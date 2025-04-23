@@ -20,7 +20,7 @@ for(i in 1:nrow(transcript_list)){
 res_gnomad_default = readRDS(paste0('chr',transcript_list$chromosome_name[i],'.rds'))
 
 #get NOVA2 & PTC 
-in_1 = which(mcols(res_gnomad_default)[['res_aenmd']]@listData[['transcript']] == transcript_list$ensembl_transcript_id[i] & mcols(res_gnomad_default)[['res_aenmd']]@listData[['is_ptc']]==T)
+in_1 = which(mcols(res_gnomad_default)[['res_aenmd']]@listData[['transcript']] == transcript_list$ensembl_transcript_id[i] & mcols(res_gnomad_default)[['res_aenmd']]@listData[['is_ptc']]==T & res_gnomad_default$type == 'snv') 
 data_1 = mcols(res_gnomad_default)[['key']][in_1]
 data_1_df = data.frame(key = data_1)
 data_1_df$loc = as.numeric(sub(".*:(\\d+).*", "\\1", data_1_df$key))
