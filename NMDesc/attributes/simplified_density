@@ -198,7 +198,7 @@ clinvar_density_PLP = function(transcript='ENST00000263257',lastcheck='off',figu
   })
   
   # Add a black rectangle on the grey exon figure to show 3'UTR and 5'UTR
-  norm_cds_begin = exon_data_coding$cdna_coding_start[which(exon_data_coding$rank == 1)]/abs_wid
+  norm_cds_begin = exon_data_coding$cdna_coding_start[which(exon_data_coding$rank == min(exon_data_coding$rank))]/abs_wid
   temp = exon_data_coding$exon_length[which(exon_data_filtered$rank == max(exon_data_filtered$rank))]  - exon_data_coding$coding_exon_length[which(exon_data_filtered$rank == max(exon_data_filtered$rank))]
   norm_cds_end = 1-(temp/abs_wid)
   UTR_region = data.frame(start = c(0,norm_cds_end), end = c(norm_cds_begin,1))
@@ -232,3 +232,4 @@ clinvar_density_PLP = function(transcript='ENST00000263257',lastcheck='off',figu
   write.csv(last_loc, file = paste0("/Users/jxu14/Desktop/clinvar_density_PLP/last_loc_",gene_name,".csv"))
   }
 }
+
