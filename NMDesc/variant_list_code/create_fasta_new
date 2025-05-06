@@ -4,16 +4,19 @@ get_re_loc <- function(location, exon_data, strand) {
   cumulative_cds_length <- 0
   for (i in 1:nrow(exon_data)) {
     if (location >= exon_data$exon_chrom_start[i] && location <= exon_data$exon_chrom_end[i]) {
-       if (strand == -1) {
-        return(cumulative_cds_length + (location - exon_data$exon_chrom_start[i] + 1))
+      if (strand == -1) {
+        # negative strand: measure from exon_chrom_end downward
+        return(cumulative_cds_length + (exon_data$exon_chrom_end[i] - location + 1))
       } else {
+        # positive strand
         return(cumulative_cds_length + (location - exon_data$exon_chrom_start[i] + 1))
       }
-    }else{
+    } else {
       cumulative_cds_length <- cumulative_cds_length + (exon_data$cds_end[i] - exon_data$cds_start[i] + 1)
     }
   }
 }
+
 reverse_complement <- function(sequence) {
   sequence <- rev(strsplit(sequence, NULL)[[1]])
   complement_map <- c("A" = "T", "T" = "A", "G" = "C", "C" = "G")
