@@ -1,1 +1,3 @@
 all attributes list here
+The gene level features include:
+The variant level features inclue:
