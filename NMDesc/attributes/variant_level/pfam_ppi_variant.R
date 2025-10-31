@@ -397,6 +397,6 @@ library(scales)
  ggsave("plots/ppi_compare/ppi_inside_vs_outside_stacked.pdf", p_ppi_percent, width = 9, height = 4.5)
  ggsave("plots/ppi_compare/ppi_inside_vs_outside_stacked.png", p_ppi_percent, width = 9, height = 4.5, dpi = 300)
  
- 
+ write.csv(pli_all, "pli_all.csv", row.names = FALSE)
 
  
