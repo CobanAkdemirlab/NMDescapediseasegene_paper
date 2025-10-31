@@ -72,3 +72,55 @@ ggplot(centrality_data, aes(x = category, y = Degree, fill = category)) +
     axis.title.y = element_text(size = 12, face = "bold"),
     legend.position = "none"
   )
+
+AD_centrality_data = centrality_data[which(centrality_data$gene %in% pli_AD$gene),]
+g1 = ggplot(AD_centrality_data, aes(x = category, y = Degree, fill = category)) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.1, outlier.shape = NA) +
+  ggpubr::stat_compare_means(
+    method = "t.test",
+    size = 6,
+    comparisons = list(
+      c("plus1", "plus1_Control"),
+      c("minus1", "minus1_Control"),
+      c("SNV", "SNV_Control")
+    ),
+    label = "p.signif"
+  ) +
+  scale_y_continuous(trans = "log10") +
+  scale_fill_manual(values = c(
+    "minus1" = "#1f77b4",
+    "minus1_Control" = "#aec7e8",
+    "plus1" = "#ff7f0e",
+    "plus1_Control" = "#ffbb78",
+    "SNV" = "#2ca02c",
+    "SNV_Control" = "#98df8a"
+  )) +
+  scale_x_discrete(labels = c(
+    "minus1" = "Minus1",
+    "minus1_Control" = "Minus1_Control",
+    "plus1" = "Plus1",
+    "plus1_Control" = "Plus1_Control",
+    "SNV" = "Nonsense",
+    "SNV_Control" = "Nonsense_Control"
+  )) +
+  labs(
+    title = "Degree Centrality of Genes in STRING PPI Network",
+    y = "Degree Centrality (log10)",
+    x = "Gene Category"
+  ) +
+  theme_classic() +
+  theme(
+    panel.background = element_rect(fill = "white", colour = NA),
+    plot.background  = element_rect(fill = "white", colour = NA),
+    panel.grid       = element_blank(),
+    axis.text.x  = element_text(angle = 45,size=12, hjust = 1, face = "bold"),
+    axis.text.y  = element_text(size=12, face = "bold"),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    legend.position = "none",
+    plot.title = element_text(size=16, hjust = 0.5, face = "bold")
+  ) +
+  theme(panel.border = element_rect(colour = "black", fill = NA))
+ggsave(g1, file = "AD_centrality_data.pdf")
+
