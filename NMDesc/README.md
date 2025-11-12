@@ -4,7 +4,7 @@ These codes aim to annotate and analyze the PTC variants from Clinvar by whether
 
 To use the codes, Clinvar_step1_NMD.R and Clinvar_step2_NMD.R should be the first R scripts to run.
 
-For different analyse:
+For \bold{ different analyse}:
 
 plus1_variants was used to create plus1 fasta files 
 
