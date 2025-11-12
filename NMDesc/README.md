@@ -1,4 +1,4 @@
-# NMDesc
+# NMDesc annotation and features extraction
 
 These codes aim to annotate and analyze the **PTC variants from Clinvar** by whether they escape from Nonsense Medicated Decay(NMD) using canonical rules(EJC model). **Gene, variant, and protein level features** are extracted from multiple data source. 
 
