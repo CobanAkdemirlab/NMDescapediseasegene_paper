@@ -74,7 +74,7 @@ install.packages(c(
 |------|---------|
 | **VEP (Variant Effect Predictor)** | Variant functional annotation |
 | **AlphaFold2 models** | Protein structural feature extraction |
-| **MetaPredict / IUPred2A** | Intrinsic disorder prediction |
+| **MetaPredict** | Intrinsic disorder prediction |
 
 ---
 
