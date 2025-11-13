@@ -23,6 +23,8 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 ---
 
 ## 📁 Directory Structure
+
+```text
 NMDesc/
 │
 ├── README.md
@@ -30,25 +32,27 @@ NMDesc/
 ├── Clinvar_step2_NMD.R
 │
 ├── data/
-│ ├── clinvar_raw/
-│ ├── canonical_transcripts/
-│ └── external_annotations/
+│   ├── clinvar_raw/
+│   ├── canonical_transcripts/
+│   └── external_annotations/
 │
 ├── results/
-│ ├── variant_sets/
-│ ├── fasta/
-│ ├── vcf/
-│ ├── idr/
-│ ├── af2/
-│ └── vep/
+│   ├── variant_sets/
+│   ├── fasta/
+│   ├── vcf/
+│   ├── idr/
+│   ├── af2/
+│   └── vep/
 │
 └── scripts/
-├── idr_analysis.R
-├── af2_feature_extraction.R
-├── vep_processing.R
-└── plotting/
+    ├── idr_analysis.R
+    ├── af2_feature_extraction.R
+    ├── vep_processing.R
+    └── plotting/
+```
 
 ---
+
 
 ## 🚀 Installation
 
