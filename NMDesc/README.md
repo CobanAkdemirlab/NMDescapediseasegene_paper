@@ -1,15 +1,26 @@
-# NMDesc annotation and features extraction
+# NMDesc: NMD Escape Annotation & Feature Extraction Pipeline
 
-These codes aim to annotate and analyze the **PTC variants from Clinvar** by whether they escape from Nonsense Medicated Decay(NMD) using canonical rules(EJC model). **Gene, variant, and protein level features** are extracted from multiple data source. 
+![badge](https://img.shields.io/badge/status-active-brightgreen)
+![badge](https://img.shields.io/badge/R->=4.2-blue)
+![badge](https://img.shields.io/badge/data-ClinVar-orange)
+![badge](https://img.shields.io/badge/purpose-NMD%20annotation-purple)
 
-To use the codes, **Clinvar_step1_NMD.R and Clinvar_step2_NMD.R** should be the first R scripts to run.
+The **NMDesc pipeline** annotates and analyzes **premature termination codon (PTC) variants from ClinVar**, classifying them by whether they **escape Nonsense-Mediated Decay (NMD)** under canonical **Exon Junction Complex (EJC) rules**.  
+It additionally extracts **gene-, variant-, and protein-level features** from multiple genomic and structural databases.
 
-For **different analyse**, the relationship between variants are:
+---
 
-plus1_variants was used to create plus1 fasta files 
+## 📌 Features
 
-plus1_variants was used to create vcf files.
+- Canonical NMD escape determination using EJC rules  
+- Automated extraction of:
+  - Gene-level features (constraint metrics, LOEUF, etc.)
+  - Variant-level features (VEP, CDS position, NMD rules)
+  - Protein-level features (IDRs, Pfam, AlphaFold2)
+- FASTA and VCF generation  
+- Modular script design for flexible expansion  
 
-The fasta files are input for idr and AF2 analyse
+---
 
-The vcf files are input for vep analysis
+## 📁 Directory Structure
+
