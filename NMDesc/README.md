@@ -172,15 +172,6 @@ ClinVar PTC Variants
 
 ---
 
-## 🧬 Citation
-
-```
-Xu J., Coban Z., Eldomery M., et al.
-NMDesc: A pipeline for annotating NMD escape in ClinVar PTC variants.
-(Manuscript in preparation)
-```
-
----
 
 ## 📫 Contact
 
