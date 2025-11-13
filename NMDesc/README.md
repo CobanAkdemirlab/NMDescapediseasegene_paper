@@ -53,11 +53,21 @@ NMDesc/
 
 ---
 
-
 ## 🚀 Installation
 
-### 1. Install R (≥4.2)
-Download: https://www.r-project.org/
+### 1. Install R (≥ 4.2)
+
+Download R from: <https://www.r-project.org/>
+
+### 2. Install required R packages
+
+```{r install-packages, eval=FALSE}
+install.packages(c(
+  "tidyverse", "data.table", "biomaRt",
+  "stringr", "jsonlite", "readr", "ggplot2"
+))
+```
+
 ### 3. Optional external tools
 
 | Tool | Purpose |
@@ -175,13 +185,4 @@ NMDesc: A pipeline for annotating NMD escape in ClinVar PTC variants.
 ## 📫 Contact
 
 **Maintainer:** Jiaoyang (JXU)  
-Email: [add-your-email-here]
-
-
-### 2. Install required R packages
-```r
-install.packages(c(
-  "tidyverse", "data.table", "biomaRt",
-  "stringr", "jsonlite", "readr", "ggplot2"
-))
-
+Email: [jiaoyang.xu@uth.tmc.edu]
