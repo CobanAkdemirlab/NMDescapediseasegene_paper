@@ -23,4 +23,42 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 ---
 
 ## 📁 Directory Structure
+NMDesc/
+│
+├── README.md
+├── Clinvar_step1_NMD.R
+├── Clinvar_step2_NMD.R
+│
+├── data/
+│ ├── clinvar_raw/
+│ ├── canonical_transcripts/
+│ └── external_annotations/
+│
+├── results/
+│ ├── variant_sets/
+│ ├── fasta/
+│ ├── vcf/
+│ ├── idr/
+│ ├── af2/
+│ └── vep/
+│
+└── scripts/
+├── idr_analysis.R
+├── af2_feature_extraction.R
+├── vep_processing.R
+└── plotting/
+
+---
+
+## 🚀 Installation
+
+### 1. Install R (≥4.2)
+Download: https://www.r-project.org/
+
+### 2. Install required R packages
+```r
+install.packages(c(
+  "tidyverse", "data.table", "biomaRt",
+  "stringr", "jsonlite", "readr", "ggplot2"
+))
 
