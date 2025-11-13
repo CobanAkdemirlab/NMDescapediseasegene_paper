@@ -145,7 +145,7 @@ ClinVar PTC Variants
 
 ### 1. IDR Prediction
 - MetaPredict
-- IUPred2A
+
 
 ### 2. AlphaFold2 Structural Feature Extraction
 - pLDDT
@@ -155,7 +155,8 @@ ClinVar PTC Variants
 ### 3. VEP Functional Annotation
 - Consequence terms
 - Nearest exon junction boundary
-- Impact categories
+- Condel_score
+
 
 ---
 
