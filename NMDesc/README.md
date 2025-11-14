@@ -14,7 +14,7 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 
 - Canonical NMD escape determination using EJC rules  
 - Automated extraction of:
-  - Gene-level features (constraint metrics, LOEUF, etc.)
+  - Gene-level features (pLI, LOEUF, eenrichment analysis, tau, etc.)
   - Variant-level features (VEP annotation, CDS position of the PTC, variant distance to CDS end)
   - Protein-level features (IDRs, Pfam, AlphaFold2)
 - FASTA and VCF generation  
