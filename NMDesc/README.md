@@ -33,7 +33,7 @@ NMDesc/
 │
 ├── data/
 │   ├── clinvar_raw/
-│   ├── canonical_transcripts/
+│   ├── gnomAD_variants/
 │   └── external_annotations/
 │
 ├── results/
