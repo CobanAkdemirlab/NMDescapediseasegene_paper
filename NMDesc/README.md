@@ -155,7 +155,8 @@ ClinVar PTC Variants
 ### 3. VEP Functional Annotation
 - Consequence terms
 - Nearest exon junction boundary
-- Condel_score
+- dbNSFP features: Condel_score, GERP scores etc
+
 
 
 ---
