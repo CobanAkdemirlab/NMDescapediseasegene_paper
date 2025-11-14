@@ -131,18 +131,60 @@ These two scripts generate all core variant objects used throughout the NMDesc p
 ## 📊 Workflow Diagram
 
 ```text
-ClinVar PTC Variants
-        │
-        ├── Step 1: Annotation (Clinvar_step1_NMD.R)
-        │
-        └── Step 2: Canonical NMD classification (Clinvar_step2_NMD.R)
-                  │
-         ┌────────┴─────────┐
-         │                  │
-   plus1_variants      other variant sets
-         │
-         ├── FASTA → IDR analysis / AF2 analysis
-         └── VCF   → VEP annotation
+ClinVar pipeline
+────────────────
+
+ClinVar
+  │
+  ├─ Select germline variants
+  │      ResetID_clinvar_Clnsig.txt
+  │
+  ├─ NMD annotation
+  │      Clinvar_1120.rds
+  │
+  ├─ Select snv/fs, plp/vus, ptc, nmdesc
+  │      Snv_plp_ptc_res1120.rds
+  │
+  ├─ Add p value
+  │      Snv_plp_ptc_p1122.rds
+  │
+  └─ Get_NMD_enrichment (modify output txt name)
+         plus1_can_gene0217.txt
+
+
+R helper scripts / metadata
+───────────────────────────
+
+Gene-level
+  ├─ BM.info4(cds, exon_chrom, transcript_id, rank)
+  └─ Snv_tx (canonical transcript names)
+
+Variant-level
+  ├─ Get_snv_variant_new.R
+  │      (remove repeated steps for creating res file)
+  └─ Snv_variants(snv_variants0406.csv,
+                  includes uniprot id, transcript, key)
+
+Key mapping
+  └─ Snv_key_to_transcript   (key is not unique)
+
+
+FASTA / VCF branches
+────────────────────
+
+From Snv_variants:
+
+  ├─ Create_fasta
+  │      → FASTA files (e.g. Minus1_dis)
+  │           → IDR analysis / AF2 analysis
+  │
+  └─ csv2vep
+         → Snv.vcf
+              (includes key, transcript & uniprot;
+               variants identified by key)
+         → VEP
+              Snv_NMD_result3_vep.txt
+
 ```
 
 ---
