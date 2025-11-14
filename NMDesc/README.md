@@ -98,7 +98,7 @@ These two scripts generate all core variant objects used throughout the NMDesc p
 
 ## 📌 Variant Objects & Usage
 
-### `plus1_variants`
+### Example: `plus1_variants`
 
 | Output | Generated From   | Used For |
 |--------|------------------|----------|
@@ -108,16 +108,22 @@ These two scripts generate all core variant objects used throughout the NMDesc p
 #### Example: FASTA generation
 
 ```{r fasta-example, eval=FALSE}
-# library(seqinr)
-# write.fasta(sequences = prot_seqs,
-#             names     = prot_ids,
-#             file.out  = "results/fasta/plus1.fasta")
+# library(stringr)
+# minus1_dis = create_fasta(minus1_variants, output_dir = "minus1_test_fasta_output")
 ```
 
 #### Example: VCF generation
 
 ```{r vcf-example, eval=FALSE}
-# write_vcf(plus1_variants, "results/vcf/plus1.vcf")
+# vcf_df <- snv_control_variants %>%
+#  extract(key, into = c("CHROM", "POS", "REF", "ALT"), regex = "([^:]+):([0-9]+)\\|#([^|]+)\\|(.+)", remove = FALSE) %>%
+#  mutate(
+#    ID = ".",
+#    QUAL = ".",
+#    FILTER = "PASS",
+#    INFO = paste0("TRANSCRIPT=", transcript, ";UNIPROT=", uniprotswissprot)
+#  ) %>%
+#  select(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO)
 ```
 
 ---
