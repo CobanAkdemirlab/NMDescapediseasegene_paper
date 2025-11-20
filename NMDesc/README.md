@@ -226,5 +226,5 @@ From Snv_variants:
 
 ## 📫 Contact
 
-**Maintainer:** Jiaoyang (JXU)  
+**Maintainer:** Jiaoyang Xu (JXU)  
 Email: [jiaoyang.xu@uth.tmc.edu]
