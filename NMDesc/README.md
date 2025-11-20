@@ -5,7 +5,7 @@
 ![badge](https://img.shields.io/badge/data-ClinVar-orange)
 ![badge](https://img.shields.io/badge/purpose-NMD%20annotation-purple)
 
-The **NMDesc pipeline** annotates and analyzes **premature termination codon (PTC) variants from ClinVar**, classifying them by whether they **escape Nonsense-Mediated Decay (NMD)** under canonical **Exon Junction Complex (EJC) rules**.  
+The **NMDesc pipeline** annotates and analyzes **premature termination codon (PTC) variants from ClinVar and gnomAD**, classifying them by whether they **escape Nonsense-Mediated Decay (NMD)** under canonical **Exon Junction Complex (EJC) rules**.  
 It additionally extracts **gene-, variant-, and protein-level features** from multiple genomic and structural databases.
 
 ---
