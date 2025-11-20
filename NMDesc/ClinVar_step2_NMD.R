@@ -406,11 +406,8 @@ allgenes <- vector()
  
   
  write.table( data.new.merged,'~/Desktop/CLinvar_genes_NMDdata.txt',sep='\t')
- 
- 
- # 假设你的数据框名称是 CLinvar_genes_NMDdata
+
  gene_column <- CLinvar_genes_NMDdata$gene
  
- # 将 gene 列写入一个 .txt 文件
  write.table(gene_column, file = "clinvar_gene_list.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
  
