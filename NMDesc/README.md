@@ -64,7 +64,8 @@ Download R from: <https://www.r-project.org/>
 ```{r install-packages, eval=FALSE}
 install.packages(c(
   "tidyverse", "data.table", "biomaRt",
-  "stringr", "jsonlite", "readr", "ggplot2"
+  "stringr", "jsonlite", "readr", "ggplot2",
+  "scales", "ggpubr" 
 ))
 ```
 
