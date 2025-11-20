@@ -1,4 +1,0 @@
-The IDR comparision has 3 parts
-1. IDR length difference between WT and variants
-2. IDR overlap with NMDesc region >= 20*3bp(20 aa)
-3. IDR end >= variant location
