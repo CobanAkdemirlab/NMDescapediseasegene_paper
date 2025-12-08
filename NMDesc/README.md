@@ -10,7 +10,7 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 
 ---
 
-## 📌 Features
+## Features
 
 - Canonical NMD escape determination using EJC rules  
 - Automated extraction of:
@@ -22,7 +22,7 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 
 ---
 
-## 📁 Directory Structure
+## Directory Structure
 
 ```text
 NMDesc/
@@ -53,7 +53,7 @@ NMDesc/
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### 1. Install R (≥ 4.2)
 
@@ -79,7 +79,7 @@ install.packages(c(
 
 ---
 
-## 🔥 Quick Start
+## Quick Start
 
 ### Step 1 — Annotate ClinVar PTC variants
 
@@ -97,7 +97,7 @@ These two scripts generate all core variant objects used throughout the NMDesc p
 
 ---
 
-## 📌 Variant Objects & Usage
+## Variant Objects & Usage
 
 ### Example: `plus1_variants`
 
@@ -190,7 +190,7 @@ From Snv_variants:
 
 ---
 
-## 🔬 Downstream Analyses
+## Downstream Analyses
 
 ### 1. IDR Prediction
 - MetaPredict
@@ -210,7 +210,7 @@ From Snv_variants:
 
 ---
 
-## 📦 Output Summary
+## Output Summary
 
 | Folder | Description |
 |--------|-------------|
@@ -224,7 +224,7 @@ From Snv_variants:
 ---
 
 
-## 📫 Contact
+## Contact
 
 **Maintainer:** Jiaoyang Xu (JXU)  
 Email: [jiaoyang.xu@uth.tmc.edu]
