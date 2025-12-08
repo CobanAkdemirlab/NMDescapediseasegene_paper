@@ -129,7 +129,7 @@ These two scripts generate all core variant objects used throughout the NMDesc p
 
 ---
 
-## 📊 Workflow Diagram
+## Workflow Diagram
 
 ```text
 ClinVar pipeline
