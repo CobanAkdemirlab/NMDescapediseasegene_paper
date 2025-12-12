@@ -31,7 +31,7 @@ NMDesc(make it match the folder structure)/
 ├── Clinvar_step1_NMD.R
 ├── Clinvar_step2_NMD.R
 │
-├── data(add to github)/
+├── data(add to git)/
 │   ├── clinvar_raw/
 │   ├── gnomAD_variants/
 │   └── external_annotations/
@@ -45,10 +45,89 @@ NMDesc(make it match the folder structure)/
 │   └── vep/
 │
 └── scripts/
-    ├── idr_analysis.R
-    ├── af2_feature_extraction.R
-    ├── vep_processing.R
-    └── plotting/
+├── idr/
+│   ├── predict_disorder.py
+│   ├── predict_disorder_can.py
+│   ├── get_snv_control_idr.R
+│   ├── idr_merge.R
+│   ├── idr_output.R
+│   ├── quality_filter_idr.R
+│   ├── README.md
+│
+├── af2/
+│   ├── AF2/
+│   ├── AF2_draw.R
+│   ├── af2_feature_extraction.R
+│   ├── nmd_alphafold_aa_composition.ipynb
+│   ├── nmd_alphafold_predicted_properties.ipynb
+│   ├── Density/
+│   ├── attributes/
+│   └── README.md
+│
+├── vep/
+│   ├── vep_processing.R
+│   ├── VEP/
+│   ├── clean_variant_AD.R
+│   ├── clinar_step1_NMD.R
+│   └── README.md
+│
+├── frameshift/
+│   ├── frameshift/
+│   ├── frameshift_code.R
+│   ├── create_fs_control.R
+│   ├── get_fs_control.R
+│   ├── get_fs_gnomAD_control.R
+│   ├── get_fs_gnomAD_control_step1.R
+│   ├── get_fs_gnomAD_control_step2.R
+│   ├── get_fs_control_variant_new.R
+│   ├── get_fs_variant_new.R
+│   └── README.md
+│
+├── gnomad/
+│   ├── gnomAD/
+│   ├── get_gnomAD_control.R
+│   ├── get_gnomAD_control_step2.R
+│   ├── get_snv_gnomAD_control_step2.R
+│   ├── get_snv_control_variant_new.R
+│   ├── get_snv_variant_new.R
+│   ├── get_variants.R
+│   └── README.md
+│
+├── NMD/
+│   ├── NMDesc
+│   ├── WT_var_NMD_4c_AD.csv
+│   ├── ClinVar_NMD.R
+│   ├── ClinVar_step2_NMD.R
+│   ├── NMD_annotate.R
+│   ├── get_NMD_enrich2
+│   ├── get_NMD_enrichment.R
+│   ├── get_statistics.R
+│   ├── get_pvalue.R
+│   └── README.md
+│
+├── variant_processing/
+│   ├── gene_level.R
+│   ├── variant_level.R
+│   ├── transcript_level.R
+│   ├── select_AD.R
+│   ├── select_AD_variants.R
+│   ├── clean_variant_AD.R
+│   ├── new_create_fasta.R
+│   ├── create_fasta_new/
+│   ├── compare.R
+│   ├── bind_result.R
+│   ├── cross_check.R
+│   └── README.md
+│
+├── plotting/
+│   ├── plots/
+│   ├── compare_length/
+│   ├── overlap/
+│   ├── with_in/
+│   └── plotting_functions.R
+│
+└── main.R
+
 ```
 
 ---
