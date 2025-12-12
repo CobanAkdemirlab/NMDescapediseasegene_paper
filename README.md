@@ -77,34 +77,13 @@ NMDesc/
 │   ├── get_snv_control_variant_new.R
 │   ├── get_snv_variant_new.R
 │   ├── get_variants.R
-│   └── README.md
+│   └── README.md  
 │
-├── NMD/
-│   ├── NMDesc
-│   ├── WT_var_NMD_4c_AD.csv
-│   ├── ClinVar_NMD.R
-│   ├── ClinVar_step2_NMD.R
-│   ├── NMD_annotate.R
-│   ├── get_NMD_enrich2
-│   ├── get_NMD_enrichment.R
-│   ├── get_statistics.R
-│   ├── get_pvalue.R
+├── attributes/
+│   ├── gene_level
+│   ├── variant_level
 │   └── README.md
-│
-├── variant_processing/
-│   ├── gene_level.R
-│   ├── variant_level.R
-│   ├── transcript_level.R
-│   ├── select_AD.R
-│   ├── select_AD_variants.R
-│   ├── clean_variant_AD.R
-│   ├── new_create_fasta.R
-│   ├── create_fasta_new/
-│   ├── compare.R
-│   ├── bind_result.R
-│   ├── cross_check.R
-│   └── README.md
-│
+|
 ├── plotting/
 │   ├── plots/
 │   ├── compare_length/
