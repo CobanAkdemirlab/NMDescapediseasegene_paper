@@ -84,12 +84,6 @@ NMDesc/
 │   ├── variant_level
 │   └── README.md
 |
-├── plotting/
-│   ├── plots/
-│   ├── compare_length/
-│   ├── overlap/
-│   ├── with_in/
-│   └── plotting_functions.R
 │
 └── main.R
 
