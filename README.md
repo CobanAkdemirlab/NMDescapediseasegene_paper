@@ -25,13 +25,13 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 ## Directory Structure
 
 ```text
-NMDesc/
+NMDesc(make it match the folder structure)/
 │
 ├── README.md
 ├── Clinvar_step1_NMD.R
 ├── Clinvar_step2_NMD.R
 │
-├── data/
+├── data(add to github)/
 │   ├── clinvar_raw/
 │   ├── gnomAD_variants/
 │   └── external_annotations/
