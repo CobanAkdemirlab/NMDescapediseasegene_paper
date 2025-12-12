@@ -41,7 +41,6 @@ NMDesc/
 │   ├── README.md
 │
 ├── af2/
-│   ├── AF2/
 │   ├── AF2_draw.R
 │   ├── af2_feature_extraction.R
 │   ├── nmd_alphafold_aa_composition.ipynb
