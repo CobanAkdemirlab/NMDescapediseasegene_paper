@@ -25,26 +25,12 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 ## Directory Structure
 
 ```text
-NMDesc(make it match the folder structure)/
+NMDesc/
 │
 ├── README.md
 ├── Clinvar_step1_NMD.R
 ├── Clinvar_step2_NMD.R
 │
-├── data(add to git)/
-│   ├── clinvar_raw/
-│   ├── gnomAD_variants/
-│   └── external_annotations/
-│
-├── results/
-│   ├── variant_sets/
-│   ├── fasta/
-│   ├── vcf/
-│   ├── idr/
-│   ├── af2/
-│   └── vep/
-│
-└── scripts/
 ├── idr/
 │   ├── predict_disorder.py
 │   ├── predict_disorder_can.py
