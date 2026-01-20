@@ -68,7 +68,7 @@ genes_remain_in_clinvar = gene_list[-which(gene_list$ensembl_transcript_id %in% 
 
 ##filter for gnomad control
 fs_gnomAD_variants <- read_csv("~/Desktop/fs_gnomAD_variants.csv")
-#get tyoe of fs_gnomAD_variants based on id
+#get type of fs_gnomAD_variants based on id
 fs_gnomAD_variants_type = rep(NA,length(fs_gnomAD_variants$id))
 get_frameshift_type2 = function(df,x)
 {
