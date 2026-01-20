@@ -48,9 +48,9 @@ snv_gnomAD_control_hgnc = getBM(
 write.csv(unique(snv_gnomAD_control_hgnc$hgnc_symbol), 'snv_gnomAD_control_genes.csv', row.names = FALSE)
 #get high frequency variants using annovar
 
-# Assuming snv_NMD_results3 is already loaded in your R environment
 
-# ✅ 1. Extract necessary information from the 'id' column
+
+# 1. Extract necessary information from the 'id' column
 # Split the id column into CHROM, POS, REF, and ALT
 # Correctly extract CHROM, POS, REF, and ALT from the id column
 snv_NMD_results3_vcf <- snv_NMD_results3 %>%
@@ -62,17 +62,17 @@ snv_NMD_results3_vcf <- snv_NMD_results3 %>%
   )
 
 
-# ✅ 2. Add VCF mandatory columns
+# 2. Add VCF mandatory columns
 snv_NMD_results3_vcf$ID <- "."  # No variant ID
 snv_NMD_results3_vcf$QUAL <- "."  # No quality score
 snv_NMD_results3_vcf$FILTER <- "PASS"  # All variants pass filter
 snv_NMD_results3_vcf$INFO <- "."  # No additional information
 
-# ✅ 3. Select and reorder the columns in the standard VCF format
+# 3. Select and reorder the columns in the standard VCF format
 vcf_output <- snv_NMD_results3_vcf %>%
   select(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO)
 
-# ✅ 4. Write VCF header and data to a file
+# 4. Write VCF header and data to a file
 vcf_file <- "snv_NMD_results3.vcf"
 
 # Write VCF header
@@ -109,7 +109,7 @@ snv_NMD_result2 = snv_NMD_results3[sample(nrow(snv_NMD_results3), 200),]
 library(data.table)
 library(dplyr)
 
-# ✅ 1. Prepare Variant Data (Example)
+# 1. Prepare Variant Data (Example)
 # Replace this with your actual transcript ID variant data
 # Assuming you have variant data extracted from transcript IDs
 transcript_variants <- data.frame(
@@ -125,7 +125,7 @@ transcript_variants$ID <- rep(".", nrow(transcript_variants))  # Placeholder for
 transcript_variants$ZYG <- rep("Het", nrow(transcript_variants))  # Zygosity
 transcript_variants$FILTER <- rep("PASS", nrow(transcript_variants))  # Filter status
 
-# ✅ 2. Write VCF File for ANNOVAR
+# 2. Write VCF File for ANNOVAR
 vcf_file <- "variants_for_annovar.vcf"
 annovar_input <- cbind(
   transcript_variants$CHR,
@@ -148,22 +148,22 @@ write.table(
   col.names = FALSE
 )
 
-# ✅ 3. Convert VCF to ANNOVAR format using system() call
+# 3. Convert VCF to ANNOVAR format using system() call
 # Replace '/path/to/annovar/' with the actual ANNOVAR installation directory
 system("perl /path/to/annovar/convert2annovar.pl -format vcf4 variants_for_annovar.vcf > variants_for_annovar.avinput")
 
-# ✅ 4. Run ANNOVAR to Annotate Variant Frequencies
+# 4. Run ANNOVAR to Annotate Variant Frequencies
 # Replace '/path/to/annovar/' and '/path/to/annovar/humandb/' with actual paths
 system("perl /path/to/annovar/annotate_variation.pl -build hg38 -out variant_frequency_results -dbtype gnomad211_exome variants_for_annovar.avinput /path/to/annovar/humandb/")
 
-# ✅ 5. Read ANNOVAR Output into R
+# 5. Read ANNOVAR Output into R
 # Assuming the output file is named 'variant_frequency_results.gnomad211_exome_dropped'
 variant_freq_file <- "variant_frequency_results.gnomad211_exome_dropped"
 
 if (file.exists(variant_freq_file)) {
   variant_freq <- fread(variant_freq_file)
   
-  # ✅ 6. Merge Frequency Data with Original Variant Data
+  # 6. Merge Frequency Data with Original Variant Data
   # Construct keys for merging
   transcript_variants$key <- paste0(
     transcript_variants$CHR, ":", transcript_variants$POS, "_", transcript_variants$REF, ">", transcript_variants$ALT
@@ -176,7 +176,7 @@ if (file.exists(variant_freq_file)) {
   # Merge frequency annotation into the original dataset
   merged_data <- merge(transcript_variants, variant_freq, by = "key", all.x = TRUE)
   
-  # ✅ 7. Save the Annotated Variants with Frequencies to CSV
+  # 7. Save the Annotated Variants with Frequencies to CSV
   write.csv(merged_data, "variant_frequencies_with_transcripts.csv", row.names = FALSE)
   
   # Print the merged data
