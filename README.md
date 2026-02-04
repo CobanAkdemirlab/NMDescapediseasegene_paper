@@ -24,6 +24,8 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 
 ## Directory Structure
 
+#gene level(control, disease genes), variant level(NMDesc-clinvar, gnomad)
+
 ```text
 NMDesc/
 │
