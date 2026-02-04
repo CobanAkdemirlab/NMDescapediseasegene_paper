@@ -1,3 +1,5 @@
+###we will download 1. the latest version of clinvar(3 files) using wget on XX day to XX  2. use aenmd to annotate them again 3. have ptc-generating ones
+
 setwd("/Users/qkelly/Desktop/autism/data")
 res_clinvar_default_1 = readRDS("clinvar0716_1.rds")
 res_clinvar_default_2 = readRDS("clinvar0716_2.rds")
