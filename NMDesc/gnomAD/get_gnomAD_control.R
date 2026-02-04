@@ -1,3 +1,5 @@
+###1. get gnomAD again, add code of getting gnomAD V4 data,
+
 variant_count = 0
 gene_count = 0
 names = paste('chr',seq(1,22),'.rds',sep='')
