@@ -1,0 +1,368 @@
+
+library(ggpubr)
+
+plus1_can_uni = getBM(
+  attributes = c("uniprotswissprot", "hgnc_symbol"),
+  filters = "hgnc_symbol",
+  values = plus1_combined$gene,
+  mart = ensembl
+)
+plus2_can_uni = getBM(
+  attributes = c("uniprotswissprot", "hgnc_symbol"),
+  filters = "hgnc_symbol",
+  values = plus2_combined$gene,
+  mart = ensembl
+)
+snv_can_uni = getBM(
+  attributes = c("uniprotswissprot", "hgnc_symbol"),
+  filters = "hgnc_symbol",
+  values = snv_plp_combined$gene,
+  mart = ensembl
+)
+plus1_control_uni = getBM(
+  attributes = c("uniprotswissprot", "hgnc_symbol"),
+  filters = "hgnc_symbol",
+  values = plus1_gnomAD_combined$gene,
+  mart = ensembl
+)
+plus2_control_uni = getBM(
+  attributes = c("uniprotswissprot", "hgnc_symbol"),
+  filters = "hgnc_symbol",
+  values = plus2_gnomAD_combined$gene,
+  mart = ensembl
+)
+snv_control_uni = getBM(
+  attributes = c("uniprotswissprot", "hgnc_symbol"),
+  filters = "hgnc_symbol",
+  values = snv_gnomAD_combined$gene,
+  mart = ensembl
+)
+
+plus1_can_uniprot = unique(plus1_can_uni$uniprotswissprot)
+plus2_can_uniprot = unique(plus2_can_uni$uniprotswissprot)
+snv_can_uniprot = unique(snv_can_uni$uniprotswissprot)
+plus1_control_uniprot = unique(plus1_control_uni$uniprotswissprot)
+plus2_control_uniprot = unique(plus2_control_uni$uniprotswissprot)
+snv_control_uniprot = unique(snv_control_uni$uniprotswissprot)
+
+
+convert_to_c <- function(x) {
+  x <- gsub("\\[|\\]", "", x) # Remove square brackets
+  if (x == "") return(c())     # Handle empty brackets
+  as.numeric(trimws(unlist(strsplit(x, ",")))) # Split by comma, trim whitespace, and convert to numeric
+}
+plus1.can.tr.set = getBM(
+  attributes = c("transcript_is_canonical",'ensembl_transcript_id','hgnc_symbol'),
+  filters = "hgnc_symbol",
+  values = plus1_can_uni$hgnc_symbol,
+  mart = ensembl
+)
+plus2.can.tr.set = getBM(
+  attributes = c("transcript_is_canonical",'ensembl_transcript_id','hgnc_symbol'),
+  filters = "hgnc_symbol",
+  values = plus2_can_uni$hgnc_symbol,
+  mart = ensembl
+)
+plus1.control.set = getBM(
+  attributes = c("transcript_is_canonical",'ensembl_transcript_id','hgnc_symbol'),
+  filters = "hgnc_symbol",
+  values = plus1_control_uni$hgnc_symbol,
+  mart = ensembl
+)
+plus2.control.set = getBM(
+  attributes = c("transcript_is_canonical",'ensembl_transcript_id','hgnc_symbol'),
+  filters = "hgnc_symbol",
+  values = plus2_control_uni$hgnc_symbol,
+  mart = ensembl
+)
+snv.can.set = getBM(
+  attributes = c("transcript_is_canonical",'ensembl_transcript_id','hgnc_symbol'),
+  filters = "hgnc_symbol",
+  values = snv_can_uni$hgnc_symbol,
+  mart = ensembl
+)
+snv.control.set = getBM(
+  attributes = c("transcript_is_canonical",'ensembl_transcript_id','hgnc_symbol'),
+  filters = "hgnc_symbol",
+  values = snv_control_uni$hgnc_symbol,
+  mart = ensembl
+)
+plus1.can.tr.set = plus1.can.tr.set[which(plus1.can.tr.set$transcript_is_canonical == 1),]
+plus2.can.tr.set = plus2.can.tr.set[which(plus2.can.tr.set$transcript_is_canonical == 1),]
+plus1.control.set = plus1.control.set[which(plus1.control.set$transcript_is_canonical == 1),]
+plus2.control.set = plus2.control.set[which(plus2.control.set$transcript_is_canonical == 1),]
+snv.can.set = snv.can.set[which(snv.can.set$transcript_is_canonical == 1),]
+snv.control.set = snv.control.set[which(snv.control.set$transcript_is_canonical == 1),]
+
+plus1.can.exon.set <- getBM(
+  attributes = c("ensembl_transcript_id", "cds_start", "cds_end", "uniprotswissprot"),
+  filters = "ensembl_transcript_id",
+  values = plus1.can.tr.set$ensembl_transcript_id,
+  mart = ensembl
+)
+
+plus2.can.exon.set <- getBM(
+  attributes = c("ensembl_transcript_id", "cds_start", "cds_end", "uniprotswissprot"),
+  filters = "ensembl_transcript_id",
+  values = plus2.can.tr.set$ensembl_transcript_id,
+  mart = ensembl
+)
+
+plus1.control.exon.set <- getBM(
+  attributes = c("ensembl_transcript_id", "cds_start", "cds_end", "uniprotswissprot"),
+  filters = "ensembl_transcript_id",
+  values = plus1.control.set$ensembl_transcript_id,
+  mart = ensembl
+)
+
+plus2.control.exon.set <- getBM(
+  attributes = c("ensembl_transcript_id", "cds_start", "cds_end", "uniprotswissprot"),
+  filters = "ensembl_transcript_id",
+  values = plus2.control.set$ensembl_transcript_id,
+  mart = ensembl
+)
+
+snv.can.exon.set <- getBM(
+  attributes = c("ensembl_transcript_id", "cds_start", "cds_end", "uniprotswissprot"),
+  filters = "ensembl_transcript_id",
+  values = snv.can.set$ensembl_transcript_id,
+  mart = ensembl
+)
+
+snv.control.exon.set <- getBM(
+  attributes = c("ensembl_transcript_id", "cds_start", "cds_end", "uniprotswissprot"),
+  filters = "ensembl_transcript_id",
+  values = snv.control.set$ensembl_transcript_id,
+  mart = ensembl
+)
+
+plus1_can_re_1_flag = rep(0,length(plus1_can_uniprot))
+plus1_can_re_2_flag = rep(0,length(plus1_can_uniprot))
+plus1_css_re_1_flag = rep(0,length(plus1_css_uniprot))
+plus1_css_re_2_flag = rep(0,length(plus1_css_uniprot))
+plus1_long_re_1_flag = rep(0,length(plus1_long_uniprot))
+plus1_long_re_2_flag = rep(0,length(plus1_long_uniprot))
+evaluate_NMD_escape_can <- function(uniprot_list, hgnc_map, tr_set, exon_set, human_1_, bp = 50) {
+  # Initialize flags
+  re_1_flag <- rep(0, length(uniprot_list))
+  re_2_flag <- rep(0, length(uniprot_list))
+  
+  for (i in seq_along(uniprot_list)) {
+    tryCatch({
+      uid <- uniprot_list[i]
+      
+      # Get interface residues
+      re_1 <- unlist(lapply(human_1_$interface_residues1[human_1_$uniprot1 == uid], convert_to_c)) * 3
+      re_2 <- unlist(lapply(human_1_$interface_residues2[human_1_$uniprot2 == uid], convert_to_c)) * 3
+      
+      # Get canonical transcript
+      hgnc <- hgnc_map$hgnc_symbol[hgnc_map$uniprotswissprot == uid][1]
+      tr_id <- tr_set$ensembl_transcript_id[tr_set$hgnc_symbol == hgnc][1]
+      exon_data <- exon_set[exon_set$ensembl_transcript_id == tr_id, ]
+      exon_data <- exon_data[complete.cases(exon_data), ]
+      
+      if (nrow(exon_data) < 2) next  # Need at least two exons
+      
+      # Get exon lengths
+      exon_length <- exon_data$cds_end - exon_data$cds_start + 1
+      pen_length <- exon_length[length(exon_length) - 1]
+      
+      # Get can NMDesc threshold
+      aft_NMD_ind <- if (pen_length < bp) {
+        exon_data$cds_start[length(exon_length) - 1]
+      } else {
+        sum(exon_length[1:(length(exon_length) - 1)]) - bp
+      }
+      
+      # Check if any residues fall beyond threshold 
+      if (any(re_1 >= aft_NMD_ind)) re_1_flag[i] <- 1
+      if (any(re_2 >= aft_NMD_ind)) re_2_flag[i] <- 1
+    }, error = function(e) {
+      message(sprintf("Error at index %d (%s): %s", i, uid, e$message))
+    })
+  }
+  
+  matched_uniprot <- uniprot_list[which(re_1_flag > 0 | re_2_flag > 0)]
+  return(matched_uniprot)
+}
+human_1_ <- fread("~/Downloads/human (1) (2).txt", data.table = FALSE)
+plus1_can_matched <- evaluate_NMD_escape_can(
+  uniprot_list = unique(plus1_can_uni$uniprotswissprot),
+  hgnc_map = plus1_can_uni,
+  tr_set = plus1.can.tr.set,
+  exon_set = plus1.can.exon.set,
+  human_1_ = human_1_,
+  bp = 50
+)
+length(plus1_can_matched)
+plus2_can_matched <- evaluate_NMD_escape_can(
+  uniprot_list = unique(plus2_can_uni$uniprotswissprot),
+  hgnc_map = plus2_can_uni,
+  tr_set = plus2.can.tr.set,
+  exon_set = plus2.can.exon.set,
+  human_1_ = human_1_,
+  bp = 50
+)
+length(plus2_can_matched)
+snv_can_matched <- evaluate_NMD_escape_can(
+  uniprot_list = unique(snv_can_uni$uniprotswissprot),
+  hgnc_map = snv_can_uni,
+  tr_set = snv.can.set,
+  exon_set = snv.can.exon.set,
+  human_1_ = human_1_,
+  bp = 50
+)
+length(snv_can_matched)
+plus1_control_matched <- evaluate_NMD_escape_can(
+  uniprot_list = unique(plus1_control_uni$uniprotswissprot),
+  hgnc_map = plus1_control_uni,
+  tr_set = plus1.control.set,
+  exon_set = plus1.control.exon.set,
+  human_1_ = human_1_,
+  bp = 50
+)
+length(plus1_control_matched)
+plus2_control_matched <- evaluate_NMD_escape_can(
+  uniprot_list = unique(plus2_control_uni$uniprotswissprot),
+  hgnc_map = plus2_control_uni,
+  tr_set = plus2.control.set,
+  exon_set = plus2.control.exon.set,
+  human_1_ = human_1_,
+  bp = 50
+)
+length(plus2_control_matched)
+snv_control_matched <- evaluate_NMD_escape_can(
+  uniprot_list = unique(snv_control_uni$uniprotswissprot),
+  hgnc_map = snv_control_uni,
+  tr_set = snv.control.set,
+  exon_set = snv.control.exon.set,
+  human_1_ = human_1_,
+  bp = 50
+)
+length(snv_control_matched)
+
+
+nmd_match_df <- data.frame(
+  group = c(
+    "plus1_can", "plus2_can", "snv_can",
+    "plus1_control", "plus2_control", "snv_control"
+  ),
+  matched = c(
+    length(plus1_can_matched),
+    length(plus2_can_matched),
+    length(snv_can_matched),
+    length(plus1_control_matched),
+    length(plus2_control_matched),
+    length(snv_control_matched)
+  )
+)
+
+nmd_match_df <- data.frame(
+  group = c(
+    "plus1_can", "plus2_can", "stopgain_can",
+    "plus1_control", "plus2_control", "stopgain_control"
+  ),
+  matched = c(
+    length(plus1_can_matched),
+    length(plus2_can_matched),
+    length(snv_can_matched),
+    length(plus1_control_matched),
+    length(plus2_control_matched),
+    length(snv_control_matched)
+  ),
+  total = c(
+    length(unique(plus1_can_uni$uniprotswissprot)),
+    length(unique(plus2_can_uni$uniprotswissprot)),
+    length(unique(snv_can_uni$uniprotswissprot)),
+    length(unique(plus1_control_uni$uniprotswissprot)),
+    length(unique(plus2_control_uni$uniprotswissprot)),
+    length(unique(snv_control_uni$uniprotswissprot))
+  )
+)
+
+nmd_match_df$percent <- round((nmd_match_df$matched / nmd_match_df$total) * 100, 1)
+
+create_flag_df <- function(uniprot_list, matched_list, group_name) {
+  data.frame(
+    uniprot = uniprot_list,
+    matched = as.integer(uniprot_list %in% matched_list),
+    group = group_name
+  )
+}
+
+# Create individual-level data
+df_plus1 <- create_flag_df(unique(plus1_can_uni$uniprotswissprot), plus1_can_matched, "plus1_can")
+df_plus1_ctrl <- create_flag_df(unique(plus1_control_uni$uniprotswissprot), plus1_control_matched, "plus1_control")
+
+df_plus2 <- create_flag_df(unique(plus2_can_uni$uniprotswissprot), plus2_can_matched, "plus2_can")
+df_plus2_ctrl <- create_flag_df(unique(plus2_control_uni$uniprotswissprot), plus2_control_matched, "plus2_control")
+
+df_stopgain <- create_flag_df(unique(snv_can_uni$uniprotswissprot), snv_can_matched, "stopgain_can")
+df_stopgain_ctrl <- create_flag_df(unique(snv_control_uni$uniprotswissprot), snv_control_matched, "stopgain_control")
+
+# Combine all
+df_all <- rbind(df_plus1, df_plus1_ctrl, df_plus2, df_plus2_ctrl, df_stopgain, df_stopgain_ctrl)
+
+
+# Create broader group category
+df_all$group_pair <- factor(
+  ifelse(grepl("plus1", df_all$group), "Plus1",
+         ifelse(grepl("plus2", df_all$group), "Minus1", "Stopgain")),
+  levels = c("Plus1", "Minus1", "Stopgain")
+)
+
+# Preserve group order within each pair
+df_all$group <- factor(df_all$group, levels = c(
+  "plus1_can", "plus1_control",
+  "plus2_can", "plus2_control",
+  "stopgain_can", "stopgain_control"
+))
+
+# Custom color palette: same group, similar shades
+group_colors <- c(
+  "plus1_can" = "#6BAED6",      # Light blue
+  "plus1_control" = "#2171B5",  # Darker blue
+  "plus2_can" = "#74C476",      # Light green
+  "plus2_control" = "#238B45",  # Darker green
+  "stopgain_can" = "#FD8D3C",   # Light orange
+  "stopgain_control" = "#D94701" # Darker orange
+)
+
+# Plot
+ggplot(df_all, aes(x = group, y = matched, fill = group)) +
+  geom_bar(stat = "summary", fun = mean, color = "black", width = 0.7) +
+  geom_text(stat = "summary",
+            fun = function(x) round(mean(x) * 100, 1),
+            aes(label = paste0(round(after_stat(y) * 100, 1), "%")),
+            vjust = -0.5, size = 3.5) +
+  stat_compare_means(
+    comparisons = list(
+      c("plus1_can", "plus1_control"),
+      c("plus2_can", "plus2_control"),
+      c("stopgain_can", "stopgain_control")
+    ),
+    method = "t.test",
+    label = "p.signif"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(), limits = c(0, 1)) +
+  scale_fill_manual(values = group_colors) +
+  theme_minimal() +
+  labs(
+    title = "Comparision of PPI",
+    y = "Percentage of overlap",
+    x = "Gene Group"
+  ) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_blank()
+  ) +
+  scale_x_discrete(labels = c(
+    "plus1_can" = "Plus1\nCase",
+    "plus1_control" = "Plus1\nControl",
+    "plus2_can" = "Minus1\nCase",
+    "plus2_control" = "Minus1\nControl",
+    "stopgain_can" = "Stopgain\nCase",
+    "stopgain_control" = "Stopgain\nControl"
+  )) +
+  facet_grid(. ~ pair_group, scales = "free_x", space = "free_x")
