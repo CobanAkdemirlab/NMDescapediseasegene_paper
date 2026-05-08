@@ -1,0 +1,56 @@
+library(tidyr)
+library(ggplot2)
+library(biomaRt)
+library(dplyr)
+gene_list <- c("ACVR1", "ARID1A", "CDK13", "CREBBP", "DOCK6", "EVC", "EVC2", "FBN1", "HAND2", "JAG1", 
+           "KDM2B", "KMT2A", "KRAS", "MAP3K7", "NF1", "NOTCH2", "NPHP4", "NUP188", "PKD1L1", "SALL4", 
+           "SMARCA4", "SMG9", "TBX20", "TBX5", "TRAF7", "ZEB2",'NOVA2','NOTCH2','MN1','PPM1D','SEMA6B','DVL3')
+gene_list = c('MPZ')
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+transcript_list <- getBM(attributes = c("hgnc_symbol", "chromosome_name","ensembl_transcript_id","transcript_is_canonical"),
+                     filters = "hgnc_symbol", 
+                     values = gene_list, 
+                     mart = ensembl)
+#get canonical transcript
+transcript_list <- transcript_list[which(transcript_list$transcript_is_canonical == 1),]
+
+res_clinvar_default_1 = readRDS("~/Library/Mobile Documents/com~apple~CloudDocs/Desktop/桌面 - q的MacBook Pro/clinvar/0819/clinvar0819_1.rds")
+res_clinvar_default_2 = readRDS("~/Library/Mobile Documents/com~apple~CloudDocs/Desktop/桌面 - q的MacBook Pro/clinvar/0819/clinvar0819_2.rds")
+res_clinvar_default_3 = readRDS("~/Library/Mobile Documents/com~apple~CloudDocs/Desktop/桌面 - q的MacBook Pro/clinvar/0819/clinvar0819_3.rds")
+res_clinvar_default = c(res_clinvar_default_1, res_clinvar_default_2, res_clinvar_default_3)
+rm(res_clinvar_default_1, res_clinvar_default_2, res_clinvar_default_3)
+for(transcript in unique(transcript_list$ensembl_transcript_id)){
+  #if error, print transcript
+  tryCatch({
+    clinvar_density_PLP(transcript, figureoutput = 'on')
+  }, error = function(e) {
+    # Print the transcript corresponding gene if an error occurs
+    egene = getBM(
+      attributes = c("hgnc_symbol"),
+      filters = "ensembl_transcript_id",
+      values = transcript,
+      mart = ensembl
+    )$hgnc_symbol
+    print(egene)
+  })
+}
+
+
+# Set the directory where your CSV files are located
+csv_directory <- "/Users/jxu14/Desktop/clinvar_density_PLP"
+
+# Get the list of all CSV files in the directory
+csv_files <- list.files(path = csv_directory, pattern = "last_loc_.*.csv", full.names = TRUE)
+
+for (i in 1:length(csv_files)) {
+  # Use tryCatch to handle where no PTC in last exon
+  tryCatch({
+    # Read the CSV file
+    df <- read.csv(csv_files[i])
+    # Print the median of the second column
+    print(median(df[, 2], na.rm = TRUE))
+  }, error = function(e) {
+    # Print the error genes
+    cat("Error in file:", csv_files[i], "\n", conditionMessage(e), "\n")
+  })
+}

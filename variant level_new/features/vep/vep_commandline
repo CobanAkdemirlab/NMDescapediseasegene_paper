@@ -1,0 +1,10 @@
+vep --input_file ~/gnomAD/annovar/snv_NMD_results3.vcf \
+    --output_file ~/gnomAD/annovar/snv_NMD_results3_vep.txt \
+    --format vcf \
+    --tab \
+    --offline \
+    --cache \
+    --dir_cache ~/.vep \
+    --species homo_sapiens \
+    --assembly GRCh38 \
+    --everything

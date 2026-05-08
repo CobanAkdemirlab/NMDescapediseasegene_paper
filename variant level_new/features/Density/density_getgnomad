@@ -1,0 +1,68 @@
+library(tidyr)
+library(ggplot2)
+library(biomaRt)
+library(dplyr)
+
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+gene_list <- c('ACTL6B',"ALDH5A1", "CEP290", "COL12A1", "DAGLA", "DNMT3A", "FBN1", "GABRG2", "KAT6B", 
+               "KCNQ2", "MTHFR", "MYH9", "MYO7A", "NCKAP1", "NR3C2", "NTRK1", "PAH", "PCCB", "PKD1", 
+               "POGZ", "PPM1D", "PRKN", "PRPF8", "SGSH", "STXBP1", "TEK", "TLK2", "WAC")
+
+transcript_list <- getBM(attributes = c("hgnc_symbol", "chromosome_name","ensembl_transcript_id","transcript_is_canonical"),
+                     filters = "hgnc_symbol", 
+                     values = gene_list, 
+                     mart = ensembl)
+#get canonical transcript
+transcript_list <- transcript_list[which(transcript_list$transcript_is_canonical == 1),]
+
+for(i in 1:nrow(transcript_list)){
+#for the chr file corresponding to each gene
+res_gnomad_default = readRDS(paste0('chr',transcript_list$chromosome_name[i],'.rds'))
+
+#get NOVA2 & PTC 
+in_1 = which(mcols(res_gnomad_default)[['res_aenmd']]@listData[['transcript']] == transcript_list$ensembl_transcript_id[i] & mcols(res_gnomad_default)[['res_aenmd']]@listData[['is_ptc']]==T & res_gnomad_default$type == 'snv') 
+data_1 = mcols(res_gnomad_default)[['key']][in_1]
+data_1_df = data.frame(key = data_1)
+data_1_df$loc = as.numeric(sub(".*:(\\d+).*", "\\1", data_1_df$key))
+
+exon_data <- getBM(
+  attributes = c("chromosome_name", "exon_chrom_start", "exon_chrom_end", 
+                 "ensembl_exon_id", "strand", "rank"),
+  filters = "ensembl_transcript_id",
+  values = transcript_list$ensembl_transcript_id[i],
+  mart = ensembl
+)
+gene_name = getBM(
+  attributes = c("hgnc_symbol"),
+  filters = "ensembl_transcript_id",
+  values = transcript_list$ensembl_transcript_id[i],
+  mart = ensembl
+)$hgnc_symbol
+
+# Ensure that only unique exon ranks are selected
+exon_data_filtered <- exon_data[!duplicated(exon_data$rank), ]
+exon_data_filtered$exon_length = exon_data_filtered$exon_chrom_end - exon_data_filtered$exon_chrom_start + 1
+if(exon_data_filtered$strand[1] == -1){
+  exon_data_filtered$rank = max(exon_data_filtered$rank)+1-exon_data_filtered$rank
+}
+abs_start = min(exon_data_filtered$exon_chrom_start)
+abs_end = max(exon_data_filtered$exon_chrom_end)
+abs_wid = abs_end - abs_start
+data_1_df = data_1_df %>%
+  separate(key, into = c("chr_loc", "ref", "alt"), sep = "\\|") %>%
+  separate(chr_loc, into = c("chr", "loc"), sep = ":") %>%
+  mutate(loc = as.numeric(loc)) %>%
+  rowwise() %>%
+  mutate(exon_num = list(exon_data %>%
+                           filter(loc >= exon_chrom_start & loc <= exon_chrom_end) %>%
+                           pull(rank))) %>%
+  unnest(cols = exon_num)
+data_1_df$relative_pos = (data_1_df$loc - abs_start)/abs_wid
+if(exon_data_filtered$strand[1] == -1){
+  data_1_df$relative_pos = 1-data_1_df$relative_pos
+}
+
+
+#write data_1_df to folder gnomAD_density
+write.csv(data_1_df, file = paste0('~/gnomAD_density/ptc_density_',transcript_list$hgnc_symbol[i],'.csv'), row.names = FALSE)
+}

@@ -1,0 +1,104 @@
+for(i in 1:nrow(transcript_list)){
+#for the chr file corresponding to each gene
+res_gnomad_default = readRDS(paste0('chr',transcript_list$chromosome_name[i],'.rds'))
+
+#get NOVA2 & PTC 
+in_1 = which(mcols(res_gnomad_default)[['res_aenmd']]@listData[['transcript']] == transcript_list$ensembl_transcript_id[i] & mcols(res_gnomad_default)[['res_aenmd']]@listData[['is_ptc']]==T)
+data_1 = mcols(res_gnomad_default)[['key']][in_1]
+data_1_df = data.frame(key = data_1)
+data_1_df$loc = as.numeric(sub(".*:(\\d+).*", "\\1", data_1_df$key))
+
+exon_data <- getBM(
+  attributes = c("chromosome_name", "exon_chrom_start", "exon_chrom_end", 
+                 "ensembl_exon_id", "strand", "rank"),
+  filters = "ensembl_transcript_id",
+  values = transcript_list$ensembl_transcript_id[i],
+  mart = ensembl
+)
+gene_name = getBM(
+  attributes = c("hgnc_symbol"),
+  filters = "ensembl_transcript_id",
+  values = transcript_list$ensembl_transcript_id[i],
+  mart = ensembl
+)$hgnc_symbol
+
+# Ensure that only unique exon ranks are selected
+exon_data_filtered <- exon_data[!duplicated(exon_data$rank), ]
+exon_data_filtered$exon_length = exon_data_filtered$exon_chrom_end - exon_data_filtered$exon_chrom_start + 1
+if(exon_data_filtered$strand[1] == -1){
+  exon_data_filtered$rank = max(exon_data_filtered$rank)+1-exon_data_filtered$rank
+}
+abs_start = min(exon_data_filtered$exon_chrom_start)
+abs_end = max(exon_data_filtered$exon_chrom_end)
+abs_wid = abs_end - abs_start
+data_1_df = data_1_df %>%
+  separate(key, into = c("chr_loc", "ref", "alt"), sep = "\\|") %>%
+  separate(chr_loc, into = c("chr", "loc"), sep = ":") %>%
+  mutate(loc = as.numeric(loc)) %>%
+  rowwise() %>%
+  mutate(exon_num = list(exon_data %>%
+                           filter(loc >= exon_chrom_start & loc <= exon_chrom_end) %>%
+                           pull(rank))) %>%
+  unnest(cols = exon_num)
+data_1_df$relative_pos = (data_1_df$loc - abs_start)/abs_wid
+if(exon_data_filtered$strand[1] == -1){
+  data_1_df$relative_pos = 1-data_1_df$relative_pos
+}
+
+
+#write data_1_df to folder gnomAD_density
+write.csv(data_1_df, file = paste0('~/gnomAD_density/ptc_density_',transcript_list$hgnc_symbol[i],'.csv'), row.names = FALSE)
+}
+------------------
+  
+for(i in 1:nrow(transcript_list)){
+# load data_1_df dataframe in R
+data_2_df <- read.csv(paste0('/Users/jxu14/Desktop/gnomAD_density/ptc_density_',transcript_list$hgnc_symbol[i],'.csv'))
+
+#method 1: plot by each variants
+#par(mfrow = c(2, 1), mar = c(2, 4, 1, 1), oma = c(0, 0, 0, 0))
+pdf(paste0("/Users/jxu14/Desktop/gnomAD_density/ptc_density_",transcript_list$hgnc_symbol[i],".pdf"))
+layout(matrix(c(1, 2,3), ncol = 1), heights = c(1.5, 1,1))
+par(mar = c(2, 4, 1, 1)) 
+# Plot the density of the relative positions
+den = density(data_2_df$relative_pos,bw=0.005,from=0,to=1)
+normalized_x <- (den$x - min(den$x)) / (max(den$x) - min(den$x))
+den_df = data.frame(x = den$x, y = den$y)
+
+plot(#normalized_x,den$y/max(den$y), 
+  den$x,den$y/max(den$y), 
+  #combined_data$x, combined_data$y,
+  xlim=c(0,1),
+  main = paste("Normalized Density of",transcript_list$hgnc_symbol[i],"PTC Variants in GnomAD"), 
+  xlab = '', 
+  type = 'l',
+  ylab = 'Normalized Density',
+  col = "orange", 
+  lwd = 2)
+# Create the empty plot without y-axis ticks or values, and label y-axis as "PTC"
+plot(1, type = "n", xlim = c(0,1), ylim = c(0, 1), 
+     xlab = "Location", ylab = "PTC", yaxt = "n",  # Remove y-axis ticks and labels
+     main = "")
+
+# Add vertical lines for each value in the 'loc' column
+sapply(data_2_df$relative_pos, function(x) abline(v = x, col = "orange"))
+
+norm_start = (sort(exon_data_filtered$exon_chrom_start) - abs_start)/abs_wid
+norm_end = (sort(exon_data_filtered$exon_chrom_end) - abs_start)/abs_wid
+if(exon_data_filtered$strand[1] == -1){
+  exon_rela = data.frame(start = 1-norm_start, end = 1-norm_end)
+}else{
+  exon_rela = data.frame(start = norm_start, end = norm_end)
+}
+
+plot(1, type = "n", xlim = c(0, 1), ylim = c(0, 1),
+     xlab = "", ylab = "Exon", xaxt = "n", yaxt = "n",  # Hide axes for a clean look
+     main = "")
+# Add a grey rectangle
+apply(exon_rela, 1, function(row) {
+  rect(row['start'], 0, row['end'], 1, col = "grey", border = "grey")
+})
+
+par(mfrow = c(1, 1))
+dev.off()
+}
