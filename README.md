@@ -86,19 +86,11 @@ install.packages(c(
 
 ## Quick Start
 
-### Step 1 — Annotate ClinVar PTC variants
-
 ```{r step1, eval=FALSE}
-source("Clinvar_step1_NMD.R")
+source("main.R")
 ```
 
-### Step 2 — Apply canonical NMD rules (EJC model)
-
-```{r step2, eval=FALSE}
-source("Clinvar_step2_NMD.R")
-```
-
-These two scripts generate all core variant objects used throughout the NMDesc pipeline.
+This script generate all core variant objects used throughout the NMDesc pipeline.
 
 ---
 
