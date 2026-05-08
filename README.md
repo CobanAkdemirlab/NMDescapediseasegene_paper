@@ -27,66 +27,30 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 #gene level(control, disease genes), variant level(NMDesc-clinvar, gnomad)
 
 ```text
-NMDesc/
+NMDescapediseasegene_paper-main/
 │
-├── README.md
-├── main.R
-│
-├── idr/
-│   ├── predict_disorder.py
-│   ├── predict_disorder_can.py
-│   ├── get_snv_control_idr.R
-│   ├── idr_merge.R
-│   ├── idr_output.R
-│   ├── quality_filter_idr.R
-│   ├── README.md
-│
-├── af2/
-│   ├── AF2_draw.R
-│   ├── af2_feature_extraction.R
-│   ├── nmd_alphafold_aa_composition.ipynb
-│   ├── nmd_alphafold_predicted_properties.ipynb
-│   ├── Density/
-│   ├── attributes/
-│   └── README.md
-│
-├── vep/
-│   ├── vep_processing.R
-│   ├── VEP/
-│   ├── clean_variant_AD.R
-│   ├── clinar_step1_NMD.R
-│   └── README.md
-│
-├── frameshift/
-│   ├── frameshift/
-│   ├── frameshift_code.R
-│   ├── create_fs_control.R
-│   ├── get_fs_control.R
-│   ├── get_fs_gnomAD_control.R
-│   ├── get_fs_gnomAD_control_step1.R
-│   ├── get_fs_gnomAD_control_step2.R
-│   ├── get_fs_control_variant_new.R
-│   ├── get_fs_variant_new.R
-│   └── README.md
-│
-├── gnomad/
-│   ├── gnomAD/
-│   ├── get_gnomAD_control.R
-│   ├── get_gnomAD_control_step2.R
-│   ├── get_snv_gnomAD_control_step2.R
-│   ├── get_snv_control_variant_new.R
-│   ├── get_snv_variant_new.R
-│   ├── get_variants.R
-│   └── README.md  
-│
-├── attributes/
-│   ├── gene_level
-│   ├── variant_level
-│   └── README.md
-|
-│
-└── main.R
-
+├── new_NMDesc/
+│   ├── data/
+│   │
+│   ├── gene_level/
+│   │   ├── features/
+│   │   ├── QC/
+│   │   ├── disease_genes/
+│   │   │   ├── framesift/
+│   │   │   └── snv/
+│   │   └── control_genes/
+│   │
+│   ├── fasta/
+│   │
+│   ├── protein_level/
+│   │   ├── fasta/
+│   │   └── AF2/
+│   │
+│   └── variant_level/
+│       ├── features/
+│       ├── QC/
+│       ├── gnomad/
+│       └── clinvar/
 ```
 
 ---
