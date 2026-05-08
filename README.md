@@ -30,8 +30,7 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 NMDesc/
 │
 ├── README.md
-├── Clinvar_step1_NMD.R
-├── Clinvar_step2_NMD.R
+├── main.R
 │
 ├── idr/
 │   ├── predict_disorder.py
