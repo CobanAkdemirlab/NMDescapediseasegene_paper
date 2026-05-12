@@ -29,31 +29,145 @@ This project includes gene level(control, disease genes), variant level(NMDesc-c
 ```text
 NMDescapediseasegene_paper-main/
 │
-├── new_NMDesc/
+├── main.R
+│
+├── scripts/
 │   │
-│   ├── main.R
+│   ├── preprocessing/
+│   │   ├── preprocess_clinvar.R
+│   │   ├── preprocess_gnomad.R
+│   │   ├── filter_ptc_variants.R
+│   │   ├── build_txdb.R
+│   │   ├── generate_nmdesc_regions.R
+│   │   ├── annotate_transcripts.R
+│   │   ├── extract_canonical_transcripts.R
+│   │   └── prepare_synonymous_controls.R
 │   │
-│   ├── data/
+│   ├── variant_level/
+│   │   ├── calculate_NMD_escape.R
+│   │   ├── calculate_frameshift_PTCs.R
+│   │   ├── calculate_ptc_distance.R
+│   │   ├── calculate_nmdesc_region_length.R
+│   │   ├── compute_gc_content.R
+│   │   ├── compute_repeat_content.R
+│   │   ├── motif_overlap_analysis.R
+│   │   ├── LCS_analysis.R
+│   │   ├── transcript_matched_analysis.R
+│   │   ├── repeated_sampling_1000x.R
+│   │   ├── paired_variant_comparison.R
+│   │   ├── variant_feature_matrix.R
+│   │   ├── synonymous_normalization.R
+│   │   ├── plus1_plus2_comparison.R
+│   │   ├── variant_QC.R
+│   │   └── variant_filtering_pipeline.R
 │   │
 │   ├── gene_level/
-│   │   ├── features/
-│   │   ├── QC/
-│   │   ├── disease_genes/
-│   │   │   ├── framesift/
-│   │   │   └── snv/
-│   │   └── control_genes/
-│   │
-│   ├── fasta/
+│   │   ├── disease_gene_enrichment.R
+│   │   ├── calculate_pLI_LOEUF.R
+│   │   ├── transcript_matching.R
+│   │   ├── tau_expression_analysis.R
+│   │   ├── gene_feature_matrix.R
+│   │   ├── gene_level_statistics.R
+│   │   ├── gene_motif_analysis.R
+│   │   ├── gene_LCS_analysis.R
+│   │   ├── gene_gc_content_analysis.R
+│   │   ├── OMIM_AD_filtering.R
+│   │   ├── ClinVar_gene_summary.R
+│   │   ├── gnomAD_gene_summary.R
+│   │   └── gene_QC.R
 │   │
 │   ├── protein_level/
-│   │   ├── fasta/
-│   │   └── AF2/
+│   │   ├── PFAM_overlap_analysis.R
+│   │   ├── PFAM_distance_analysis.R
+│   │   ├── PPI_overlap_analysis.R
+│   │   ├── STRINGdb_degree_centrality.R
+│   │   ├── AlphaFold_feature_extraction.R
+│   │   ├── SASA_analysis.R
+│   │   ├── IDR_analysis.R
+│   │   ├── phase_separation_analysis.R
+│   │   ├── PICNIC_score_analysis.R
+│   │   ├── hydrophobic_cluster_analysis.R
+│   │   ├── sticker_feature_analysis.R
+│   │   ├── prion_like_domain_analysis.R
+│   │   ├── protein_charge_analysis.R
+│   │   ├── amino_acid_composition_analysis.R
+│   │   ├── interface_residue_overlap.R
+│   │   ├── protein_structure_mapping.R
+│   │   └── protein_QC.R
 │   │
-│   └── variant_level/
-│       ├── features/
-│       ├── QC/
-│       ├── gnomad/
-│       └── clinvar/
+│   ├── statistics/
+│   │   ├── paired_wilcoxon_tests.R
+│   │   ├── mcnemar_tests.R
+│   │   ├── exact_binomial_tests.R
+│   │   ├── Wald_logOR_analysis.R
+│   │   ├── FDR_correction.R
+│   │   ├── mixed_effect_models.R
+│   │   ├── bootstrap_analysis.R
+│   │   ├── permutation_tests.R
+│   │   ├── regression_models.R
+│   │   ├── feature_correlation_analysis.R
+│   │   ├── enrichment_statistics.R
+│   │   ├── sensitivity_analysis.R
+│   │   └── model_comparison_analysis.R
+│   │
+│   ├── plotting/
+│   │   ├── plot_dist_to_cds_end.R
+│   │   ├── plot_nmdesc_region_length.R
+│   │   ├── plot_cds_length.R
+│   │   ├── plot_gc_content.R
+│   │   ├── plot_repeat_content.R
+│   │   ├── plot_pfams.R
+│   │   ├── plot_ppi_overlap.R
+│   │   ├── plot_tau_violin.R
+│   │   ├── plot_LOEUF_pLI.R
+│   │   ├── plot_phase_separation_features.R
+│   │   ├── plot_resampling_results.R
+│   │   ├── plot_matched_analysis.R
+│   │   ├── plot_foldchange_histograms.R
+│   │   ├── plot_centrality_results.R
+│   │   ├── plot_variant_density.R
+│   │   ├── plot_protein_features.R
+│   │   ├── plot_feature_heatmaps.R
+│   │   └── generate_manuscript_figures.R
+│   │
+│   ├── machine_learning/
+│   │   ├── feature_selection.R
+│   │   ├── recursive_feature_elimination.R
+│   │   ├── CatBoost_model.R
+│   │   ├── XGBoost_model.R
+│   │   ├── random_forest_model.R
+│   │   ├── Bayesian_optimization.R
+│   │   ├── model_training_pipeline.R
+│   │   ├── SHAP_analysis.R
+│   │   ├── cross_validation.R
+│   │   └── model_evaluation.R
+│   │
+│   ├── utilities/
+│   │   ├── helper_functions.R
+│   │   ├── fasta_generation.R
+│   │   ├── biomaRt_queries.R
+│   │   ├── VCF_processing.R
+│   │   ├── sequence_translation.R
+│   │   ├── transcript_coordinate_conversion.R
+│   │   ├── logging_functions.R
+│   │   ├── parallel_processing.R
+│   │   └── file_management.R
+│   │
+│   └── QC/
+│       ├── clinvar_QC.R
+│       ├── gnomad_QC.R
+│       ├── transcript_QC.R
+│       ├── FASTA_QC.R
+│       ├── PFAM_QC.R
+│       ├── PPI_QC.R
+│       ├── matching_QC.R
+│       └── statistical_QC.R
+│
+└── archived_scripts/
+    ├── old_versions/
+    ├── debugging/
+    ├── exploratory_analysis/
+    └── deprecated/
 ```
 
 ---
