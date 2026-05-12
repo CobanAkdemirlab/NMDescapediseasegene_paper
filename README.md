@@ -24,7 +24,7 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 
 ## Directory Structure
 
-#gene level(control, disease genes), variant level(NMDesc-clinvar, gnomad)
+This project includes gene level(control, disease genes), variant level(NMDesc-clinvar, gnomad) and protein level analysis.
 
 ```text
 NMDescapediseasegene_paper-main/
