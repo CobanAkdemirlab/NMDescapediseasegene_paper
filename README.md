@@ -130,28 +130,6 @@ NMDescapediseasegene_paper-main/
 │   │   ├── plot_feature_heatmaps.R
 │   │   └── generate_manuscript_figures.R
 │   │
-│   ├── machine_learning/
-│   │   ├── feature_selection.R
-│   │   ├── recursive_feature_elimination.R
-│   │   ├── CatBoost_model.R
-│   │   ├── XGBoost_model.R
-│   │   ├── random_forest_model.R
-│   │   ├── Bayesian_optimization.R
-│   │   ├── model_training_pipeline.R
-│   │   ├── SHAP_analysis.R
-│   │   ├── cross_validation.R
-│   │   └── model_evaluation.R
-│   │
-│   ├── utilities/
-│   │   ├── helper_functions.R
-│   │   ├── fasta_generation.R
-│   │   ├── biomaRt_queries.R
-│   │   ├── VCF_processing.R
-│   │   ├── sequence_translation.R
-│   │   ├── transcript_coordinate_conversion.R
-│   │   ├── logging_functions.R
-│   │   ├── parallel_processing.R
-│   │   └── file_management.R
 │   │
 │   └── QC/
 │       ├── clinvar_QC.R
@@ -163,11 +141,7 @@ NMDescapediseasegene_paper-main/
 │       ├── matching_QC.R
 │       └── statistical_QC.R
 │
-└── archived_scripts/
-    ├── old_versions/
-    ├── debugging/
-    ├── exploratory_analysis/
-    └── deprecated/
+└── 
 ```
 
 ---
