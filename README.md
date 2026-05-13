@@ -299,7 +299,8 @@ From Snv_variants:
 
 | Folder | Description |
 |--------|-------------|
-| `variant_sets/` | Final NMD classification results |
+| `gene_results/` | gene level features |
+| `variant_results/` | variant level features |
 | `fasta/` | FASTA files for protein-based analyses |
 | `vcf/` | VCF files for VEP input |
 | `idr/` | Intrinsic disorder predictions & plots |
