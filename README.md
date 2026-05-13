@@ -184,18 +184,18 @@ This script generate all core variant objects used throughout the NMDesc pipelin
 
 ## Variant Objects & Usage
 
-### Example: `plus1_variants`
+### Example: `snv_variants`
 
 | Output | Generated From   | Used For |
 |--------|------------------|----------|
-| FASTA  | `plus1_variants` | IDR analysis, AlphaFold2 inputs |
-| VCF    | `plus1_variants` | VEP functional annotation |
+| FASTA  | `snv_variants` | IDR analysis, AlphaFold2 inputs |
+| VCF    | `snv_variants` | VEP functional annotation |
 
 #### Example: FASTA generation
 
 ```{r fasta-example, eval=FALSE}
 # library(stringr)
- minus1_dis = create_fasta(minus1_variants, output_dir = "minus1_test_fasta_output")
+ minus1_dis = create_fasta(snv_variants, output_dir = "snv_test_fasta_output")
 ```
 
 #### Example: VCF generation
