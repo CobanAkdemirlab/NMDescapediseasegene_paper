@@ -195,7 +195,7 @@ This script generate all core variant objects used throughout the NMDesc pipelin
 
 ```{r fasta-example, eval=FALSE}
 # library(stringr)
- minus1_dis = create_fasta(snv_variants, output_dir = "snv_test_fasta_output")
+ snv_dis = create_fasta(snv_variants, output_dir = "snv_test_fasta_output")
 ```
 
 #### Example: VCF generation
