@@ -291,6 +291,11 @@ From Snv_variants:
 - Nearest exon junction boundary
 - dbNSFP features: Condel_score, GERP scores etc
 
+### 4. Protein domain analysis
+- PPI
+- PFAM
+- SLM, NLS
+
 
 
 ---
