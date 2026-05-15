@@ -547,16 +547,6 @@ tidy(model2_fs, exponentiate = TRUE, conf.int = TRUE) %>%
    )
   
   
-  ------------
-    #control for covariates
-    
-    #control for cds length
-    
-    #control for nmdesc region 
-    
-    #control for GC content
-    
-    #control for transcript(variant level)
     
     
   
