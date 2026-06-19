@@ -272,24 +272,27 @@ From Snv_variants:
 
 ## Downstream Analyses
 
-### 1. IDR Prediction
-- MetaPredict
+### 1. Protein domain analysis
+- PPI
+- PFAM
+- SLM, NLS
+- 
+### 2. Potential confounders
+- CDS length
+- PTC distance to CDS end
+- GC content
 
-
-### 2. AlphaFold2 Structural Feature Extraction
+### 3. AlphaFold2 Structural Feature Extraction
 - pLDDT
 - secondary structure
 - SASA
 
-### 3. VEP Functional Annotation
+### 4. VEP Functional Annotation
 - Consequence terms
 - Nearest exon junction boundary
 - dbNSFP features: Condel_score, GERP scores etc
 
-### 4. Protein domain analysis
-- PPI
-- PFAM
-- SLM, NLS
+
 
 
 
