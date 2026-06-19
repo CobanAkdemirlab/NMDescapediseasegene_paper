@@ -198,18 +198,13 @@ This script generate all core variant objects used throughout the NMDesc pipelin
  snv_dis = create_fasta(snv_variants, output_dir = "snv_test_fasta_output")
 ```
 
-#### Example: VCF generation
+#### Example: Calculate PPI Degree centrality
 
 ```{r vcf-example, eval=FALSE}
- vcf_df <- snv_control_variants %>%
-  extract(key, into = c("CHROM", "POS", "REF", "ALT"), regex = "([^:]+):([0-9]+)\\|#([^|]+)\\|(.+)", remove = FALSE) %>%
-  mutate(
-    ID = ".",
-    QUAL = ".",
-    FILTER = "PASS",
-    INFO = paste0("TRANSCRIPT=", transcript, ";UNIPROT=", uniprotswissprot)
-  ) %>%
-  select(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO)
+ calculate_ppi_degree_centrality(
+  gene_all,
+  output_csv = "wald_ppi_degree_centrality_results.csv"
+)
 ```
 
 ---
