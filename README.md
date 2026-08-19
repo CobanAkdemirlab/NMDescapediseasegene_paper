@@ -176,6 +176,8 @@ install.packages(c(
 
 ```{r step1, eval=FALSE}
 source("main.R")
+source('gene_main.R')
+source('variant_main.R')
 ```
 
 This script generate all core variant objects used throughout the NMDesc pipeline.
