@@ -286,7 +286,7 @@ From Snv_variants:
 
 ### 3. AlphaFold2 Structural Feature Extraction
 - pLDDT
-- secondary structure
+- secondary structure: coil, beta
 - SASA
 
 ### 4. VEP Functional Annotation
