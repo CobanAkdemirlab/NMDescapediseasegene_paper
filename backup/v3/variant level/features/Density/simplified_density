@@ -1,0 +1,235 @@
+clinvar_density_PLP = function(transcript='ENST00000263257',lastcheck='off',figureoutput = 'off',densityoutput = 'off'){
+  #get NOVA2 & PTC  + P/LP
+  PLP = grep("Pathogenic", res@unlistData@elementMetadata@listData[["clinsig"]],ignore.case = T)
+   NMD = which(res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["is_last"]] | res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["is_407plus"]] | res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["is_cssProximal"]] | res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["is_penultimate"]])
+  #NMDesc are those not NMD
+  NMDesc = setdiff(1:length(res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["is_ptc"]]),NMD)
+  #get ind for the target transcript
+  in_1 = which(res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]] == transcript & res@unlistData@elementMetadata@listData[["res_aenmd"]]@listData[["is_ptc"]]==T)
+  #get only stop gains
+  in_snv = which(res@unlistData@elementMetadata@listData[["type"]] =='snv')
+  in_snv_1 = intersect(in_1,in_snv)
+  res@unlistData@elementMetadata@listData[["key"]][in_snv_1]
+  
+  in_PLP = intersect(in_1, PLP)
+ 
+
+  data_PLP = res@unlistData@elementMetadata@listData[["key"]][in_PLP]
+  gene_name = getBM(
+    attributes = c("hgnc_symbol"),
+    filters = "ensembl_transcript_id",
+    values = transcript,
+    mart = ensembl
+  )$hgnc_symbol
+  
+  #get pli
+  gnomad.v2.1.1.lof_metrics.by_gene <- read.delim("~/Library/Mobile Documents/com~apple~CloudDocs/Desktop/桌面 - q的MacBook Pro/autism/data/gnomad.v2.1.1.lof_metrics.by_gene.txt")
+  pli = gnomad.v2.1.1.lof_metrics.by_gene$pLI[gnomad.v2.1.1.lof_metrics.by_gene$gene == gene_name]
+  
+  data_2_df <- read.csv(paste0('/Users/jxu14/Desktop/gnomAD_density', '/ptc_density/ptc_density_',gene_name,'.csv'))
+  
+  data_PLP_df = data.frame(key = data_PLP)
+  data_PLP_df$loc = as.numeric(sub(".*:(\\d+).*", "\\1", data_PLP_df$key))
+ 
+  #data_1_df$relative_pos = (data_1_df$loc - min(data_1_df$loc)) / (max(data_1_df$loc) - min(data_1_df$loc))
+  
+  #Get exon data for the canonical transcript
+  exon_data <- getBM(
+    attributes = c("chromosome_name", "exon_chrom_start", "exon_chrom_end", 
+                   "ensembl_exon_id", "strand", "rank",'cdna_coding_start','cdna_coding_end','cds_start','cds_end'),
+    filters = "ensembl_transcript_id",
+    values = transcript,
+    mart = ensembl
+  )
+  
+  
+  # Ensure that only unique exon ranks are selected
+  exon_data_filtered <- exon_data[!duplicated(exon_data$rank), ]
+  #remove rows with NA in exon_data_filtered
+  exon_data_filtered = exon_data_filtered[!is.na(exon_data_filtered$cdna_coding_start),]
+  exon_data_filtered$exon_length = exon_data_filtered$exon_chrom_end - exon_data_filtered$exon_chrom_start + 1
+  
+  abs_start = min(exon_data_filtered$exon_chrom_start)
+  abs_end = max(exon_data_filtered$exon_chrom_end)
+  abs_wid = abs_end - abs_start
+  data_PLP_df = data_PLP_df %>%
+    separate(key, into = c("chr_loc", "ref", "alt"), sep = "\\|") %>%
+    separate(chr_loc, into = c("chr", "loc"), sep = ":") %>%
+    mutate(loc = as.numeric(loc)) %>%
+    rowwise() %>%
+    mutate(exon_num = list(exon_data %>%
+                             filter(loc >= exon_chrom_start & loc <= exon_chrom_end) %>%
+                             pull(rank))) %>%
+    unnest(cols = exon_num)
+  data_PLP_df$relative_pos = (data_PLP_df$loc - abs_start)/abs_wid
+  if(exon_data_filtered$strand[1] == -1){
+    data_PLP_df$relative_pos = 1-data_PLP_df$relative_pos
+  }
+ 
+  
+
+  #par(mfrow = c(2, 1), mar = c(2, 4, 1, 1), oma = c(0, 0, 0, 0))
+  if(figureoutput == 'on'){
+  pdf(paste0("/Users/jxu14/Desktop/gnomAD_density/ptc_density_",gene_name,".pdf"), height = 5)
+  }
+  layout(matrix(c(1,2,3,4), ncol = 1), heights = c(1.5,1,1,1))
+  par(mar = c(2, 4, 1, 1)) 
+  # Plot the density of the relative positions
+  #it seems sth wrong with the way of calcuating density, it should be # of variants in each exon/length of this exon, but if so, the density would be constant for each exon, which is not the case for the density plot
+  den_PLP = density(data_PLP_df$relative_pos,bw=0.005,from=0,to=1)
+  normalized_x_PLP <- (den_PLP$x - min(den_PLP$x)) / (max(den_PLP$x) - min(den_PLP$x))
+  den_df_PLP = data.frame(x = den_PLP$x, y = den_PLP$y)
+  
+  plot(#normalized_x,den$y/max(den$y), 
+    den_PLP$x,den_PLP$y/max(den_PLP$y), 
+    #combined_data$x, combined_data$y,
+    xlim=c(0,1),
+    main = bquote("Normalized Density of" ~ italic(.(gene_name)) ~ " PTC Variants in ClinVar and gnomAD, pLI:" ~ .(round(pli, 2))), 
+    xlab = '', 
+    type = 'l',
+    ylab = 'Normalized Density',
+    col = "orange", 
+    lwd = 2)
+  
+  den2 = density(data_2_df$relative_pos,bw=0.005,from=0,to=1)
+  normalized_x2 <- (den2$x - min(den2$x)) / (max(den2$x) - min(den2$x))
+  den2_df = data.frame(x = den2$x, y = den2$y)
+  den2_y_normalized = den2$y/max(den2$y)
+  lines(den2$x, den2_y_normalized, col = "chartreuse3", lwd = 2)
+  
+  legend("topright", legend = c("ClinVar P/LP",  "gnomAD"),
+         col = c("orange",  "chartreuse3"), lwd = 2)
+  
+  #write den_PLP,den_VUS and den2 to csv
+  if(densityoutput == 'on'){
+  write.csv(den_df_PLP, file = paste0("/Users/jxu14/Desktop/clinvar_density_PLP/den_PLP_",gene_name,".csv"), row.names = F)
+  write.csv(den2_df, file = paste0("/Users/jxu14/Desktop/clinvar_density_PLP/den_gnomAD_",gene_name,".csv"),row.names = F)
+  }
+  
+  #plot the density difference between clinvar_PLP and gnomAD
+  plot(den2$x,den_PLP$y/max(den_PLP$y) - den2_y_normalized,
+       xlim=c(0,1),
+       main = bquote("Density Difference of" ~ italic(.(gene_name)) ~ " PTC Variants in ClinVar P/LP and gnomAD"),
+       xlab = '', 
+       type = 'l',
+       ylab = 'Density Difference',
+       col = "black", 
+       lwd = 2)
+  
+  
+  #legend("topright", legend = c("ClinVar P/LP", "ClinVar VUS", "gnomAD"),
+  #       col = c("orange", "cadetblue2", "chartreuse3"), lwd = 2,
+  #       xpd = TRUE, inset = c(-0.3, 0))
+  
+  # Create the empty plot without y-axis ticks or values, and label y-axis as "PTC"
+  plot(1, type = "n", xlim = c(0,1), ylim = c(0, 1), 
+       xlab = "Location", ylab = "PTC", yaxt = "n",  # Remove y-axis ticks and labels
+       main = "")
+  
+  # Add vertical lines for each value in the 'loc' column
+  sapply(data_PLP_df$relative_pos, function(x) abline(v = x, col = "orange"))
+  sapply(data_2_df$relative_pos, function(x) abline(v = x, col = "chartreuse3"))
+  
+  norm_start = (sort(exon_data_filtered$exon_chrom_start) - abs_start)/abs_wid
+  norm_end = (sort(exon_data_filtered$exon_chrom_end) - abs_start)/abs_wid
+  if(exon_data_filtered$strand[1] == -1){
+    exon_rela = data.frame(start = 1-norm_start, end = 1-norm_end)
+  }else{
+    exon_rela = data.frame(start = norm_start, end = norm_end)
+  }
+  
+  plot(1, type = "n", xlim = c(0, 1), ylim = c(0, 1),
+       xlab = "", ylab = "Exon", xaxt = "n", yaxt = "n",  # Hide axes for a clean look
+       main = "")
+  # Add a grey rectangle 
+  apply(exon_rela, 1, function(row) {
+    rect(row['start'], 0, row['end'], 1, col = "grey", border = "grey")
+  })
+  
+  
+  #add area tag for NMD or NMDesc
+  #define NMDesc region, do we need to reverse according to direction of translation? I think so
+  ##last coding exon
+  ###select on coding exon
+  exon_data_coding = exon_data_filtered[which(!is.na(exon_data_filtered$cds_start)),]
+  cds_length = exon_data_coding$cds_end[which(exon_data_coding$rank == max(exon_data_coding$rank))] - exon_data_coding$cds_start[which(exon_data_coding$rank == max(exon_data_coding$rank))]
+  if(exon_data_coding$strand[1] == -1){
+    last_begin = exon_data_coding$exon_chrom_end[which(exon_data_coding$rank == max(exon_data_coding$rank))]
+    norm_last_coding_begin = (last_begin - abs_start)/abs_wid
+    norm_last_coding_begin = 1-norm_last_coding_begin
+    last_end = last_begin - cds_length
+    norm_last_coding_end = (last_end - abs_start)/abs_wid
+    norm_last_coding_end = 1-norm_last_coding_end
+  }else{
+    last_begin = exon_data_coding$exon_chrom_start[which(exon_data_coding$rank == max(exon_data_coding$rank))]
+    norm_last_coding_begin = (last_begin - abs_start)/abs_wid
+    last_end = last_begin + cds_length
+    norm_last_coding_end = (last_end - abs_start)/abs_wid
+  }
+  exon_data_coding$coding_exon_length = exon_data_filtered$cds_end - exon_data_filtered$cds_start + 1
+  ##penultimate exon, if -1 strand, start and end should swap
+  if(exon_data_filtered$strand[1] == -1){
+    pen_end = exon_data_filtered$exon_chrom_start[which(exon_data_filtered$rank == max(exon_data_filtered$rank)-1)]
+    pen_begin = pen_end + 50
+    norm_pen_end = (pen_end - abs_start)/abs_wid
+    norm_pen_begin = (pen_begin - abs_start)/abs_wid
+    norm_pen_end = 1-norm_pen_end
+    norm_pen_begin = 1-norm_pen_begin
+  }else{
+    pen_end = exon_data_filtered$exon_chrom_end[which(exon_data_filtered$rank == max(exon_data_filtered$rank)-1)]
+    pen_begin = pen_end - 50
+    norm_pen_begin = (pen_begin - abs_start)/abs_wid
+    norm_pen_end = (pen_end - abs_start)/abs_wid
+  }
+ 
+  NMDesc_region = data.frame(start = c(norm_last_coding_begin,norm_pen_begin), end = c(norm_last_coding_end,norm_pen_end))
+  #make start < end always
+  for(i in 1:nrow(NMDesc_region)){
+    if(NMDesc_region$start[i] > NMDesc_region$end[i]){
+      temp = NMDesc_region$start[i]
+      NMDesc_region$start[i] = NMDesc_region$end[i]
+      NMDesc_region$end[i] = temp
+    }
+  }
+  
+  # Add a purple rectangle on the grey exon figure to show NMDesc area
+  apply(NMDesc_region, 1, function(row) {
+    rect(row['start'], 0, row['end'], 1, col = "darkorchid2", border = "darkorchid2")
+  })
+  
+  # Add a black rectangle on the grey exon figure to show 3'UTR and 5'UTR
+  norm_cds_begin = exon_data_coding$cdna_coding_start[which(exon_data_coding$rank == min(exon_data_coding$rank))]/abs_wid
+  temp = exon_data_coding$exon_length[which(exon_data_filtered$rank == max(exon_data_filtered$rank))]  - exon_data_coding$coding_exon_length[which(exon_data_filtered$rank == max(exon_data_filtered$rank))]
+  norm_cds_end = 1-(temp/abs_wid)
+  UTR_region = data.frame(start = c(0,norm_cds_end), end = c(norm_cds_begin,1))
+  apply(UTR_region, 1, function(row) {
+    rect(row['start'], 0, row['end'], 1, col = "black", border = "black")
+  })
+  
+  par(mfrow = c(1, 1))
+  
+  if(figureoutput == 'on'){
+    dev.off()
+    }
+  
+  #if loc of PTC in last exon, print the percentile of it
+  if(lastcheck == 'on'){
+  last_loc = NULL
+  for(i in 1:nrow(data_PLP_df)){
+    if(exon_data_filtered$strand[1] == -1){
+      if(data_PLP_df$relative_pos[i] < norm_last_begin & data_PLP_df$relative_pos[i] > norm_last_end){
+        #print("PTC in last exon")
+        rel_loc = (data_PLP_df$relative_pos[i] - norm_last_end)/(norm_last_begin - norm_last_end)
+        last_loc = c(last_loc,rel_loc)
+      }else if(data_PLP_df$relative_pos[i] < norm_last_end & data_PLP_df$relative_pos[i] > norm_last_begin){
+        #print("PTC in penultimate exon")
+        rel_loc = (data_PLP_df$relative_pos[i] - norm_last_begin)/(norm_last_end - norm_last_begin)
+        last_loc
+        }
+  }
+  }
+  #output last_loc
+  write.csv(last_loc, file = paste0("/Users/jxu14/Desktop/clinvar_density_PLP/last_loc_",gene_name,".csv"))
+  }
+}
+
