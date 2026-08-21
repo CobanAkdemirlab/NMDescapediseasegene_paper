@@ -60,16 +60,7 @@ CONFIG <- list(
   omim_ad_symbols  = "omim_AD_symbols.csv",
   snv_gene_list    = "snv_dbh_AD.csv",
   fs_gene_list     = "fs_can_AD_gene20260201_simes_FDR0.05.txt",
-  
-  # 外部特征数据（缺失则跳过对应特征）
-  # 原来这些是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。
-  # 现在走 data_file()：按文件名在 DATA_ROOTS 里查找，找不到返回 NA，
-  # 下游的 file.exists() 检查会自动跳过对应特征。
-  # 注意 ppi_file 原为 "human (1) (2).txt" —— 那是 "human (1).txt" 的重复下载副本。
   ppi_file         = data_file("human (1).txt"),
-  # GTEx 是【可选】输入：annotate_tau() 里有 file.exists() 检查，缺失就把 tau 填 NA
-  # 继续跑。所以这里必须用 data_file(must=FALSE)（返回 NA），不能用 missing_file()
-  # —— 后者会 stop()，构造 CONFIG 时就崩，下游的跳过逻辑永远走不到。
   gtex_path        = data_file("GTEx_Analysis_v10_RNASeQCv2.4.2_gene_median_tpm.gct",
                                must = FALSE),
   lof_metrics_path = data_file("gnomad.v2.1.1.lof_metrics.by_gene.txt"),
@@ -124,9 +115,6 @@ connect_ensembl <- function(version = CONFIG$ensembl_version,
 }
 
 
-## getBM 用 POST 提交；coding 属性返回完整 CDS 序列，几百个基因就是几 MB，
-## 服务器会返回 HTTP 405。分批 + 重试。
-## 跨属性页的错误无法靠重试解决，直接抛出并给出可操作的提示。
 getBM_chunked <- function(attributes, filters, values, mart,
                           chunk = CONFIG$chunk_light, pause = 0.2,
                           max_retry = 3, verbose = TRUE) {
@@ -621,10 +609,6 @@ annotate_constraint <- function(gene_all, lof_path) {
 }
 
 
-# 注意：本函数与 features/functions/annotate_motif_flags.R 里的同名函数**不兼容** ——
-# 那个是 7 参数版（多 mart / output_motif_csv / output_lcs_csv，并会写出两个 csv），
-# 本函数是 4 参数版，只返回 gene_all，且带"补充文件缺失就填 NA 跳过"的保护。
-# 为避免加载函数库时被覆盖，这里改名为 annotate_motif_flags_dbh。
 annotate_motif_flags_dbh <- function(gene_all, path_touni, path_motif, path_lcs) {
   flags <- c("gene_protein_flag","gene_domains_flag","gene_slim_flag",
              "gene_morf_flag","gene_ptm_flag","gene_nls_flag","gene_LCS_flag")
