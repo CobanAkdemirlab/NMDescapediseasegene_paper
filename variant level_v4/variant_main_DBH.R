@@ -5,7 +5,6 @@
 #   4.1  Unmatched analysis
 #   4.2  Mixed-effect model
 #   4.3  Hierarchical Bayesian model
-#   4.4  (removed: bootstrap resampling)
 #
 # MULTIPLE TESTING CORRECTION SUMMARY
 #   4.0.3  .pval_df()            -> BH across the Fisher bar-chart comparisons
@@ -1346,16 +1345,4 @@ plot_mixed_effect_flags(mixed_results)
 # --- 4.3: hierarchical Bayesian model -------------------------------------------
 bayes_by_gs <- run_bayesian_by_geneset(variants_all5, GENE_MATCHED_FLAGS)
 plot_bayesian_by_geneset(bayes_by_gs)
-
-# --- 4.4: 原 gene-matched 分析已删除（依赖 bootstrap 重抽样）---------------------
-# 同段里与 bootstrap 无关的 Unadjusted 逻辑回归保留，调用如下。
-unadj_results <- run_unadjusted_flag_analysis(variants_all5)
-write.csv(unadj_results, file.path(OUT_DIR, "unadjusted_fdr.csv"), row.names = FALSE)
-plot_or_forest(
-  unadj_results %>%
-    mutate(flag = ifelse(flag %in% names(FLAG_LABELS), FLAG_LABELS[flag], flag)),
-  facet_var = NULL, shape_var = "gene_set",
-  title    = "Disease vs. control variant features (unadjusted)",
-  subtitle = "Logistic regression per flag; BH-adjusted within gene set"
-)
 
