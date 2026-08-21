@@ -35,17 +35,12 @@ library(ggpubr)
 # 4.0.1  Paths and constants
 # ------------------------------------------------------------------------------
 
-# --- 路径解析层 ---------------------------------------------------------------
-# 原来这里是旧机器的绝对路径 /Users/jxu14/... —— 换机器必断。
-# 现在走 paths.R：数据按文件名定位（data_file），输出走 out_file。
 .p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
         "../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
 source(.p[1]); rm(.p)
 
-# 兼容原有变量名：下游若用 file.path(CLINVAR_DIR, "x.csv")，仍然可用。
-# 但新写的代码建议直接用 data_file("x.csv")，不依赖目录结构。
 CLINVAR_DIR <- data_root("clinvar")
 OTHERS_DIR  <- file.path(CLINVAR_DIR, "others")
 DATA_DIR    <- dirname(CLINVAR_DIR)
@@ -735,12 +730,6 @@ variants_motif <- function(variants_all2,
   variants_all2$uniprot <- variants_all2$uniprotswissprot
   
   # step 6: merge and compute motif flags
-  # 【2026-08 修复】原版 merge 后用 match(uniprot) 写回 —— motif_max3 是每
-  # 变异一行，match 键却是每蛋白的 uniprot，只返回第一个命中行，同一蛋白
-  # 所有变异拿到第一个变异的 flag，蛋白内变异被抹平，4.2 节的随机截距
-  # GLMM 因此测不到 motif flag 的效应。
-  # 修法：match 改用【变异级】键（函数内行号 .vm_row —— 每变异唯一，
-  # 不依赖 key/Variant_Key 列名）。与 features/functions/variants_motif.R 一致。
   variants_all2$.vm_row <- seq_len(nrow(variants_all2))
   motif_max3 <- merge(motif_max, variants_all2, by = "uniprot")
   
