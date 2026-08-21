@@ -1,15 +1,7 @@
 # =============================================================================
-# run_analysis.R —— 在 RStudio 里跑 gene level + variant level 出图
-#
-# 用法（RStudio Console 里粘这一行）：
-#     source("~/Desktop/NMDesc/repo_cleaned/run_analysis.R")
-#
-# 不需要先 setwd()，不需要改任何路径。脚本自己定位仓库和数据。
-# 报错的话把 Console 里红字整段贴给我。
-# =============================================================================
+
 
 # ---- 1) 定位仓库根目录 ------------------------------------------------------
-# 优先用 source() 时的脚本位置；失败则退到默认路径
 .find_repo <- function() {
   p <- tryCatch(dirname(normalizePath(sys.frame(1)$ofile)), error = function(e) NA)
   if (!is.na(p) && dir.exists(file.path(p, "gene level_v3"))) return(p)
