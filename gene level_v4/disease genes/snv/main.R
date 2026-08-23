@@ -1,6 +1,5 @@
-# --- 路径解析层（自动插入）---------------------------------
+
 # 数据文件用 data_file("文件名") 定位；输出用 out_file("文件名")
-# 换数据位置只改 gene level_v3/lib/paths.R 的 DATA_ROOTS
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../gene level_v3/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
@@ -8,25 +7,18 @@ if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
 source(.p[1])
 # ------------------------------------------------------------
 
-# --- 函数库加载 -----------------------------------------------
-# 本脚本 L334-382 调用 8 个特征分析函数（plot_gc_content、run_tau_analysis 等），
-# 它们的权威实现在 features/functions/ 下，不在本文件里。
-# 以前靠"先跑 gene_main.R"间接载入；现在自己加载，跑 main.R 不再依赖别的脚本。
+# --- load functions-----------------------------------------------
 .fn_dir <- c("gene level_v3/features/functions", "../../features/functions",
              "../features/functions", "features/functions")
 .fn_dir <- .fn_dir[dir.exists(.fn_dir)]
-if (!length(.fn_dir))
-  stop("找不到 features/functions/ —— 请从仓库根目录运行 R")
 for (.f in list.files(.fn_dir[1], pattern = "\\.R$", full.names = TRUE)) source(.f)
 rm(.f, .fn_dir)
 
-# 本脚本还调用 get_pvalue()、extract_enriched()、get_syn_count()，
-# 它们各自在独立文件里。一并加载，跑 main.R 不再依赖手动先跑别的脚本。
 for (.dep in c("get_pvalue.R", "extract_enriched.R", "process_syn.R")) {
   .cand <- c(file.path("gene level_v3/disease genes/snv", .dep), .dep,
              file.path("../snv", .dep))
   .cand <- .cand[file.exists(.cand)]
-  if (length(.cand)) source(.cand[1]) else message("  提示：找不到 ", .dep)
+  if (length(.cand)) source(.cand[1]) else message("  can't find ", .dep)
 }
 rm(.dep, .cand)
 # --------------------------------------------------------------
@@ -52,7 +44,6 @@ library(data.table)
 library(ggplot2)
 
 #1. NMDesc annotation
-# [已移除 setwd] 改用 data_file()/out_file()，不依赖工作目录
 # setwd("/Users/jxu14/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/clinvar")
 mart = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 ensembl = mart
@@ -295,11 +286,8 @@ for(i in 1:790){
 write.csv(p_set,'p_less.csv',row.names = F)
 
 #get enriched genes
-# [已停用] wald 变体已移入 gene level_v3/archive/ —— DBH 为主版本
 # get_NMD_enrichment_wald('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds',FDR = 0.05,filter_type = 'can')
-# 需要 wald 结果时：source("gene level_v3/archive/get_NMD_enrichment_wald.R") 后再调用
 
-# 加载主版本 enrichment 函数
 .e <- c("gene level_v3/disease genes/snv/get_NMD_enrichment_DBH.R",
         "get_NMD_enrichment_DBH.R", "../snv/get_NMD_enrichment_DBH.R")
 .e <- .e[file.exists(.e)]
@@ -384,12 +372,9 @@ annotate_motif_flags(
 run_pfam_overlap_analysis(
   gene_all      = gene_all,
   ensembl       = ensembl,
-  output_prefix = "pfam_overlap"   # 输出文件前缀，可自定义
+  output_prefix = "pfam_overlap"   
 )
 
-# 原来这里指向 "human (1) (2).txt" —— 那是 "human (1).txt" 的重复下载副本（浏览器加的 " (2)"）。
-# 已实测：uniprot1 / uniprot2 / interface_residues1 / interface_residues2 四列齐全，
-# 正是 run_ppi_overlap_analysis 用到的全部列。
 run_ppi_overlap_analysis(
   gene_all      = gene_all,
   ppi_file_path = data_file("human (1).txt"),
@@ -399,7 +384,7 @@ run_ppi_overlap_analysis(
 run_tau_analysis(
   gene_all      = gene_all,
   gtex_path     = data_file("GTEx_Analysis_v10_RNASeQCv2.4.2_gene_median_tpm.gct",
-                                must = FALSE),   # 可选：缺则 tau=NA
+                                must = FALSE),   
   output_prefix = "tau"
 )
 
@@ -625,7 +610,6 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
 -----------------
 #4. variant_level comparison
 ##the variant level comparision has 4 parts: unmatched, mixed-effect model, hierarchical baysian model,bootstrap and matched analysis
-  # [已移除 setwd] 改用 data_file()/out_file()，不依赖工作目录
   # setwd('/Users/jxu14/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/clinvar/')
   snv_variants = read.csv('snv_variants20260201_plp_wald_clinvar.csv')
   fs_variants = read.csv('fs_variants20260201_plp_wald_clinvar.csv')
@@ -718,18 +702,16 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
   
   str(variants_all3_PDB)
   
-  # ══════════════════════════════════════════════════════════════════════════════
-  # 辅助函数
-  # ══════════════════════════════════════════════════════════════════════════════
+#define functions
   
-  # 清理.x/.y重复列
+  # clean duplicated rows
   clean_xy_cols <- function(data) {
     data %>%
       select(-ends_with(".x")) %>%
       rename_with(~ gsub("\\.y$", "", .), ends_with(".y"))
   }
   
-  # 编码is_disease和gene_set
+  # code is_disease and gene_set
   encode_groups <- function(data) {
     data %>%
       mutate(
@@ -741,7 +723,7 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
       )
   }
   
-  # Unadjusted logistic回归
+  # Unadjusted logistic regression
   run_unadjusted_ppi <- function(data, gene_set_label) {
     df <- data %>%
       filter(!is.na(variant_ppi_overlap))
@@ -767,17 +749,11 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
     )
   }
   
-  # [已删除] run_matched_ppi() / run_matched() —— gene-matched 配对分析，
-  # 置信区间由 1000 次 bootstrap 重抽样得到，按要求整条移除。
-  # 保留同段的 run_unadjusted*()（逻辑回归，与 bootstrap 无关）。
-  
-  # 对一个数据集运行全部模型
+  #run models
   run_all <- function(data, source_label) {
     data <- clean_xy_cols(data) %>% encode_groups()
     
     message(sprintf("\n══ %s ══", source_label))
-    message("variant_ppi_overlap列存在: ", "variant_ppi_overlap" %in% names(data))
-    message(sprintf("总行数: %d", nrow(data)))
     print(table(data$group))
     
     bind_rows(
@@ -788,13 +764,13 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
   }
   
   # ══════════════════════════════════════════════════════════════════════════════
-  # RUN 三个数据集
+  # run on PDB, PIONEER, and HM datasets
   # ══════════════════════════════════════════════════════════════════════════════
   results_pdb     <- run_all(variants_all3_PDB,     "PDB")
   results_pioneer <- run_all(variants_all3_PIONEER,  "PIONEER")
   results_hm      <- run_all(variants_all3_HM,       "HM")
   
-  # 合并
+  # combine results
   results_all <- bind_rows(results_pdb, results_pioneer, results_hm) %>%
     mutate(
       model  = factor(model,  levels = c("Unadjusted", "Gene-matched")),
@@ -826,7 +802,7 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
       title    = "PPI overlap across PPI sources: Unadjusted vs Gene-matched",
       subtitle = "Unadjusted: logistic regression | Gene-matched: paired Wilcoxon\nPDB = 实验结构 | HM = 同源建模 | PIONEER = 计算预测",
       x        = "OR / Mean proportion ratio (log scale)",
-      y        = "PPI来源", color = "p-value", shape = "Gene set"
+      y        = "PPI source", color = "p-value", shape = "Gene set"
     ) +
     theme_minimal(base_size = 12) +
     theme(plot.title = element_text(face = "bold"))
@@ -1039,10 +1015,6 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
      bind_rows(flag_res, cont_res) %>%
        mutate(gene_set = gene_set_label, model = "Unadjusted")
    }
-   
-  # [已删除] run_matched_ppi() / run_matched() —— gene-matched 配对分析，
-  # 置信区间由 1000 次 bootstrap 重抽样得到，按要求整条移除。
-  # 保留同段的 run_unadjusted*()（逻辑回归，与 bootstrap 无关）。
    
    # ══════════════════════════════════════════════════════════════════════════════
    # RUN MODELS

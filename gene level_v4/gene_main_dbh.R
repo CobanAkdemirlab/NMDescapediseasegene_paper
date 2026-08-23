@@ -1,28 +1,24 @@
 # =============================================================================
 # nmdesc_paired_analysis.R  (v2)
 # -----------------------------------------------------------------------------
-# NMDesc 疾病基因 vs 对照基因的成对特征比较，四组结构：
-#   snv / snv_control / fs / fs_control
+# Main analysis (matched)
+#   1. For each disease gene, match one control gene by CDS length (1:1, without replacement)
+#   2. Use the matching results to build gene_all, with each row carrying a pair_id and group
+#   3. Retrieve the information needed for the features via getBM
+#   4. Compare features within pairs (McNemar / exact binomial test for binary features,
+#      Wilcoxon signed-rank test for continuous features)
+#   5. Apply BH correction and report significant features
 #
-# 主分析（matched）
-#   1. 按 CDS 长度为每个疾病基因匹配一个对照基因（1:1，无放回）
-#   2. 用匹配结果构建 gene_all，每行带 pair_id 与 group
-#   3. 通过 getBM 获取特征所需信息
-#   4. 在配对内部比较特征（二分类用 McNemar/精确二项，连续用 Wilcoxon 符号秩）
-#   5. BH 校正，报告显著特征
+# Sensitivity analysis (random)
+#   Also 1:1, but controls are drawn at random rather than matched by CDS length;
+#   since the pairing is arbitrary, unpaired tests are used instead
+#   (Fisher / Wilcoxon rank-sum), likewise with BH correction.
 #
-# 敏感性分析（random）
-#   同样 1:1，但对照随机抽取、不按 CDS 匹配；配对是任意的，故改用非配对检验
-#   （Fisher / Wilcoxon 秩和），同样做 BH 校正。
+# The contrast between the two is itself a result: the main analysis controls for
+# CDS length as a confounder, while the sensitivity analysis does not.
+# Features that are significant only in the sensitivity analysis are likely
+# proxies for CDS length rather than true signals.
 #
-# 两者的对比本身就是结果：主分析控制了 CDS 长度这个混杂，敏感性分析没有。
-# 只在敏感性分析里显著的特征，很可能是 CDS 长度的代理而非真实信号。
-#
-# v2 修正：
-#   - fetch_canonical_cds 拆成两次 getBM。cds_length 属于 sequences 属性页，
-#     hgnc_symbol / transcript_is_canonical 属于 feature_page，同一次请求不能跨页
-#   - annotate_pfam 同样做了跨页防护
-#   - 四组的描述性统计、分组输出、组间重叠诊断
 # =============================================================================
 
 suppressPackageStartupMessages({
@@ -36,8 +32,6 @@ select <- dplyr::select; filter <- dplyr::filter; rename <- dplyr::rename
 mutate <- dplyr::mutate; summarise <- dplyr::summarise
 setdiff <- dplyr::setdiff; union <- dplyr::union; intersect <- dplyr::intersect
 
-# --- 路径解析层（必须在 CONFIG 之前，CONFIG 里用到 data_file()）-----------
-# 数据文件用 data_file("文件名") 定位；换数据位置只改 gene level_v3/lib/paths.R
 .p <- c("gene level_v3/lib/paths.R", "lib/paths.R", "../lib/paths.R",
         "../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
@@ -47,11 +41,11 @@ source(.p[1]); rm(.p)
 
 
 # =============================================================================
-# 0. 配置
+# 0. config
 # =============================================================================
 
 CONFIG <- list(
-  ensembl_version  = NULL,          # NULL = 当前版本
+  ensembl_version  = NULL,          # NULL 
   ensembl_mirror   = NULL,          # "useast" / "uswest" / "asia"
   chunk_sequence   = 25,            # 含 coding 属性（完整 CDS 序列）
   chunk_light      = 300,           # 其余属性
@@ -70,7 +64,7 @@ CONFIG <- list(
   
   pool_cache       = "omim_AD_cds_length.csv",
   
-  caliper_frac     = 0.5,           # |log2(对照/病例)| 上限，0.5 ≈ 1.41 倍
+  caliper_frac     = 0.5,           
   alpha            = 0.05,
   seed             = 1
 )
@@ -96,7 +90,7 @@ BINARY_FEATURES <- c(
 
 
 # =============================================================================
-# 1. biomaRt 辅助
+# 1. biomaRt 
 # =============================================================================
 
 connect_ensembl <- function(version = CONFIG$ensembl_version,
@@ -109,8 +103,8 @@ connect_ensembl <- function(version = CONFIG$ensembl_version,
   probe <- tryCatch(
     getBM(attributes = c("hgnc_symbol", "ensembl_transcript_id"),
           filters = "hgnc_symbol", values = "MYH9", mart = mart),
-    error = function(e) stop("Ensembl 连接失败: ", e$message))
-  message(sprintf("Ensembl 已连接（MYH9 探针返回 %d 个转录本）", nrow(probe)))
+    error = function(e) stop("Ensembl connection error: ", e$message))
+  message(sprintf("MYH9 return %d transcripts）", nrow(probe)))
   mart
 }
 
@@ -133,16 +127,14 @@ getBM_chunked <- function(attributes, filters, values, mart,
               values = values[idx[[k]]], mart = mart),
         error = function(e) {
           if (grepl("multiple attribute pages", e$message))
-            stop("属性跨页: ", paste(attributes, collapse = ", "),
-                 "\n需拆成多次 getBM 后按 ID 合并。",
-                 "\n用 listAttributes(mart)[, c('name','page')] 查看归属页。",
+            stop("getBM error",
                  call. = FALSE)
           message("      retry ", attempt, ": ", e$message); NULL
         })
       if (!is.null(res)) break
       Sys.sleep(2 * attempt)
     }
-    if (is.null(res)) warning("chunk ", k, " 失败，", length(idx[[k]]), " 个值被丢弃")
+    if (is.null(res)) warning("chunk ", k, " failed，", length(idx[[k]]), " dropped")
     Sys.sleep(pause)
     res
   })
@@ -151,11 +143,11 @@ getBM_chunked <- function(attributes, filters, values, mart,
 
 
 # =============================================================================
-# 2. 基因列表读取
+# 2. read gene list
 # =============================================================================
 
 read_gene_list <- function(path, label = NULL) {
-  if (!file.exists(path)) stop("文件不存在: ", path)
+  if (!file.exists(path)) stop("file does not exist: ", path)
   x <- if (grepl("\\.csv$", path, ignore.case = TRUE)) {
     df <- read.csv(path, stringsAsFactors = FALSE)
     if (ncol(df) == 0) character(0)
@@ -172,17 +164,14 @@ read_gene_list <- function(path, label = NULL) {
 
 
 # =============================================================================
-# 3. 对照构建
+# 3. create control
 # =============================================================================
 
-## cds_length 在 sequences 属性页，hgnc_symbol / transcript_is_canonical 在
-## feature_page，同一次 getBM 不能跨页 —— 拆两步，第二步只查 canonical 转录本
 fetch_canonical_cds <- function(symbols, mart, chunk = CONFIG$chunk_light) {
   symbols <- unique(trimws(as.character(symbols)))
   symbols <- symbols[!is.na(symbols) & nchar(symbols) > 0]
   if (length(symbols) == 0) return(data.frame())
   
-  message("  [1/2] canonical 转录本 ...")
   tx <- getBM_chunked(
     attributes = c("hgnc_symbol", "ensembl_transcript_id", "transcript_is_canonical"),
     filters = "hgnc_symbol", values = symbols, mart = mart, chunk = chunk) %>%
@@ -192,7 +181,6 @@ fetch_canonical_cds <- function(symbols, mart, chunk = CONFIG$chunk_light) {
   
   if (nrow(tx) == 0) return(data.frame())
   
-  message("  [2/2] CDS 长度 ...")
   len <- getBM_chunked(
     attributes = c("ensembl_transcript_id", "cds_length"),
     filters = "ensembl_transcript_id", values = tx$ensembl_transcript_id,
@@ -218,19 +206,11 @@ get_pool_cds <- function(omim_AD_symbols, mart, cache = CONFIG$pool_cache) {
 }
 
 
-## 主分析对照：按 CDS 长度最近邻，1:1 无放回
-##
-## 匹配尺度用 log2 比值而非绝对 bp 差 —— CDS 长度跨数量级，300 vs 400 bp 是
-## 巨大差异，10000 vs 10100 bp 几乎相同。
-## 处理顺序"极端优先"：贪心匹配对顺序敏感，若先匹配中等长度基因，最长和最短
-## 的只能捡剩下的，所以按距池子中位数的距离降序处理。
+#match by log(CDS length)
 build_controls_matched <- function(case_df, pool_df,
                                    caliper_frac = CONFIG$caliper_frac,
                                    seed = CONFIG$seed, label = "matched") {
   set.seed(seed)
-  if (nrow(case_df) == 0 || nrow(pool_df) == 0) {
-    warning(label, ": 病例或候选池为空"); return(data.frame())
-  }
   
   pool_median <- stats::median(pool_df$cds_length)
   case_df <- case_df[order(-abs(log2(case_df$cds_length / pool_median))), , drop = FALSE]
@@ -260,16 +240,12 @@ build_controls_matched <- function(case_df, pool_df,
 }
 
 
-## 敏感性分析对照：随机抽取，1:1 无放回，不看 CDS 长度
+## sensitivity test: random match
 build_controls_random <- function(case_df, pool_df,
                                   seed = CONFIG$seed, label = "random") {
   set.seed(seed + 1000)
-  if (nrow(case_df) == 0 || nrow(pool_df) == 0) {
-    warning(label, ": 病例或候选池为空"); return(data.frame())
-  }
+  
   n <- min(nrow(case_df), nrow(pool_df))
-  if (n < nrow(case_df))
-    warning(label, ": 候选池不足，仅抽取 ", n, " / ", nrow(case_df))
   
   pick <- sample(seq_len(nrow(pool_df)), n, replace = FALSE)
   case_use <- case_df[seq_len(n), , drop = FALSE]
@@ -336,10 +312,10 @@ build_both_controls <- function(disease_genes, pool_all, mart,
 
 
 # =============================================================================
-# 4. gene_all 组装（四组结构 + pair_id）
+# 4. create gene_all
 # =============================================================================
 
-## 把配对表摊平成长表：每个 pair 两行（case + control），group 为四组之一
+## melt the dataframe
 pairs_to_long <- function(pairs, stratum) {
   if (nrow(pairs) == 0) return(data.frame())
   pairs$pair_id <- sprintf("%s_%04d", stratum, seq_len(nrow(pairs)))
@@ -359,7 +335,7 @@ pairs_to_long <- function(pairs, stratum) {
 }
 
 
-## 补齐 CDS 序列、NMDesc 区域、uniprot
+## add CDS sequence、NMDesc region、uniprot id
 assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
   
   message("\n=== 组装 gene_all", if (nchar(label)) paste0(" [", label, "]") else "", " ===")
@@ -367,7 +343,6 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
   
   tx <- unique(long_df$ensembl_transcript_id)
   
-  message("  拉取 CDS 序列 ...")
   cds_df <- getBM_chunked(
     attributes = c("ensembl_transcript_id", "coding"),
     filters = "ensembl_transcript_id", values = tx, mart = mart,
@@ -375,7 +350,6 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
     filter(!is.na(coding), coding != "", coding != "Sequence unavailable") %>%
     distinct(ensembl_transcript_id, .keep_all = TRUE)
   
-  message("  拉取外显子结构 ...")
   exon_df <- getBM_chunked(
     attributes = c("ensembl_transcript_id", "rank", "cds_start", "cds_end"),
     filters = "ensembl_transcript_id", values = tx, mart = mart,
@@ -390,7 +364,6 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
               .groups = "drop") %>%
     mutate(nmdesc_start_exon = pmax(1, nmdesc_end - 50 - last_exon_length))
   
-  message("  拉取 UniProt ID ...")
   uni_df <- getBM_chunked(
     attributes = c("ensembl_transcript_id", "uniprotswissprot"),
     filters = "ensembl_transcript_id", values = tx, mart = mart,
@@ -405,7 +378,7 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
     rename(uniprot = uniprotswissprot) %>%
     left_join(PTC_combined, by = c("ensembl_transcript_id" = "transcript"))
   
-  # NMDesc 区域：FS 层用 PTC_info，SNV 层用外显子结构
+  # NMDesc region：FS  - PTC_info，SNV - biomart
   out <- out %>%
     mutate(
       NMD_region_start = ifelse(stratum == "FS" & !is.na(median_can_region_start),
@@ -419,7 +392,6 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
     select(-any_of(c("median_can_region_start", "median_can_region_end",
                      "nmdesc_start_exon", "last_exon_length", "nmdesc_end")))
   
-  # 只保留两侧信息都齐全的配对 —— 配对检验要求成对存在
   ok_pairs <- out %>%
     filter(!is.na(coding), !is.na(NMD_region_start), !is.na(NMDesc_region_length)) %>%
     count(pair_id) %>% filter(n == 2) %>% pull(pair_id)
@@ -428,7 +400,7 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
   out <- out %>% filter(pair_id %in% ok_pairs) %>%
     mutate(group = factor(as.character(group), levels = GROUP_LEVELS))
   
-  message(sprintf("  完整配对: %d / %d", length(ok_pairs), n_before))
+  message(sprintf("  complete pairs: %d / %d", length(ok_pairs), n_before))
   print(table(out$group))
   
   out
@@ -436,7 +408,7 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
 
 
 # =============================================================================
-# 5. 特征标注
+# 5. add features
 # =============================================================================
 
 annotate_sequence_features <- function(gene_all) {
@@ -467,10 +439,8 @@ annotate_sequence_features <- function(gene_all) {
 
 
 annotate_pfam <- function(gene_all, mart) {
-  message("  PFAM 结构域 ...")
   tx <- unique(gene_all$ensembl_transcript_id)
   
-  # 若 pfam / pfam_start / pfam_end 分属不同页，退回到两次请求后合并
   pfam <- tryCatch(
     getBM_chunked(attributes = c("ensembl_transcript_id", "pfam", "pfam_start", "pfam_end"),
                   filters = "ensembl_transcript_id", values = tx, mart = mart,
@@ -1020,7 +990,7 @@ write_csv(ctrl_snv$random,  "pairs_snv_random.csv")
 write_csv(ctrl_fs$random,   "pairs_fs_random.csv")
 
 
-# ---- 9a. 主分析：CDS 匹配对照 + 配对检验 -----------------------------------
+# ---- 9a. match by CDS length + paired analysis -----------------------------------
 
 long_matched <- bind_rows(pairs_to_long(ctrl_snv$matched, "SNV"),
                           pairs_to_long(ctrl_fs$matched,  "FS"))
@@ -1059,11 +1029,7 @@ plot_four_groups(gene_all_random, c(CONTINUOUS_FEATURES, BINARY_FEATURES),
 
 
 # =============================================================================
-# 10. 两套分析的对比
-#
-# 只在随机对照里显著的特征，很可能是 CDS 长度的代理而非真实信号；
-# 两者都显著的最可信；只在匹配分析里显著的，说明 CDS 长度原本在掩盖信号
-# （负混杂），也值得关注。
+# 10. compare CDS match and random match
 # =============================================================================
 
 cmp <- full_join(
@@ -1080,15 +1046,13 @@ cmp <- full_join(
     TRUE ~ "均不显著")) %>%
   arrange(stratum, padj_matched)
 
-cat("\n\n==================== 主分析 vs 敏感性分析 ====================\n")
 print(as.data.frame(cmp), row.names = FALSE, digits = 4)
-cat("==============================================================\n")
 print(table(cmp$verdict))
 write_csv(cmp, "results_comparison.csv")
 
 
 # =============================================================================
-# 11. 配对分布图（仅主分析的显著特征）
+# 11. draw significant features
 # =============================================================================
 
 sig_feats <- res_matched %>% filter(!is.na(p_adj_BH), p_adj_BH < CONFIG$alpha)
@@ -1122,8 +1086,7 @@ if (nrow(sig_feats) > 0) {
     ggsave("paired_significant_features.pdf", fig,
            width = 4.2 * min(3, length(plots)),
            height = 3.6 * ceiling(length(plots) / 3), limitsize = FALSE)
-    message("已保存: paired_significant_features.pdf")
   }
 } else {
-  message("主分析无显著特征，跳过绘图")
+  message("no significant features in matched analysis, skip paired distribution plots.")
 }
