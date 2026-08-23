@@ -276,7 +276,7 @@ From Snv_variants:
 - PPI
 - PFAM
 - SLM, NLS
-- 
+
 ### 2. Potential confounders
 - CDS length
 - PTC distance to CDS end
