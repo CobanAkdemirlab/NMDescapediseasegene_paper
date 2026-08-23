@@ -14,11 +14,6 @@
 #   since the pairing is arbitrary, unpaired tests are used instead
 #   (Fisher / Wilcoxon rank-sum), likewise with BH correction.
 #
-# The contrast between the two is itself a result: the main analysis controls for
-# CDS length as a confounder, while the sensitivity analysis does not.
-# Features that are significant only in the sensitivity analysis are likely
-# proxies for CDS length rather than true signals.
-#
 # =============================================================================
 
 suppressPackageStartupMessages({
@@ -35,7 +30,6 @@ setdiff <- dplyr::setdiff; union <- dplyr::union; intersect <- dplyr::intersect
 .p <- c("gene level_v3/lib/paths.R", "lib/paths.R", "../lib/paths.R",
         "../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -263,42 +257,32 @@ build_controls_random <- function(case_df, pool_df,
 
 
 report_match_quality <- function(pairs, n_case, label) {
-  message("\n--- ", label, " 匹配质量 ---")
-  message(sprintf("  配对数: %d / %d", nrow(pairs), n_case))
+  message(sprintf("  number of pairs: %d / %d", nrow(pairs), n_case))
   if (nrow(pairs) == 0) return(invisible(NULL))
-  message(sprintf("  |log2(对照/病例)| 中位数 %.3f, 最大 %.3f (最差 %.2f 倍)",
-                  stats::median(abs(pairs$log2_ratio)), max(abs(pairs$log2_ratio)),
-                  2^max(abs(pairs$log2_ratio))))
+  message(sprintf("  |log2(control/disease)| median %.3f, max %.3f ",
+                  stats::median(abs(pairs$log2_ratio)), max(abs(pairs$log2_ratio))
+                  ))
   ks <- suppressWarnings(stats::ks.test(pairs$disease_cds, pairs$control_cds))
-  message(sprintf("  CDS 长度 KS 检验: p = %.4f  （匹配组期望不显著）", ks$p.value))
+  message(sprintf("  CDS length KS test: p = %.4f  （no significant）", ks$p.value))
   invisible(ks)
 }
 
 
-## 一个 stratum（SNV 或 FS）的两套对照
+## build snv/fs contorl
 build_both_controls <- function(disease_genes, pool_all, mart,
                                 exclude_genes = character(0),
                                 require_transcripts = NULL,
                                 label = "SNV") {
   
-  message("\n=== 构建对照: ", label, " ===")
-  
   case_df <- fetch_canonical_cds(disease_genes, mart)
-  message(sprintf("  病例中有 canonical CDS 的: %d / %d", nrow(case_df), length(disease_genes)))
   
   pool_df <- pool_all %>%
     filter(!hgnc_symbol %in% union(disease_genes, exclude_genes))
-  message(sprintf("  候选池（OMIM AD 去除两个疾病列表后）: %d", nrow(pool_df)))
-  
-  # FS 层：NMDesc 区域通过 PTC_info 推导，不在 PTC_info 里的对照转录本会被
-  # inner_join 静默丢弃，所以候选池必须先做限制
+   
+  # FS ：get NMDesc region by PTC_info 
   if (!is.null(require_transcripts)) {
     n0 <- nrow(pool_df)
     pool_df <- pool_df %>% filter(ensembl_transcript_id %in% require_transcripts)
-    message(sprintf("  限制到 PTC_info 转录本: %d -> %d", n0, nrow(pool_df)))
-    if (nrow(pool_df) < nrow(case_df))
-      warning(label, ": 候选池(", nrow(pool_df), ")小于病例数(", nrow(case_df),
-              ")，部分病例无法匹配")
   }
   
   matched <- build_controls_matched(case_df, pool_df, label = paste(label, "matched"))
@@ -338,7 +322,7 @@ pairs_to_long <- function(pairs, stratum) {
 ## add CDS sequence、NMDesc region、uniprot id
 assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
   
-  message("\n=== 组装 gene_all", if (nchar(label)) paste0(" [", label, "]") else "", " ===")
+  message("\n=== create gene_all", if (nchar(label)) paste0(" [", label, "]") else "", " ===")
   if (nrow(long_df) == 0) return(data.frame())
   
   tx <- unique(long_df$ensembl_transcript_id)
@@ -446,8 +430,6 @@ annotate_pfam <- function(gene_all, mart) {
                   filters = "ensembl_transcript_id", values = tx, mart = mart,
                   chunk = CONFIG$chunk_light),
     error = function(e) {
-      if (!grepl("属性跨页", e$message)) stop(e)
-      message("    pfam 属性跨页，改为分两次请求")
       a <- getBM_chunked(c("ensembl_transcript_id", "pfam"),
                          "ensembl_transcript_id", tx, mart, chunk = CONFIG$chunk_light)
       b <- getBM_chunked(c("ensembl_transcript_id", "pfam_start", "pfam_end"),
@@ -518,10 +500,8 @@ annotate_ppi_interface <- function(gene_all, ppi_file) {
 annotate_string_degree <- function(gene_all, score_threshold = 400) {
   if (!requireNamespace("STRINGdb", quietly = TRUE) ||
       !requireNamespace("igraph", quietly = TRUE)) {
-    message("  跳过 STRING 度中心性（缺少 STRINGdb / igraph）")
     return(gene_all %>% mutate(degree_centrality = NA_real_))
   }
-  message("  STRING 度中心性 ...")
   res <- tryCatch({
     sdb <- STRINGdb::STRINGdb$new(version = "11.5", species = 9606,
                                   score_threshold = score_threshold, input_directory = "")
@@ -537,7 +517,7 @@ annotate_string_degree <- function(gene_all, score_threshold = 400) {
                 .groups = "drop") %>%
       mutate(degree_centrality = ifelse(is.finite(degree_centrality),
                                         degree_centrality, NA_real_))
-  }, error = function(e) { message("  STRING 失败: ", e$message); NULL })
+  }, error = function(e) { message("  STRING failed: ", e$message); NULL })
   
   if (is.null(res)) return(gene_all %>% mutate(degree_centrality = NA_real_))
   gene_all %>% left_join(res, by = "hgnc_symbol")
@@ -545,10 +525,6 @@ annotate_string_degree <- function(gene_all, score_threshold = 400) {
 
 
 annotate_tau <- function(gene_all, gtex_path) {
-  if (!file.exists(gtex_path)) {
-    message("  跳过组织特异性 tau（GTEx 文件不存在）")
-    return(gene_all %>% mutate(tau = NA_real_))
-  }
   message("  GTEx tau ...")
   gtex <- read_tsv(gtex_path, skip = 2, show_col_types = FALSE)
   expr <- gtex %>%
@@ -583,11 +559,6 @@ annotate_motif_flags_dbh <- function(gene_all, path_touni, path_motif, path_lcs)
   flags <- c("gene_protein_flag","gene_domains_flag","gene_slim_flag",
              "gene_morf_flag","gene_ptm_flag","gene_nls_flag","gene_LCS_flag")
   
-  if (!all(file.exists(c(path_touni, path_motif, path_lcs)))) {
-    message("  跳过 motif / LCS flags（补充文件不存在）")
-    for (f in flags) gene_all[[f]] <- NA_integer_
-    return(gene_all)
-  }
   message("  motif / LCS flags ...")
   
   get_max <- function(x) {
@@ -622,7 +593,6 @@ annotate_motif_flags_dbh <- function(gene_all, path_touni, path_motif, path_lcs)
 
 
 annotate_all <- function(gene_all, mart) {
-  message("\n=== 特征标注 ===")
   gene_all %>%
     annotate_sequence_features() %>%
     annotate_pfam(mart) %>%
@@ -635,7 +605,7 @@ annotate_all <- function(gene_all, mart) {
 
 
 # =============================================================================
-# 6. 四组的描述性统计与分组输出
+# 6. descriptive data
 # =============================================================================
 
 summarise_by_group <- function(gene_all, label) {
@@ -651,7 +621,6 @@ summarise_by_group <- function(gene_all, label) {
               nmdesc_median = stats::median(NMDesc_region_length, na.rm = TRUE),
               .groups = "drop")
   
-  cat("\n=== 四组基本情况 [", label, "] ===\n", sep = "")
   print(as.data.frame(desc), row.names = FALSE, digits = 4)
   
   feat_tab <- gene_all %>%
@@ -665,39 +634,35 @@ summarise_by_group <- function(gene_all, label) {
               .groups = "drop") %>%
     pivot_wider(names_from = group, values_from = c(n, value))
   
-  cat("\n=== 各特征按组汇总（二分类=阳性比例，连续=中位数）[", label, "] ===\n", sep = "")
   print(as.data.frame(feat_tab), row.names = FALSE, digits = 4)
   
   write_csv(desc,     sprintf("group_summary_%s.csv", label))
   write_csv(feat_tab, sprintf("group_features_%s.csv", label))
   
-  # 两个对照组来自同一候选池，可能有重叠 —— 不影响各自的配对检验有效性，
-  # 但若之后要把两层合并分析，重叠基因会被计两次
   sc <- unique(gene_all$hgnc_symbol[gene_all$group == "snv_control"])
   fc <- unique(gene_all$hgnc_symbol[gene_all$group == "fs_control"])
-  cat(sprintf("\nsnv_control 与 fs_control 重叠基因数: %d\n", length(intersect(sc, fc))))
+  cat(sprintf("\nsnv_control 与 fs_control matched gene counts: %d\n", length(intersect(sc, fc))))
   
   sd_ <- unique(gene_all$hgnc_symbol[gene_all$group == "snv"])
   fd_ <- unique(gene_all$hgnc_symbol[gene_all$group == "fs"])
-  cat(sprintf("snv 与 fs 疾病基因重叠数: %d\n", length(intersect(sd_, fd_))))
+  cat(sprintf("snv 与 fs disease gene overlap counts: %d\n", length(intersect(sd_, fd_))))
   
   invisible(list(desc = desc, features = feat_tab))
 }
 
 
 write_by_group <- function(gene_all, label) {
-  cat("\n--- 分组输出 [", label, "] ---\n", sep = "")
   for (g in GROUP_LEVELS) {
     sub <- gene_all %>% filter(group == g)
     if (nrow(sub) == 0) { message(sprintf("  %-12s 空", g)); next }
     fn <- sprintf("gene_all_%s_%s.csv", label, g)
     write_csv(sub, fn)
-    cat(sprintf("  %-12s %3d 基因 -> %s\n", g, n_distinct(sub$hgnc_symbol), fn))
+    cat(sprintf("  %-12s %3d gene -> %s\n", g, n_distinct(sub$hgnc_symbol), fn))
   }
 }
 
 
-## 显著性标签：p 值来自对应分析的检验结果（matched 用配对，random 用非配对）
+## create significance label
 fmt_p_label <- function(p, alpha = CONFIG$alpha) {
   if (length(p) == 0 || is.na(p)) return("p = NA")
   star <- if (p < 0.001) "***" else if (p < 0.01) "**" else if (p < alpha) "*" else "ns"
@@ -799,7 +764,7 @@ plot_four_groups <- function(gene_all, features, label, res = NULL,
 
 
 # =============================================================================
-# 7. 检验框架
+# 7. do feature comparisions 
 # =============================================================================
 
 make_pair_table <- function(gene_all, feature) {
@@ -810,9 +775,7 @@ make_pair_table <- function(gene_all, feature) {
 }
 
 
-## 配对检验（主分析）
-##   二分类 -> 不一致配对上的精确二项检验（小样本）或 McNemar
-##   连续   -> Wilcoxon 符号秩检验
+## paired match analysis
 test_paired <- function(gene_all, feature, stratum_now, exact_cutoff = 25) {
   
   d <- make_pair_table(gene_all, feature) %>% filter(stratum == stratum_now)
@@ -859,9 +822,7 @@ test_paired <- function(gene_all, feature, stratum_now, exact_cutoff = 25) {
 }
 
 
-## 非配对检验（敏感性分析）
-##   二分类 -> Fisher 精确检验
-##   连续   -> Wilcoxon 秩和检验
+## random match analysis
 test_unpaired <- function(gene_all, feature, stratum_now) {
   
   d <- gene_all %>% filter(stratum == stratum_now, !is.na(.data[[feature]]))
@@ -906,12 +867,7 @@ run_all_tests <- function(gene_all, paired = TRUE) {
 
 
 # =============================================================================
-# 8. 多重检验校正
-#
-# 家族按 stratum 划分：SNV 与 FS 是两个独立的科学问题，各自校正；
-# 同时给出跨 stratum 的全局校正供参考。
-# 特征之间高度相关（GC 与 repeat、pLI 与 LOEUF、PFAM 三个视角），BH 在
-# 正相关（PRDS）下有效；需要更保守时看 p_adj_holm。
+# 8. multiple test correction
 # =============================================================================
 
 correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NULL) {
@@ -932,7 +888,7 @@ correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NU
     arrange(stratum, p_value)
   
   cat("\n==================== ", label, " ====================\n", sep = "")
-  cat(sprintf("检验总数: %d\n", nrow(res)))
+  cat(sprintf("total number of tests: %d\n", nrow(res)))
   print(res %>% group_by(stratum) %>%
           summarise(n_tests = n(),
                     raw_sig = sum(p_value  < alpha, na.rm = TRUE),
@@ -940,24 +896,22 @@ correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NU
                     .groups = "drop"))
   
   sig_rows <- res %>% filter(!is.na(p_adj_BH), p_adj_BH < alpha)
-  if (nrow(sig_rows) > 0) {
-    cat("\n--- BH FDR <", alpha, "的显著特征 ---\n")
+
+    cat("\n--- BH FDR <", alpha, "signficant features ---\n")
     print(sig_rows %>%
             select(stratum, feature, test, case_summary, control_summary,
                    effect, p_value, p_adj_BH, sig) %>%
             as.data.frame(), row.names = FALSE, digits = 4)
-  } else {
-    cat("\n--- 无特征通过 BH FDR <", alpha, "---\n")
-  }
+  
   cat("=========================================================\n")
   
-  if (!is.null(output_csv)) { write_csv(res, output_csv); message("已保存: ", output_csv) }
+   write_csv(res, output_csv)
   res
 }
 
 
 # =============================================================================
-# 9. 主流程
+# 9. main analysis
 # =============================================================================
 
 PTC_info <- read.csv(CONFIG$ptc_info)
@@ -972,7 +926,7 @@ snv_gene        <- read_gene_list(CONFIG$snv_gene_list,   "snv (DBH)")
 fs_gene         <- read_gene_list(CONFIG$fs_gene_list,    "fs (Simes)")
 omim_AD_symbols <- read_gene_list(CONFIG$omim_ad_symbols, "OMIM AD")
 
-cat(sprintf("\nsnv n = %d | fs n = %d | 重叠 = %d\n",
+cat(sprintf("\nsnv n = %d | fs n = %d | overlap = %d\n",
             length(snv_gene), length(fs_gene), length(intersect(snv_gene, fs_gene))))
 
 pool_all <- get_pool_cds(omim_AD_symbols, ensembl)
@@ -1002,14 +956,14 @@ write_csv(gene_all_matched, "gene_all_matched.csv")
 write_by_group(gene_all_matched, "matched")
 summarise_by_group(gene_all_matched, "matched")
 res_matched <- run_all_tests(gene_all_matched, paired = TRUE) %>%
-  correct_and_report("主分析：CDS 匹配对照，配对检验",
+  correct_and_report("matched by CDS",
                      output_csv = "results_matched_paired.csv")
 
 plot_four_groups(gene_all_matched, c(CONTINUOUS_FEATURES, BINARY_FEATURES),
                  "matched", res = res_matched)
 
 
-# ---- 9b. 敏感性分析：随机对照 + 非配对检验 ---------------------------------
+# ---- 9b. compare cds match with random match ---------------------------------
 
 long_random <- bind_rows(pairs_to_long(ctrl_snv$random, "SNV"),
                          pairs_to_long(ctrl_fs$random,  "FS"))
@@ -1021,72 +975,9 @@ write_csv(gene_all_random, "gene_all_random.csv")
 write_by_group(gene_all_random, "random")
 summarise_by_group(gene_all_random, "random")
 res_random <- run_all_tests(gene_all_random, paired = FALSE) %>%
-  correct_and_report("敏感性分析：随机对照，非配对检验",
+  correct_and_report("random match",
                      output_csv = "results_random_unpaired.csv")
 
 plot_four_groups(gene_all_random, c(CONTINUOUS_FEATURES, BINARY_FEATURES),
                  "random", res = res_random)
 
-
-# =============================================================================
-# 10. compare CDS match and random match
-# =============================================================================
-
-cmp <- full_join(
-  res_matched %>% select(stratum, feature, p_matched = p_value,
-                         padj_matched = p_adj_BH, eff_matched = effect),
-  res_random  %>% select(stratum, feature, p_random = p_value,
-                         padj_random = p_adj_BH, eff_random = effect),
-  by = c("stratum", "feature")) %>%
-  mutate(verdict = case_when(
-    !is.na(padj_matched) & padj_matched < CONFIG$alpha &
-      !is.na(padj_random) & padj_random < CONFIG$alpha ~ "两者均显著（最可信）",
-    !is.na(padj_matched) & padj_matched < CONFIG$alpha ~ "仅匹配分析显著（CDS 长度曾掩盖信号）",
-    !is.na(padj_random)  & padj_random  < CONFIG$alpha ~ "仅随机对照显著（可能是 CDS 长度的代理）",
-    TRUE ~ "均不显著")) %>%
-  arrange(stratum, padj_matched)
-
-print(as.data.frame(cmp), row.names = FALSE, digits = 4)
-print(table(cmp$verdict))
-write_csv(cmp, "results_comparison.csv")
-
-
-# =============================================================================
-# 11. draw significant features
-# =============================================================================
-
-sig_feats <- res_matched %>% filter(!is.na(p_adj_BH), p_adj_BH < CONFIG$alpha)
-
-if (nrow(sig_feats) > 0) {
-  plots <- lapply(seq_len(nrow(sig_feats)), function(k) {
-    f <- sig_feats$feature[k]; s <- sig_feats$stratum[k]
-    d <- make_pair_table(gene_all_matched, f) %>% filter(stratum == s)
-    if (nrow(d) == 0) return(NULL)
-    
-    dl <- d %>% pivot_longer(c(case, control), names_to = "role", values_to = "value")
-    
-    ggplot(dl, aes(x = role, y = value, group = pair_id)) +
-      geom_line(alpha = 0.25, colour = "grey50") +
-      geom_point(aes(colour = role), size = 1.8, alpha = 0.8) +
-      scale_colour_manual(values = c(case = "#D07A3A", control = "#8ABA67"), guide = "none") +
-      labs(title = sprintf("%s [%s]", f, s),
-           subtitle = sprintf("%s, BH p = %.3g", sig_feats$test[k], sig_feats$p_adj_BH[k]),
-           x = NULL, y = f) +
-      theme_bw(base_size = 11) +
-      theme(plot.title = element_text(face = "bold", size = 12))
-  })
-  plots <- Filter(Negate(is.null), plots)
-  
-  if (length(plots) > 0) {
-    fig <- patchwork::wrap_plots(plots, ncol = min(3, length(plots))) +
-      patchwork::plot_annotation(
-        title = "Paired distribution of significant features (matched analysis)",
-        subtitle = "Each line is one CDS-length-matched case-control pair",
-        theme = theme(plot.title = element_text(face = "bold", size = 16)))
-    ggsave("paired_significant_features.pdf", fig,
-           width = 4.2 * min(3, length(plots)),
-           height = 3.6 * ceiling(length(plots) / 3), limitsize = FALSE)
-  }
-} else {
-  message("no significant features in matched analysis, skip paired distribution plots.")
-}

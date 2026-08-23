@@ -47,11 +47,7 @@ DATA_DIR    <- dirname(CLINVAR_DIR)
 OUT_DIR     <- out_dir("plots/pfam_ppi_analysis")
 # -----------------------------------------------------------------------------
 
-FDR_METHOD <- "BH"   # single place to change the adjustment method
-
-# 注意：这处定义在下文 4.2 节被重新赋值覆盖（见 "实际生效的 FLAG_COLS"）。
-# 这里保留原始的完整列名清单作参考 —— 它含 ptc_after 与 ptc_before 两个互补的
-# Pfam flag，实际分析只用 ptc_before 一个。
+FDR_METHOD <- "BH"  
 FLAG_COLS_ALL <- c(
   "variant_ppi_overlap", "ptc_after_max_pfam_end", "ptc_before_max_pfam_end",
   "variant_protein_flag", "variant_domain_flag", "variant_slim_flag",
@@ -63,7 +59,6 @@ CONFOUNDERS      <- c("cds_length")                                    # base ad
 CONFOUNDERS_FULL <- c("cds_length", "NMDesc_region_length", "GC_Content")
 
 # Flags for the gene-matched panel: one Pfam flag, one PPI flag, plus motifs
-# 连续型预测变量（不是 0/1 flag）——拟合时不能做 as.integer 二值化
 CONT_PREDICTORS <- c("dist_to_cds_end_log")
 
 GENE_MATCHED_FLAGS <- c(
@@ -71,7 +66,7 @@ GENE_MATCHED_FLAGS <- c(
   "ptc_before_max_pfam_end",   # Pfam: keep the "domain disrupted" direction
   "variant_protein_flag", "variant_domain_flag", "variant_slim_flag",
   "variant_morf_flag", "variant_ptm_flag", "variant_nls_flag", "variant_LCS_flag",
-  "dist_to_cds_end_log"        # 连续：PTC 到 CDS 末端距离（log）
+  "dist_to_cds_end_log"        
 )
 
 # Publication-ready display names
@@ -947,7 +942,7 @@ tidy_dist_models <- function(models, labels = FLAG_LABELS) {
 }
 
 # ==============================================================================
-# 4.2  MIXED-EFFECT MODEL   [replaces the previous 4.2]
+# 4.2  MIXED-EFFECT MODEL  
 # ------------------------------------------------------------------------------
 # Logistic GLMM with a random intercept per transcript, fitted SEPARATELY within
 # each gene set (SNV, FS). The previous version pooled both gene sets into one
@@ -955,42 +950,11 @@ tidy_dist_models <- function(models, labels = FLAG_LABELS) {
 # feature effect with systematic differences in PTC position between SNVs and
 # frameshift variants.
 #
-# WHAT THE RANDOM INTERCEPT DOES AND DOES NOT DO
-#   It accounts for clustering of variants within transcripts, so standard
-#   errors are not inflated by treating correlated variants as independent.
-#   It does NOT restrict the comparison to within-gene contrasts: the fixed
-#   effect is still estimated using transcripts that appear in only one group,
-#   so it mixes between- and within-gene information. For the purely within-gene
-#   estimate see the conditional logistic regression in the matched analysis.
-#
 # MULTIPLICITY
 #   BH within each (gene_set, model) stratum, matching 4.3 and 4.4.
-#
-# DIAGNOSTICS REPORTED PER MODEL
-#   n_variants     variants entering the model
-#   n_transcripts  transcripts entering the model
-#   singular       TRUE if the random-intercept variance collapsed to zero, in
-#                  which case the model has degenerated to ordinary logistic
-#                  regression and the clustering claim does not hold
-#   separation     TRUE if the flag almost perfectly predicts disease status,
-#                  in which case the OR is unstable and Firth is used instead
 # ==============================================================================
 
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(ggplot2)
-
 FDR_METHOD <- "BH"
-
-# One flag per Pfam direction: ptc_after and ptc_before are complementary sides
-# of the same continuous variable and must not both enter the same family.
-# 这是实际生效的 FLAG_COLS（覆盖文件开头那处定义）。
-# 每个特征只保留一个 flag：
-#   PPI  -> variant_ppi_overlap（PTC 下游存在界面残基）
-#   Pfam -> ptc_before_max_pfam_end（域被打断的方向）
-#           不再同时放 ptc_after_max_pfam_end —— 那两个是互补的
-#           （dist>0 与 dist<0），信息等价，同时放入等于重复计入同一特征。
 FLAG_COLS <- c(
   "variant_ppi_overlap",
   "ptc_before_max_pfam_end",
@@ -1001,7 +965,7 @@ FLAG_COLS <- c(
   "variant_ptm_flag",
   "variant_nls_flag",
   "variant_LCS_flag",
-  "dist_to_cds_end_log"      # 连续：PTC 到 CDS 末端距离（log）
+  "dist_to_cds_end_log"    
 )
 
 # A cell count at or below this in the 2x2 of flag by is_disease triggers the
@@ -1009,19 +973,9 @@ FLAG_COLS <- c(
 SEPARATION_MIN_CELL <- 5
 
 
-# ------------------------------------------------------------------------------
-# 4.2.1  Separation check
-# ------------------------------------------------------------------------------
-
-check_separation_2x2 <- function(df, flag, min_cell = SEPARATION_MIN_CELL) {
-  tab <- table(df[[flag]], df$is_disease)
-  if (any(dim(tab) < 2)) return(list(separated = TRUE, min_cell = 0, tab = tab))
-  list(separated = min(tab) <= min_cell, min_cell = min(tab), tab = tab)
-}
-
 
 # ------------------------------------------------------------------------------
-# 4.2.2  Fit one flag within one gene set
+# 4.2.1  Fit one flag within one gene set
 # ------------------------------------------------------------------------------
 
 fit_one_glmm <- function(dat, flag, gs) {
@@ -1030,7 +984,6 @@ fit_one_glmm <- function(dat, flag, gs) {
   df <- dat %>%
     dplyr::select(is_disease, all_of(flag), ensembl_transcript_id) %>%
     filter(!is.na(.data[[flag]]))
-  # 二分类 flag 才转 integer；连续变量（如 dist_to_cds_end_log）保持数值
   if (!is_cont) df <- df %>% mutate(across(all_of(flag), as.integer))
   
   base <- data.frame(
@@ -1038,8 +991,7 @@ fit_one_glmm <- function(dat, flag, gs) {
     n_variants = nrow(df),
     n_transcripts = n_distinct(df$ensembl_transcript_id),
     OR = NA_real_, OR_low = NA_real_, OR_high = NA_real_, p_value = NA_real_,
-    min_cell = NA_integer_, separation = NA, singular = NA,
-    method = NA_character_, row.names = NULL
+    singular = NA, method = NA_character_, row.names = NULL
   )
   
   if (nrow(df) == 0 ||
@@ -1050,34 +1002,6 @@ fit_one_glmm <- function(dat, flag, gs) {
     return(base)
   }
   
-  # 2x2 分离检验只适用于二分类；连续变量不做
-  sep <- if (is_cont) list(min_cell = NA_integer_, separated = FALSE) else
-                      check_separation_2x2(df, flag)
-  base$min_cell   <- sep$min_cell
-  base$separation <- sep$separated
-  
-  # --- separation: Firth-penalised logistic, no random effect ----------------
-  # logistf cannot carry a random intercept, so the clustering correction is
-  # lost. This is flagged in `method` so it is not read as a GLMM result.
-  if (sep$separated) {
-    message(sprintf("[%s] %s: min cell = %d, using Firth penalisation",
-                    gs, flag, sep$min_cell))
-    fit <- tryCatch(
-      logistf::logistf(as.formula(paste("is_disease ~", flag)), data = df),
-      error = function(e) { message(sprintf("  Firth failed: %s", e$message)); NULL }
-    )
-    if (is.null(fit)) { base$method <- "failed"; return(base) }
-    
-    ci <- confint(fit)
-    base$OR      <- unname(exp(coef(fit)[flag]))
-    base$OR_low  <- unname(exp(ci[flag, 1]))
-    base$OR_high <- unname(exp(ci[flag, 2]))
-    base$p_value <- unname(fit$prob[flag])
-    base$method  <- "Firth (no random effect)"
-    return(base)
-  }
-  
-  # --- standard path: GLMM ---------------------------------------------------
   fit <- tryCatch(
     lme4::glmer(as.formula(paste("is_disease ~", flag, "+ (1 | ensembl_transcript_id)")),
                 data = df, family = binomial,
@@ -1106,7 +1030,7 @@ fit_one_glmm <- function(dat, flag, gs) {
 
 
 # ------------------------------------------------------------------------------
-# 4.2.3  Driver
+# 4.2.2  Driver
 # ------------------------------------------------------------------------------
 
 run_mixed_effect_flag_analysis <- function(variants_all5,
@@ -1194,12 +1118,6 @@ plot_mixed_effect_flags <- function(mixed_results, or_limits = c(0.01, 1000)) {
 # 4.3  HIERARCHICAL BAYESIAN MODEL
 # ------------------------------------------------------------------------------
 # Partial pooling of flag effects across genes within each gene set (SNV/FS).
-#
-# NOTE ON MULTIPLICITY: no post-hoc p-value adjustment is applied here by
-# design. Multiplicity is handled by partial pooling: the hierarchical prior
-# shrinks transcript-level effects toward the group mean, which plays the same
-# role as an FDR correction. Applying BH on top of shrinkage would double-count
-# the adjustment. Significance is read off the 95% credible interval.
 # ==============================================================================
 
 run_bayesian_by_geneset <- function(variants_all5, flag_cols = GENE_MATCHED_FLAGS) {
@@ -1258,14 +1176,9 @@ plot_bayesian_by_geneset <- function(fit_lists) {
   ) + ggplot2::labs(color = "95% CrI", shape = "Gene set")
 }
 
-# ==============================================================================
-# ==============================================================================
-# 4.4  (REMOVED — bootstrap resampling)
-# ------------------------------------------------------------------------------
 
-# [已删除] 原 4.4 gene-matched 分析（sample_one_per_gene / run_gene_matched_one /
-# plot_gene_matched_flags）依赖 bootstrap 重抽样算置信区间，按要求整条移除。
-# 保留的是同一段里与 bootstrap 无关的 Unadjusted 逻辑回归。
+# 4.4 unadjusted regression
+# ------------------------------------------------------------------------------
 run_unadjusted_flag_analysis <- function(variants_all5,
                                            flag_cols = GENE_MATCHED_FLAGS,
                                            cont_col  = CONT_COL,
