@@ -20,8 +20,6 @@ for (.dep in c("get_pvalue.R", "extract_enriched.R", "process_syn.R")) {
 }
 rm(.dep, .cand)
 # --------------------------------------------------------------
-
-##Library aenmd into R
 library(aenmd.data.ensdb.v105)
 library(aenmd)
 library(GenomicRanges)
@@ -47,7 +45,6 @@ mart = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 ensembl = mart
 genome <- BSgenome.Hsapiens.UCSC.hg38
 txdb <- txdbmaker::makeTxDbFromEnsembl("Homo sapiens", release=105)
-#saveDb(txdb, 'txdb.Ensembl105.sqlite')
 ensgene <- txdb
 seqlevels(ensgene) <- paste('chr',seqlevels(ensgene),sep='')
 chr.list <- c(paste('chr',1:22,sep=''))
@@ -67,7 +64,6 @@ all.df <- AnnotationDbi::select(ensgene, keys = keys, columns = cols, keytype="T
 all.df.sub <- all.df[which(all.df$TXNAME!='NA'),]
 rm(all.df)
 BM.info <- getBM(attributes=c("ensembl_gene_id","ensembl_transcript_id","hgnc_symbol","transcript_is_canonical"),mart=ensembl)
-#write.csv(BM.info,'BM_info.csv',row.names = F)
 
 vcf_file = data_file("clinvar_20260201.vcf.gz")
 vcf = aenmd:::parse_vcf_VariantAnnotation(vcf_file)
@@ -82,7 +78,6 @@ ind_out =  Biostrings::vcountPattern("N", vcf_rng_fil$alt) > 0
 vcf_rng_fil = vcf_rng_fil[!ind_out]
 #- back to the original workflow
 res = annotate_nmd(vcf_rng_fil, rettype="gr")
-
 
 #2. get nmdesc enriched genes
 snv_ind = which(res@elementMetadata@listData[["type"]] == 'snv')
@@ -227,7 +222,6 @@ variant_summary$key = paste0(
 rm(v_cs, v_gr, v_re)
 #output v_ch
 write.csv(v_ch,'v_ch20260201.csv',row.names = F)
-v_ch = read.csv('v_ch20260201.csv')
 #return this information to res, build res3
 #the problem is, not all tr in res appeared in this variant_summary
 res2 = res[which(res@elementMetadata@listData[["key"]] %in% v_ch$key)]
@@ -248,8 +242,6 @@ saveRDS(snv_plp_ptc_can_filtered,'snv_plp_ptc_can_filtered20260201.rds')
 fs_plp_ptc_nmdesc_can_filtered = fs_plp_ptc_nmdesc_can[which(fs_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 snv_benign_ptc_nmdesc_can_filtered = snv_benign_ptc_nmdesc_can[which(snv_benign_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 saveRDS(snv_plp_ptc_nmdesc_can_filtered,'snv_plp_ptc_nmdesc_can_filtered20260201_check.rds')
-temp1 = readRDS('snv_plp_ptc_nmdesc_can_filtered20260201.rds')
-temp2 = readRDS('snv_plp_ptc_nmdesc_can20260201.rds')
 saveRDS(snv_benign_ptc_nmdesc_can_filtered,'snv_benign_ptc_nmdesc_can_filtered20260201.rds')
 get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
                           'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
@@ -258,22 +250,10 @@ get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
                   
 txnames.list <- readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds')
 rest.all <- sapply(txnames.list, function(x) if(is.null(x$rest.PTC)) NA else x$rest.PTC)
-summary(rest.all)
-quantile(rest.all, c(0.1, 0.25, 0.5, 0.75), na.rm = TRUE)
 res3 <- extract_enriched(txnames.list, fdr.method = "dbh")
-res3$genes                  
 write.csv(res3$enriched, "enriched_genes_dbh.csv", row.names = FALSE)
 
-# compare source for ppi
-g.dbh <- extract_enriched(txnames.list, "dbh")$genes
-g.dby <- extract_enriched(txnames.list, "dby")$genes
-g.bh  <- extract_enriched(txnames.list, "bh")$genes
-length(g.dbh); length(g.dby); length(g.bh)
-length(intersect(g.dbh, g.bh))
-
 re1 = readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30.rds')
-get_pvalue_wald('snv_plp_ptc_nmdesc_can_filtered20260201_check.rds','snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_Jul30.rds')
-res_wald_p = readRDS('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds')
 res_p1 = readRDS('snv_plp_ptc_nmdesc_can_filtered20260201.rds')
 res_p_syn = readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201.rds')
 p_set = NULL
@@ -283,8 +263,6 @@ for(i in 1:790){
 write.csv(p_set,'p_less.csv',row.names = F)
 
 #get enriched genes
-# get_NMD_enrichment_wald('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds',FDR = 0.05,filter_type = 'can')
-
 .e <- c("gene level_v3/disease genes/snv/get_NMD_enrichment_DBH.R",
         "get_NMD_enrichment_DBH.R", "../snv/get_NMD_enrichment_DBH.R")
 .e <- .e[file.exists(.e)]
@@ -295,25 +273,16 @@ snv_can_gene = read.csv("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched
 #filter for AD genes
 omim_AD_symbols = read.csv('omim_AD_symbols.csv',header=F)$V1
 dbh_genes = read.csv('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30_NMDesc_dbh_enriched_can.txt',header=F)$V1
-wald_genes = read.csv('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_wald_enriched_can.txt',header=F)$V1
 binom_genes = read.csv('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_binom_enriched_can.txt',header=F)$V1
-wald_AD_genes = wald_genes[wald_genes %in% omim_AD_symbols[-1]]
 dbh_AD_genes = dbh_genes[dbh_genes %in% omim_AD_symbols[-1]]
 write.csv(wald_AD_genes,'snv_wald_AD.csv',row.names = F)
 write.csv(dbh_AD_genes,'snv_dbh_AD.csv',row.names = F)
 binom_AD_genes = binom_genes[binom_genes %in% omim_AD_symbols$x]
 snv_gene = gene_all$hgnc_symbol[gene_all$group == 'snv']
 fs_gene = gene_all$hgnc_symbol[gene_all$group == 'fs']
-length(wald_AD_genes)
-length(binom_AD_genes)
-length(snv_gene)
-length(intersect(wald_AD_genes, binom_AD_genes))
-length(intersect(wald_AD_genes, snv_gene))
-length(intersect(binom_AD_genes, snv_gene))
 
 snv_AD_can_gene = snv_can_gene %>% filter(V1 %in% omim_AD_symbols)
 write.csv(snv_AD_can_gene,'snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv',row.names = F)
-
 
 #get the total number of submitters for each gene
 gene_all$NumberSubmitters = v_ch$NumberSubmitters[match(gene_all$k, v_ch$key)]
@@ -327,7 +296,6 @@ table(gene_all$group)
 gene_can_AD_plp_ptc_nmdesc_uni$NumberSubmitters = variant_summary$NumberSubmitters[match(gene_can_AD_plp_ptc_nmdesc_uni$key, variant_summary$key)]
 summary(gene_can_AD_plp_ptc_nmdesc_uni$NumberSubmitters)
 
-
 get_snv_variant_new.R
 get_fs_variant_new.R
 get_gnomad_control.R
@@ -336,7 +304,6 @@ build_gene_all.R #(adapted from combine_gene.R)
 -------------------------
 #3. gene_level comparision
 gene_all = read.csv('gene_all.csv')
-
 
 calculate_ppi_degree_centrality(
   gene_all,
@@ -425,8 +392,6 @@ gene_all_merged <- gene_all %>%
   left_join(gene_level %>% select(hgnc_symbol, group, pLI, oe_lof_upper, pli_cat, loeuf_cat),
             by = c("hgnc_symbol", "group"))
 
-#do multiple correction
-
 #do regression
 model_data <- gene_all_merged %>%
   mutate(is_nmdesc = if_else(group %in%  c("fs_control","snv_control"), 0L, 1L)) 
@@ -481,8 +446,6 @@ check_flags <- function(data, gene_set_label) {
 skip_snv <- check_flags(model_data, "SNV")
 skip_fs  <- check_flags(model_data, "FS")
 
-message("Skipping in SNV: ", if (length(skip_snv)) paste(skip_snv, collapse = ", ") else "none")
-message("Skipping in FS: ",  if (length(skip_fs))  paste(skip_fs,  collapse = ", ") else "none")
 
 #get OR
 extract_or <- function(fit, coef_name) {
@@ -622,16 +585,7 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
   #add attributes
   new_create_fasta.R #add cds_mutation_loc etc
   combine_variant.R #combine variant level info with gene level info
-##4.1 unmatched analysis
-  
-##4.2 mixed-effect model
-  
-##4.3 hierarchial mode
-  
-##4.4 bootstrap and matched analysis
-  
-  
-  
+
   #do a regression on dist to cds end using variants_all
   variant_data2 = variants_all2
   variant_data2 = variant_data2 %>%
@@ -778,10 +732,8 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
         TRUE            ~ "ns"
       )
     )
+
   
-  print(results_all)
-  
-  # ══════════════════════════════════════════════════════════════════════════════
   # PLOT
   # ══════════════════════════════════════════════════════════════════════════════
   ggplot(results_all, aes(x = OR, y = source, color = sig, shape = gene_set)) +
@@ -827,11 +779,9 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
   )
   
   variants_all5 <- variants_all4[!duplicated(variants_all4$Variant_Key), ]
-  
+
   write.csv(variants_all5,'variants_all5.csv',row.names = F)
- variants_all5 = read.csv('variants_all5.csv')
-    
-    #control for covariates
+  #control for covariates
   
   variants_all5$is_disease          <- as.integer(grepl("disease", variants_all5$group))
   variants_all5$dist_to_cds_end_log <- log(abs(variants_all5$dist_to_cds_end) + 1)
@@ -874,12 +824,6 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
     extract_or(fit, col)
   }) %>% bind_rows() %>% mutate(model = "Adjusted")
   
-  # ── cont: filter out NA/Inf before fitting ─────────────────────────────────────
-  df_cont <- variants_all5 %>%
-    filter(!is.na(dist_to_cds_end_log), is.finite(dist_to_cds_end_log),
-           !is.na(is_disease), !is.na(cds_length),
-           !is.na(NMDesc_region_length), !is.na(GC_Content))
-  
   # ── unadjusted dist_to_cds_end_log ────────────────────────────────────────────
   fit_u      <- glm(is_disease ~ dist_to_cds_end_log, data = df_cont, family = binomial)
   cont_unadj <- extract_or(fit_u, cont_col) %>% mutate(model = "Unadjusted")
@@ -911,7 +855,6 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
     theme_minimal(base_size = 12) +
     theme(plot.title = element_text(face = "bold"))
 
-   
    
    ----------------------
 #match by gene
@@ -945,10 +888,6 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
    
    skip_snv <- check_flags(variants_all5, "SNV")
    skip_fs  <- check_flags(variants_all5, "FS")
-   
-   message("Skipping in SNV: ", if (length(skip_snv)) paste(skip_snv, collapse = ", ") else "none")
-   message("Skipping in FS: ",  if (length(skip_fs))  paste(skip_fs,  collapse = ", ") else "none")
-   
    # ── OR extractor ──────────────────────────────────────────────────────────────
    extract_or <- function(fit, coef_name) {
      ci <- confint(fit)[coef_name, ]
