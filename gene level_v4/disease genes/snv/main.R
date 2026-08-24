@@ -1,5 +1,4 @@
 
-# 数据文件用 data_file("文件名") 定位；输出用 out_file("文件名")
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../gene level_v3/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
