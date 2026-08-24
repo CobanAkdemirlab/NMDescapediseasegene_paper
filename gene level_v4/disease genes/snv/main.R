@@ -2,7 +2,6 @@
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../gene level_v3/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
 source(.p[1])
 # ------------------------------------------------------------
 
