@@ -5,14 +5,6 @@
 #   4.1  Unmatched analysis
 #   4.2  Mixed-effect model
 #   4.3  Hierarchical Bayesian model
-#
-# MULTIPLE TESTING CORRECTION SUMMARY
-#   4.0.3  .pval_df()            -> BH across the Fisher bar-chart comparisons
-#   4.0.3  stat_compare_means()  -> BH across the Wilcoxon violin comparisons
-#   4.1    tidy_dist_models()    -> BH across the PTC-distance sanity models
-#   4.2    add_fdr_sig()         -> BH within model (already present)
-#   4.3    none by design: partial pooling handles multiplicity
-#   4.4    add_fdr_sig()         -> BH within (gene_set, model) (already present)
 # ==============================================================================
 
 
@@ -38,7 +30,6 @@ library(ggpubr)
 .p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
         "../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
 source(.p[1]); rm(.p)
 
 CLINVAR_DIR <- data_root("clinvar")
@@ -52,11 +43,7 @@ FLAG_COLS_ALL <- c(
   "variant_ppi_overlap", "ptc_after_max_pfam_end", "ptc_before_max_pfam_end",
   "variant_protein_flag", "variant_domain_flag", "variant_slim_flag",
   "variant_morf_flag", "variant_ptm_flag", "variant_nls_flag", "variant_LCS_flag"
-)
-FLAG_COLS <- setdiff(FLAG_COLS_ALL, "ptc_after_max_pfam_end")
-CONT_COL         <- "dist_to_cds_end_log"
-CONFOUNDERS      <- c("cds_length")                                    # base adjustment set
-CONFOUNDERS_FULL <- c("cds_length", "NMDesc_region_length", "GC_Content")
+)CONT_COL         <- "dist_to_cds_end_log"
 
 # Flags for the gene-matched panel: one Pfam flag, one PPI flag, plus motifs
 CONT_PREDICTORS <- c("dist_to_cds_end_log")
@@ -275,40 +262,14 @@ variants_all2$cds_mutation_loc = variants_all2$cds_mutation_loc.x
 variants_all2$cds_end = nchar(variants_all2$coding)
 variants_all2$dist_to_cds_end = variants_all2$cds_end - variants_all2$ptc_pos
 
-# ------------------------------------------------------------------------------
+# # ------------------------------------------------------------------------------
 # 4.0.3  PPI + Pfam annotation (BioMart, human_1_ interactome)
 # ------------------------------------------------------------------------------
-
-get_pfam_annotations <- function(transcript_ids, ensembl) {
-  pfam_raw <- getBM(
-    attributes = c("ensembl_transcript_id", "hgnc_symbol", "pfam",
-                   "pfam_start", "pfam_end", "uniprotswissprot"),
-    filters = "ensembl_transcript_id",
-    values  = unique(transcript_ids),
-    mart    = ensembl
-  )
-  
-  pfam_raw %>%
-    filter(!is.na(pfam), pfam != "") %>%
-    distinct() %>%
-    mutate(uniprot = uniprotswissprot)
-}
-
-
-variant_pfam_ppi <- function(
-    variants_all2,
-    human_1_,
-    pfam_fin,
-    ensembl,
-    out_dir      = ".",
-    group_levels = c("fs_disease", "fs_control", "snv_disease", "snv_control"),
-    group_colors = c(
-      "fs_disease"  = "#1f77b4",
-      "fs_control"  = "#aec7e8",
-      "snv_disease" = "#2ca02c",
-      "snv_control" = "#98df8a"
-    )
-) {
+variant_pfam_ppi <- function(variants_all2,
+                             human_1_,
+                             pfam_fin,
+                             ensembl,
+                             out_dir = ".") {
   
   .convert_to_c <- function(x) {
     if (is.na(x) || x == "") return(numeric(0))
@@ -318,58 +279,12 @@ variant_pfam_ppi <- function(
     vals[!is.na(vals)]
   }
   
-  .convert_to_ints <- function(x) {
-    if (is.null(x) || is.na(x) || x == "") return(integer(0))
-    s <- trimws(gsub("\\[|\\]", "", x))
-    if (s == "") return(integer(0))
-    as.integer(trimws(unlist(strsplit(s, ","))))
-  }
-  
   # CDS base position -> amino acid position
   .cds2aa <- function(base_idx) ((as.integer(base_idx) - 1L) %/% 3L) + 1L
   
-  # Fisher's exact test -> p-value
-  .fisher_p <- function(n_event_a, n_total_a, n_event_b, n_total_b) {
-    mat <- matrix(
-      c(n_event_a,   n_total_a - n_event_a,
-        n_event_b,   n_total_b - n_event_b),
-      nrow = 2, byrow = TRUE
-    )
-    fisher.test(mat)$p.value
-  }
-  
-  # Build p-value bracket data frame for stat_pvalue_manual()
-  # CHANGED: raw Fisher p-values are BH-adjusted across the comparisons in this
-  # panel; the bracket label now reports the adjusted value.
-  .pval_df <- function(summary_df, prop_col, event_col, total_col,
-                       pairs, y_mult = c(1.08, 1.20)) {
-    ymax <- max(summary_df[[prop_col]], na.rm = TRUE)
-    rows <- lapply(seq_along(pairs), function(i) {
-      g1 <- pairs[[i]][1]; g2 <- pairs[[i]][2]
-      if (!all(c(g1, g2) %in% summary_df$group)) return(NULL)
-      p <- .fisher_p(
-        summary_df[[event_col]][summary_df$group == g1],
-        summary_df[[total_col]][summary_df$group == g1],
-        summary_df[[event_col]][summary_df$group == g2],
-        summary_df[[total_col]][summary_df$group == g2]
-      )
-      mult <- if (i <= length(y_mult)) y_mult[i] else y_mult[length(y_mult)] + 0.12 * (i - length(y_mult))
-      data.frame(group1 = g1, group2 = g2,
-                 y.position = ymax * mult,
-                 p_raw      = p,
-                 stringsAsFactors = FALSE)
-    })
-    out <- do.call(rbind, Filter(Negate(is.null), rows))
-    if (is.null(out)) return(NULL)
-    out$p_adj <- p.adjust(out$p_raw, method = FDR_METHOD)
-    out$label <- paste0("p.adj = ", signif(out$p_adj, 3))
-    out
-  }
-  
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   
-  
-  #get pfam info
+  # --- uniprot map from pfam_fin ---
   uniprot_map <- pfam_fin %>%
     filter(!is.na(uniprot), uniprot != "") %>%
     distinct(ensembl_transcript_id, uniprot) %>%
@@ -396,30 +311,25 @@ variant_pfam_ppi <- function(
       variant_ppi_dist_to_nearest_interface_bp = NA_real_
     )
   
-  #get ppi info
+  # --- PPI: is there an interface residue downstream of the PTC? ---
   for (i in seq_len(nrow(dat))) {
     
     uid     <- dat$uniprot[[i]]
     cds_ptc <- dat$ptc_pos[[i]]
     
     if (length(uid) != 1 || length(cds_ptc) != 1) next
-    if (is.na(uid)  || uid == "")                  next
+    if (is.na(uid) || uid == "")                   next
     if (is.na(cds_ptc))                            next
     
     re1 <- unlist(lapply(
-      human_1_$interface_residues1[human_1_$uniprot1 == uid],
-      .convert_to_c
-    )) * 3
-    
+      human_1_$interface_residues1[human_1_$uniprot1 == uid], .convert_to_c)) * 3
     re2 <- unlist(lapply(
-      human_1_$interface_residues2[human_1_$uniprot2 == uid],
-      .convert_to_c
-    )) * 3
+      human_1_$interface_residues2[human_1_$uniprot2 == uid], .convert_to_c)) * 3
     
     all_iface_bp <- na.omit(c(re1, re2))
     if (length(all_iface_bp) == 0) next
     
-    downstream <- all_iface_bp[all_iface_bp >= cds_ptc] #if ppi residue is downstream of PTC, calculate distance
+    downstream <- all_iface_bp[all_iface_bp >= cds_ptc]
     
     if (length(downstream) > 0) {
       dat$variant_ppi_overlap[i]                      <- 1L
@@ -428,228 +338,37 @@ variant_pfam_ppi <- function(
     }
   }
   
-  #clean data
-  present_levels <- unique(as.character(dat$group))
-  ordered_levels <- c(
-    intersect(group_levels, present_levels),
-    setdiff(present_levels, group_levels)
-  )
-  dat$group <- factor(dat$group, levels = ordered_levels)
-  
-  # Restrict group_colors to levels actually present
-  group_colors <- group_colors[names(group_colors) %in% present_levels]
-  
-  # Pair adjacent levels for comparisons: (1 vs 2), (3 vs 4), etc.
-  comparisons <- lapply(
-    seq(1, length(ordered_levels) - 1, by = 2),
-    function(k) ordered_levels[k:(k + 1)]
-  )
-  
-  #plot ppi
-  ppi_summary <- dat %>%
-    group_by(group) %>%
-    summarise(
-      n       = n(),
-      n_match = sum(variant_ppi_overlap == 1L, na.rm = TRUE),
-      prop    = n_match / n,
-      .groups = "drop"
-    )
-  
-  pv_ppi   <- .pval_df(ppi_summary, "prop", "n_match", "n", comparisons)
-  ymax_ppi <- max(ppi_summary$prop, na.rm = TRUE)
-  
-  p_ppi_prop <- ggplot(ppi_summary, aes(x = group, y = prop, fill = group)) +
-    geom_col(width = 0.7) +
-    scale_fill_manual(values = group_colors, guide = "none") +
-    geom_text(aes(label = paste0(n_match, "/", n)), vjust = -0.3, size = 4) +
-    stat_pvalue_manual(pv_ppi, label = "label", xmin = "group1", xmax = "group2",
-                       y.position = "y.position", tip.length = 0.01) +
-    expand_limits(y = ymax_ppi * 1.35) +
-    labs(title = "Proportion of variants with downstream PPI interface residue",
-         x = NULL, y = "Proportion") +
-    theme_minimal(base_size = 14) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  # CHANGED: Wilcoxon comparisons now BH-adjusted (p.adjust.method + label)
-  p_ppi_dist <- ggplot(
-    dat %>% filter(!is.na(variant_ppi_dist_to_nearest_interface_bp)),
-    aes(x = group, y = variant_ppi_dist_to_nearest_interface_bp, fill = group)
-  ) +
-    geom_violin(trim = TRUE, alpha = 0.7) +
-    geom_boxplot(width = 0.12, outlier.size = 0.6, color = "black") +
-    scale_fill_manual(values = group_colors, guide = "none") +
-    stat_compare_means(comparisons = comparisons, method = "wilcox.test",
-                       p.adjust.method = FDR_METHOD, label = "p.adj") +
-    labs(title = "Distance from PTC to nearest downstream PPI interface residue",
-         x = NULL, y = "Distance (bp)") +
-    theme_minimal(base_size = 14) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  # CHANGED: Wilcoxon comparisons now BH-adjusted
-  p_ppi_log <- ggplot(
-    dat %>% filter(!is.na(variant_ppi_dist_to_nearest_interface_bp),
-                   variant_ppi_dist_to_nearest_interface_bp > 0),
-    aes(x = group, y = variant_ppi_dist_to_nearest_interface_bp, fill = group)
-  ) +
-    geom_violin(trim = TRUE, alpha = 0.7) +
-    geom_boxplot(width = 0.12, outlier.size = 0.6, color = "black") +
-    scale_y_log10() +
-    scale_fill_manual(values = group_colors, guide = "none") +
-    stat_compare_means(comparisons = comparisons, method = "wilcox.test",
-                       p.adjust.method = FDR_METHOD, label = "p.adj") +
-    labs(title = "Log10 distance from PTC to nearest downstream PPI interface residue",
-         x = NULL, y = "Distance (bp, log10)") +
-    theme_minimal(base_size = 14) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  #plot pfam
-  pfam_bm <- getBM(
-    attributes = c("ensembl_transcript_id", "pfam_end"),
-    filters    = "ensembl_transcript_id",
-    values     = unique(dat$ensembl_transcript_id),
-    mart       = ensembl
-  )
-  
-  max_pfam_end_df <- pfam_bm %>%
+  # --- Pfam: PTC position relative to the last domain end ---
+  max_pfam_end_df <- pfam_fin %>%
     filter(!is.na(pfam_end)) %>%
     group_by(ensembl_transcript_id) %>%
     summarise(max_pfam_end = max(pfam_end), .groups = "drop")
   
   dat <- dat %>%
     mutate(ptc_aa = .cds2aa(ptc_pos)) %>%
-    dplyr::select(-any_of(c("max_pfam_end",
-                            "dist_ptc_to_max_pfam_end_aa",
-                            "ptc_after_max_pfam_end",
-                            "ptc_before_max_pfam_end"))) %>%
     left_join(max_pfam_end_df, by = "ensembl_transcript_id") %>%
     mutate(
       dist_ptc_to_max_pfam_end_aa = ptc_aa - max_pfam_end,
-      ptc_after_max_pfam_end      = as.integer(dist_ptc_to_max_pfam_end_aa >  0),
-      ptc_before_max_pfam_end     = as.integer(dist_ptc_to_max_pfam_end_aa <  0)
+      ptc_after_max_pfam_end      = as.integer(dist_ptc_to_max_pfam_end_aa > 0),
+      ptc_before_max_pfam_end     = as.integer(dist_ptc_to_max_pfam_end_aa < 0)
     )
   
-  dat <- dat %>%
-    left_join(
-      pfam_fin %>%
-        dplyr::select(ensembl_transcript_id, pfam, pfam_start, pfam_end, hgnc_symbol),
-      by = "ensembl_transcript_id"
-    ) %>%
-    mutate(
-      in_pfam = !is.na(pfam_start) & !is.na(pfam_end) &
-        !is.na(ptc_aa)     & ptc_aa <= pfam_end
-    )
-  
-  pfam_summary <- dat %>%
+  # --- descriptive counts per group ---
+  flag_summary <- dat %>%
     group_by(group) %>%
     summarise(
-      n           = n(),
-      n_after     = sum(ptc_after_max_pfam_end  == 1L, na.rm = TRUE),
-      n_before    = sum(ptc_before_max_pfam_end == 1L, na.rm = TRUE),
-      prop_after  = n_after  / n,
-      prop_before = n_before / n,
+      n            = n(),
+      n_ppi        = sum(variant_ppi_overlap     == 1L, na.rm = TRUE),
+      prop_ppi     = n_ppi / n,
+      n_pfam_before = sum(ptc_before_max_pfam_end == 1L, na.rm = TRUE),
+      prop_pfam_before = n_pfam_before / n,
       .groups = "drop"
     )
   
-  pv_pfam   <- .pval_df(pfam_summary, "prop_after", "n_after", "n", comparisons)
-  ymax_pfam <- max(pfam_summary$prop_after, na.rm = TRUE)
+  write.csv(dat,          file.path(out_dir, "variants_annotated.csv"), row.names = FALSE)
+  write.csv(flag_summary, file.path(out_dir, "ppi_pfam_flag_summary.csv"), row.names = FALSE)
   
-  # CHANGED: Wilcoxon comparisons now BH-adjusted
-  p_pfam_dist <- ggplot(
-    dat %>% filter(!is.na(dist_ptc_to_max_pfam_end_aa)),
-    aes(x = group, y = dist_ptc_to_max_pfam_end_aa, fill = group)
-  ) +
-    geom_violin(trim = TRUE, alpha = 0.7) +
-    geom_boxplot(width = 0.12, outlier.size = 0.6, color = "black") +
-    scale_fill_manual(values = group_colors, guide = "none") +
-    stat_compare_means(comparisons = comparisons, method = "wilcox.test",
-                       p.adjust.method = FDR_METHOD, label = "p.adj") +
-    labs(title = "Distance from PTC to the largest PFAM end",
-         x = NULL, y = "PTC aa position - largest PFAM end (aa)") +
-    theme_minimal(base_size = 14) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  # CHANGED: Wilcoxon comparisons now BH-adjusted
-  p_pfam_abs <- ggplot(
-    dat %>%
-      filter(!is.na(dist_ptc_to_max_pfam_end_aa)) %>%
-      mutate(abs_dist = abs(dist_ptc_to_max_pfam_end_aa)),
-    aes(x = group, y = abs_dist, fill = group)
-  ) +
-    geom_violin(trim = TRUE, alpha = 0.7) +
-    geom_boxplot(width = 0.12, outlier.size = 0.6, color = "black") +
-    scale_fill_manual(values = group_colors, guide = "none") +
-    stat_compare_means(comparisons = comparisons, method = "wilcox.test",
-                       p.adjust.method = FDR_METHOD, label = "p.adj") +
-    labs(title = "Absolute distance from PTC to the largest PFAM end",
-         x = NULL, y = "Absolute distance (aa)") +
-    theme_minimal(base_size = 14) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  p_pfam_prop <- ggplot(pfam_summary,
-                        aes(x = group, y = prop_before, fill = group)) +
-    geom_col(width = 0.7) +
-    scale_fill_manual(values = group_colors, guide = "none") +
-    geom_text(aes(label = paste0(n_before, "/", n)), vjust = -0.3, size = 4) +
-    stat_pvalue_manual(pv_pfam, label = "label", xmin = "group1", xmax = "group2",
-                       y.position = "y.position", tip.length = 0.01) +
-    expand_limits(y = ymax_pfam * 1.35) +
-    labs(title = "Proportion of variants with PTC influencing PFAM domain",
-         x = NULL, y = "Proportion") +
-    theme_minimal(base_size = 14) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  pfam_pct_df <- dat %>%
-    count(group, in_pfam) %>%
-    group_by(group) %>%
-    tidyr::complete(in_pfam = c(FALSE, TRUE), fill = list(n = 0)) %>%
-    mutate(prop = n / sum(n),
-           pct  = scales::percent(prop, accuracy = 0.1)) %>%
-    ungroup()
-  
-  p_pfam_stack <- ggplot(pfam_pct_df,
-                         aes(x = group, y = prop, fill = as.character(in_pfam))) +
-    geom_col(color = "grey30") +
-    geom_text(aes(label = pct), position = position_stack(vjust = 0.5), size = 3) +
-    scale_fill_manual(values = c("FALSE" = "lightblue", "TRUE" = "#2ca02c"),
-                      labels = c("Outside PFAM", "Influences PFAM"), name = NULL) +
-    scale_y_continuous(labels = percent_format(), limits = c(0, 1)) +
-    labs(title = "% of variants influencing PFAM domains",
-         x = NULL, y = "Fraction of variants") +
-    theme_minimal(base_size = 12) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          plot.title  = element_text(hjust = 0.5, face = "bold"))
-  
-  #output
-  write.csv(dat,          file.path(out_dir, "variants_annotated.csv"),              row.names = FALSE)
-  write.csv(ppi_summary,  file.path(out_dir, "ppi_flag_summary.csv"),                row.names = FALSE)
-  write.csv(pfam_summary, file.path(out_dir, "pfam_flag_summary.csv"),               row.names = FALSE)
-  write.csv(pfam_pct_df,  file.path(out_dir, "pfam_influenced_variant_counts.csv"),  row.names = FALSE)
-  # CHANGED: export raw and adjusted p-values for the bar-chart comparisons
-  if (!is.null(pv_ppi))  write.csv(pv_ppi,  file.path(out_dir, "ppi_prop_pvalues.csv"),  row.names = FALSE)
-  if (!is.null(pv_pfam)) write.csv(pv_pfam, file.path(out_dir, "pfam_prop_pvalues.csv"), row.names = FALSE)
-  
-  plot_list <- list(
-    ppi_proportion    = p_ppi_prop,
-    ppi_distance      = p_ppi_dist,
-    ppi_distance_log  = p_ppi_log,
-    pfam_distance     = p_pfam_dist,
-    pfam_abs_distance = p_pfam_abs,
-    pfam_proportion   = p_pfam_prop,
-    pfam_stacked      = p_pfam_stack
-  )
-  
-  for (nm in names(plot_list)) {
-    ggsave(file.path(out_dir, paste0(nm, ".pdf")), plot_list[[nm]], width = 9, height = 5)
-    ggsave(file.path(out_dir, paste0(nm, ".png")), plot_list[[nm]], width = 9, height = 5, dpi = 300)
-  }
-  
-  #return new variant_all dataframe
+  # --- return the annotated variant table ---
   new_cols <- c(
     "uniprot",
     "variant_ppi_overlap",
@@ -662,8 +381,6 @@ variant_pfam_ppi <- function(
     "ptc_before_max_pfam_end"
   )
   
-  # dat may have been expanded by the pfam_fin join (multiple domains per
-  # transcript); collapse back to one row per Variant_Key before joining
   dat_collapsed <- dat %>%
     dplyr::select(Variant_Key, ensembl_transcript_id, all_of(new_cols)) %>%
     distinct(Variant_Key, ensembl_transcript_id, .keep_all = TRUE)
@@ -798,20 +515,6 @@ extract_or <- function(fit, coef_name) {
   )
 }
 
-# Standardize group -> is_disease / gene_set encoding, drop duplicated .x/.y cols
-encode_groups <- function(data) {
-  data %>%
-    dplyr::select(-ends_with(".x")) %>%
-    rename_with(~ gsub("\\.y$", "", .), ends_with(".y")) %>%
-    mutate(
-      is_disease = as.integer(group %in% c("snv_disease", "fs_disease")),
-      gene_set   = case_when(
-        group %in% c("snv_disease", "snv_control") ~ "SNV",
-        group %in% c("fs_disease",  "fs_control")  ~ "FS"
-      )
-    )
-}
-
 # Flags with < 2 unique non-NA values within a gene_set can't be modeled -> skip
 flags_without_variation <- function(data, gene_set_label, flag_cols = FLAG_COLS) {
   data %>%
@@ -941,43 +644,10 @@ tidy_dist_models <- function(models, labels = FLAG_LABELS) {
     )
 }
 
-# ==============================================================================
 # 4.2  MIXED-EFFECT MODEL  
-# ------------------------------------------------------------------------------
-# Logistic GLMM with a random intercept per transcript, fitted SEPARATELY within
-# each gene set (SNV, FS). The previous version pooled both gene sets into one
-# model, which is inconsistent with sections 4.3 and 4.4 and confounds the
-# feature effect with systematic differences in PTC position between SNVs and
-# frameshift variants.
-#
-# MULTIPLICITY
-#   BH within each (gene_set, model) stratum, matching 4.3 and 4.4.
-# ==============================================================================
-
-FDR_METHOD <- "BH"
-FLAG_COLS <- c(
-  "variant_ppi_overlap",
-  "ptc_before_max_pfam_end",
-  "variant_protein_flag",
-  "variant_domain_flag",
-  "variant_slim_flag",
-  "variant_morf_flag",
-  "variant_ptm_flag",
-  "variant_nls_flag",
-  "variant_LCS_flag",
-  "dist_to_cds_end_log"    
-)
-
-# A cell count at or below this in the 2x2 of flag by is_disease triggers the
-# Firth-penalised fallback.
 SEPARATION_MIN_CELL <- 5
 
-
-
-# ------------------------------------------------------------------------------
 # 4.2.1  Fit one flag within one gene set
-# ------------------------------------------------------------------------------
-
 fit_one_glmm <- function(dat, flag, gs) {
   
   is_cont <- flag %in% CONT_PREDICTORS
@@ -993,14 +663,6 @@ fit_one_glmm <- function(dat, flag, gs) {
     OR = NA_real_, OR_low = NA_real_, OR_high = NA_real_, p_value = NA_real_,
     singular = NA, method = NA_character_, row.names = NULL
   )
-  
-  if (nrow(df) == 0 ||
-      n_distinct(df[[flag]]) < 2 ||
-      n_distinct(df$is_disease) < 2) {
-    message(sprintf("[%s] %s: insufficient variation, skipped", gs, flag))
-    base$method <- "skipped"
-    return(base)
-  }
   
   fit <- tryCatch(
     lme4::glmer(as.formula(paste("is_disease ~", flag, "+ (1 | ensembl_transcript_id)")),
@@ -1028,13 +690,9 @@ fit_one_glmm <- function(dat, flag, gs) {
   base
 }
 
-
-# ------------------------------------------------------------------------------
 # 4.2.2  Driver
-# ------------------------------------------------------------------------------
-
 run_mixed_effect_flag_analysis <- function(variants_all5,
-                                           flag_cols = FLAG_COLS,
+                                           flag_cols = GENE_MATCHED_FLAGS,
                                            gene_sets = c("SNV", "FS")) {
   
   map_dfr(gene_sets, function(gs) {
@@ -1043,13 +701,7 @@ run_mixed_effect_flag_analysis <- function(variants_all5,
   })
 }
 
-
-# ------------------------------------------------------------------------------
-# 4.2.4  Tidy and adjust
-# ------------------------------------------------------------------------------
-# BH within each gene set. Rows that never produced an estimate are excluded
-# from the family so they do not inflate m.
-
+# 4.2.3  Tidy and adjust
 tidy_mixed_results <- function(mixed_results, labels = FLAG_LABELS) {
   mixed_results %>%
     mutate(model = "Mixed-effect") %>%
@@ -1073,16 +725,8 @@ tidy_mixed_results <- function(mixed_results, labels = FLAG_LABELS) {
     )
 }
 
-
-# ------------------------------------------------------------------------------
-# 4.2.5  Plot
-# ------------------------------------------------------------------------------
-# Gene sets are separate shapes. Estimates from a singular fit or from the Firth
-# fallback are drawn hollow, since in neither case did a random intercept
-# actually contribute.
-
+# 4.2.4  Plot
 plot_mixed_effect_flags <- function(mixed_results, or_limits = c(0.01, 1000)) {
-  
   d <- tidy_mixed_results(mixed_results) %>%
     filter(!is.na(OR)) %>%
     mutate(
@@ -1101,7 +745,7 @@ plot_mixed_effect_flags <- function(mixed_results, or_limits = c(0.01, 1000)) {
                                   "ns" = "grey60", "not estimable" = "grey85")) +
     scale_shape_manual(values = c("SNV" = 16, "FS" = 17)) +
     scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = 0.35),
-                       labels = c(`TRUE` = "GLMM", `FALSE` = "singular / Firth"),
+                       labels = c(`TRUE` = "GLMM", `FALSE` = "singular"),
                        name = "Fit") +
     scale_x_log10(limits = or_limits) +
     labs(
@@ -1113,13 +757,8 @@ plot_mixed_effect_flags <- function(mixed_results, or_limits = c(0.01, 1000)) {
     theme(plot.title = element_text(face = "bold"))
 }
 
-
-# ==============================================================================
 # 4.3  HIERARCHICAL BAYESIAN MODEL
-# ------------------------------------------------------------------------------
 # Partial pooling of flag effects across genes within each gene set (SNV/FS).
-# ==============================================================================
-
 run_bayesian_by_geneset <- function(variants_all5, flag_cols = GENE_MATCHED_FLAGS) {
   library(brms)
   gene_sets <- c("SNV", "FS")
@@ -1131,7 +770,6 @@ run_bayesian_by_geneset <- function(variants_all5, flag_cols = GENE_MATCHED_FLAG
       df <- dat_gs %>%
         dplyr::select(is_disease, all_of(flag), ensembl_transcript_id) %>%
         filter(!is.na(.data[[flag]]))
-      # 二分类才转 integer；连续变量保持数值（否则距离会被截断成整数）
       if (!(flag %in% CONT_PREDICTORS))
         df <- df %>% mutate(across(all_of(flag), as.integer))
       
@@ -1176,44 +814,7 @@ plot_bayesian_by_geneset <- function(fit_lists) {
   ) + ggplot2::labs(color = "95% CrI", shape = "Gene set")
 }
 
-
-# 4.4 unadjusted regression
-# ------------------------------------------------------------------------------
-run_unadjusted_flag_analysis <- function(variants_all5,
-                                           flag_cols = GENE_MATCHED_FLAGS,
-                                           cont_col  = CONT_COL,
-                                           fdr_group_vars = c("gene_set", "model")) {
-  
-  gene_sets <- c("SNV", "FS")
-  
-  results <- map_dfr(gene_sets, function(gs) {
-    data          <- filter(variants_all5, gene_set == gs)
-    skip_flags    <- flags_without_variation(variants_all5, gs, flag_cols)
-    active_flags  <- setdiff(flag_cols, skip_flags)
-    
-    message(sprintf("Skipping in %s: %s", gs,
-                    if (length(skip_flags)) paste(skip_flags, collapse = ", ") else "none"))
-    
-    unadj <- map_dfr(active_flags, ~ fit_flag_glm(data, .x)) %>%
-      mutate(gene_set = gs, model = "Unadjusted")
-    unadj_cont <- fit_flag_glm(data, cont_col) %>%
-      mutate(gene_set = gs, model = "Unadjusted")
-    
-    
-    bind_rows(unadj, unadj_cont)
-  })
-  
-  results %>%
-    add_fdr_sig(group_vars = fdr_group_vars) %>%
-    mutate(model = factor(model, levels = c("Unadjusted")))
-}
-
-
-
-# ==============================================================================
-# PIPELINE ENTRY POINT
-# ==============================================================================
-
+##run analysis
 # --- 4.0: data + annotation ---------------------------------------------------
 pfam_fin     <- get_pfam_annotations(variants_all2$ensembl_transcript_id, ensembl)
 human_1_     <- read_delim(data_file("human (1).txt"),

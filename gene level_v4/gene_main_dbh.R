@@ -41,8 +41,8 @@ source(.p[1]); rm(.p)
 CONFIG <- list(
   ensembl_version  = NULL,          # NULL 
   ensembl_mirror   = NULL,          # "useast" / "uswest" / "asia"
-  chunk_sequence   = 25,            # 含 coding 属性（完整 CDS 序列）
-  chunk_light      = 300,           # 其余属性
+  chunk_sequence   = 25,           
+  chunk_light      = 300,         
   
   ptc_info         = "PTC_info20260201_region.csv",
   omim_ad_symbols  = "omim_AD_symbols.csv",
@@ -187,13 +187,12 @@ fetch_canonical_cds <- function(symbols, mart, chunk = CONFIG$chunk_light) {
 }
 
 
-## 候选池缓存：OMIM AD 基因的 CDS 长度在多次运行间不变
+#get CDS length
 get_pool_cds <- function(omim_AD_symbols, mart, cache = CONFIG$pool_cache) {
   if (file.exists(cache)) {
-    message("读取候选池缓存: ", cache)
+    message("get cache: ", cache)
     return(read.csv(cache, stringsAsFactors = FALSE))
   }
-  message("首次构建候选池 CDS 长度表（此后走缓存）...")
   pool <- fetch_canonical_cds(omim_AD_symbols, mart)
   write.csv(pool, cache, row.names = FALSE)
   pool
@@ -470,11 +469,6 @@ annotate_pfam <- function(gene_all, mart) {
 
 
 annotate_ppi_interface <- function(gene_all, ppi_file) {
-  if (!file.exists(path.expand(ppi_file))) {
-    message("  跳过 PPI 界面残基（文件不存在）")
-    return(gene_all %>% mutate(ppi_overlap = NA_integer_))
-  }
-  message("  PPI 界面残基 ...")
   hp <- fread(path.expand(ppi_file), data.table = FALSE)
   
   to_num <- function(x) {
@@ -541,12 +535,8 @@ annotate_tau <- function(gene_all, gtex_path) {
   gene_all %>% mutate(tau = unname(tau_scores[hgnc_symbol]))
 }
 
-
+#add pli and loeuf
 annotate_constraint <- function(gene_all, lof_path) {
-  if (!file.exists(lof_path)) {
-    message("  跳过 gnomAD 约束指标（文件不存在）")
-    return(gene_all %>% mutate(pLI = NA_real_, oe_lof_upper = NA_real_))
-  }
   message("  gnomAD pLI / LOEUF ...")
   lof <- read.delim(lof_path) %>%
     select(gene, pLI, oe_lof_upper) %>%
@@ -790,7 +780,7 @@ test_paired <- function(gene_all, feature, stratum_now, exact_cutoff = 25) {
     
     if (disc == 0)
       return(data.frame(feature = feature, stratum = stratum_now, n_pairs = n,
-                        test = "none (无不一致配对)", statistic = NA_real_,
+                        test = "none (no dis pair)", statistic = NA_real_,
                         effect = NA_real_, p_value = NA_real_,
                         case_summary = mean(cs), control_summary = mean(ct),
                         stringsAsFactors = FALSE))
@@ -871,7 +861,7 @@ run_all_tests <- function(gene_all, paired = TRUE) {
 # =============================================================================
 
 correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NULL) {
-  if (nrow(res) == 0) { message(label, ": 无检验结果"); return(res) }
+  if (nrow(res) == 0) { message(label, ": no result"); return(res) }
   
   res <- res %>%
     group_by(stratum) %>%
