@@ -11,7 +11,6 @@
        call. = FALSE)
 }
 REPO <- if (exists("REPO")) path.expand(REPO) else .find_repo()
-cat("仓库:", REPO, "\n")
 
 # ---- 2) check necessary packages --------------------------------------------------------------
 need_main  <- c("dplyr", "tidyr", "readr", "ggplot2", "purrr", "patchwork", "lme4")
@@ -68,13 +67,10 @@ run_one("fig_gene_level.R",
         c(F_MATCHED, if (is.na(F_RANDOM)) "NA" else F_RANDOM, OUTDIR),
         "Gene level：matched by CDS length")
 
-if (!is.na(F_TABLE) && !is.na(F_IDR)) {
+
   run_one("fig_variant_level.R",
           c(F_TABLE, F_IDR, OUTDIR, if (RUN_BAYES) "bayes" else "nobayes"),
           "Variant level：mixed effect（main）+ Bayesian（sensitivity）")
-} else {
-  cat("\n跳过 variant level —— 缺 analysis_table.csv 或 idr_metrics.csv\n")
-}
 
 # ---- 6) main ----------------------------------------------------------------
 cat("\n", strrep("=", 70), "\ngenerated files\n", strrep("=", 70), "\n", sep = "")
