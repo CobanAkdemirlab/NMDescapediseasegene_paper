@@ -261,11 +261,10 @@ rest.all <- sapply(txnames.list, function(x) if(is.null(x$rest.PTC)) NA else x$r
 summary(rest.all)
 quantile(rest.all, c(0.1, 0.25, 0.5, 0.75), na.rm = TRUE)
 res3 <- extract_enriched(txnames.list, fdr.method = "dbh")
-res3$genes                    # 富集基因名向量
-head(res3$enriched, 20)       # 按 p 值排序的转录本明细
+res3$genes                  
 write.csv(res3$enriched, "enriched_genes_dbh.csv", row.names = FALSE)
 
-# 三种方法的基因集对比
+# compare source for ppi
 g.dbh <- extract_enriched(txnames.list, "dbh")$genes
 g.dby <- extract_enriched(txnames.list, "dby")$genes
 g.bh  <- extract_enriched(txnames.list, "bh")$genes
@@ -289,7 +288,6 @@ write.csv(p_set,'p_less.csv',row.names = F)
 .e <- c("gene level_v3/disease genes/snv/get_NMD_enrichment_DBH.R",
         "get_NMD_enrichment_DBH.R", "../snv/get_NMD_enrichment_DBH.R")
 .e <- .e[file.exists(.e)]
-if (!length(.e)) stop("找不到 get_NMD_enrichment_DBH.R")
 source(.e[1]); rm(.e)
 get_NMD_enrichment_DBH()
 snv_can_gene = read.csv("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can.txt",header=F)
