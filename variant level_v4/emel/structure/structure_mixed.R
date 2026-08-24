@@ -4,7 +4,7 @@ library(lmerTest)
 library(gt)
 
 # ══════════════════════════════════════════════════════════════
-# 1. 数据准备（与 Table 1 / Table 2 一致）
+# 1. Data preparation (consistent with Table 1 / Table 2)
 # ══════════════════════════════════════════════════════════════
 
 df_all <- VAR_WT_structural_results %>%
@@ -38,9 +38,9 @@ for (rg in c("full", "NMDPos", "DivergentPos")) {
 
 
 # ══════════════════════════════════════════════════════════════
-# 2. 结果变量 + 可读标签
+# 2. Outcome variables + readable labels
 # ══════════════════════════════════════════════════════════════
-# 不含 WT_* / wt_length（基因内恒定，混合模型无法识别组效应）
+# Excludes WT_* / wt_length (constant within gene, no group effect identifiable)
 
 region_label <- c(full = "Full", NMDPos = "NMD", DivergentPos = "Divergent")
 
@@ -94,7 +94,7 @@ cat_levels <- c(
 
 
 # ══════════════════════════════════════════════════════════════
-# 3. 混合模型：value ~ group + (1 | uniprot_id)
+# 3. Mixed model: value ~ group + (1 | uniprot_id)
 # ══════════════════════════════════════════════════════════════
 
 fit_lmm <- function(data, outcome, g_dis, g_con, family_label) {
@@ -144,7 +144,7 @@ lmm_results <- bind_rows(
   map_dfr(all_outcomes, ~ fit_lmm(df_all, .x, "FS Disease",  "FS Control",  "FS"))
 ) %>%
   group_by(family) %>%
-  mutate(q_fdr = p.adjust(p_raw, method = "BH")) %>%   # 各比较内独立校正
+  mutate(q_fdr = p.adjust(p_raw, method = "BH")) %>%   # correct independently within each comparison
   ungroup() %>%
   left_join(var_map, by = "outcome") %>%
   mutate(
@@ -166,7 +166,7 @@ write_csv(lmm_results, "LMM_results_all.csv")
 
 
 # ══════════════════════════════════════════════════════════════
-# 4. 合并表格：SNV 与 FS 并排
+# 4. Combined table: SNV and FS side by side
 # ══════════════════════════════════════════════════════════════
 
 tbl_wide <- lmm_results %>%
@@ -184,7 +184,7 @@ tbl_wide <- lmm_results %>%
     estimate_FS,  ci_FS,  p_raw_FS,  q_fdr_FS,  sig_FS
   )
 
-# 样本量放进脚注
+# Sample sizes go into footnote
 n_info <- lmm_results %>%
   group_by(family) %>%
   summarise(n_obs = max(n_obs), n_prot = max(n_proteins), .groups = "drop")
@@ -251,16 +251,16 @@ gtsave(gt_combined, "LMM_table_combined.html")
 try(gtsave(gt_combined, "LMM_table_combined.docx"), silent = TRUE)
 
 # ══════════════════════════════════════════════════════════════
-# 5. 森林图：仅 Δ (VAR−WT)，仅 Full 与 Divergent
+# 5. Forest plot: Delta (VAR-WT) only, Full and Divergent only
 # ══════════════════════════════════════════════════════════════
 
 plot_dat <- lmm_results %>%
   filter(
     !is.na(estimate),
-    str_starts(outcome, "delta_"),                      # 仅 VAR−WT
-    str_detect(outcome, "_(full|DivergentPos)$")        # 仅 Full / Divergent
+    str_starts(outcome, "delta_"),                      # VAR-WT only
+    str_detect(outcome, "_(full|DivergentPos)$")        # Full / Divergent only
   ) %>%
-  mutate(category = droplevels(category)) %>%           # 去掉空 facet
+  mutate(category = droplevels(category)) %>%           # drop empty facets
   arrange(category, desc(ord)) %>%
   mutate(y_key = factor(paste(category, label, sep = "___"),
                         levels = unique(paste(category, label, sep = "___"))))

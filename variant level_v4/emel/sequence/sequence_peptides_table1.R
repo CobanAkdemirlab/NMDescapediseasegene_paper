@@ -6,7 +6,7 @@ library(flextable)
 library(officer)
 
 # ══════════════════════════════════════════════════════════
-# 通用函数
+# Utility functions
 # ══════════════════════════════════════════════════════════
 
 make_group <- function(source_folder) {
@@ -22,14 +22,14 @@ make_group <- function(source_folder) {
 }
 
 # ══════════════════════════════════════════════════════════
-# 计算 VAR - WT 差值
+# Compute VAR - WT difference
 # ══════════════════════════════════════════════════════════
 
 compute_diff <- function(data, has_length = TRUE) {
   
   df <- data %>%
     mutate(
-      # 连续变量差值
+      # Continuous variable differences
       diff_aliphatic_index    = var_aliphatic_index    - wt_aliphatic_index,
       diff_boman              = var_boman               - wt_boman,
       diff_charge             = var_charge              - wt_charge,
@@ -45,7 +45,7 @@ compute_diff <- function(data, has_length = TRUE) {
       diff_hydrophobicity     = var_hydrophobicity     - wt_hydrophobicity,
       diff_hydrophobic_moment = var_hydrophobic_moment - wt_hydrophobic_moment,
       
-      # 结构类别是否改变
+      # Whether structural class changed
       structural_class_changed = factor(
         ifelse(var_structural_class == wt_structural_class,
                "Unchanged", "Changed")
@@ -61,14 +61,14 @@ compute_diff <- function(data, has_length = TRUE) {
 }
 
 # ══════════════════════════════════════════════════════════
-# 建表函数
+# Table-building functions
 # ══════════════════════════════════════════════════════════
 
 make_diff_merged_table <- function(data,
                                    has_length = TRUE,
                                    caption) {
   
-  # 选列
+  # Select columns
   base_vars <- c(
     "group",
     "diff_aliphatic_index",
@@ -152,7 +152,7 @@ make_diff_merged_table <- function(data,
     group_map <- base_map
   }
   
-  # ── SNV 子表 ──────────────────────────────────────────
+  # ── SNV subtable ──────────────────────────────────────
   tbl_snv <- df_sel %>%
     filter(group %in% c("SNV Disease", "SNV Control")) %>%
     mutate(group = droplevels(group)) %>%
@@ -182,7 +182,7 @@ make_diff_merged_table <- function(data,
     ) %>%
     bold_labels()
   
-  # ── FS 子表 ───────────────────────────────────────────
+  # ── FS subtable ───────────────────────────────────────
   tbl_fs <- df_sel %>%
     filter(group %in% c("FS Disease", "FS Control")) %>%
     mutate(group = droplevels(group)) %>%
@@ -211,7 +211,7 @@ make_diff_merged_table <- function(data,
     ) %>%
     bold_labels()
   
-  # ── 合并 ──────────────────────────────────────────────
+  # ── Merge ──────────────────────────────────────────────
   tbl_merged <- tbl_merge(
     tbls        = list(tbl_snv, tbl_fs),
     tab_spanner = c("**SNV Disease vs Control**",
@@ -226,7 +226,7 @@ make_diff_merged_table <- function(data,
 }
 
 # ══════════════════════════════════════════════════════════
-# 准备数据
+# Prepare data
 # ══════════════════════════════════════════════════════════
 
 df_div_raw <- NMD_region_DivergentPos_peptide_props %>%
@@ -245,12 +245,12 @@ df_nmd_raw <- NMD_region_NMDPos_peptide_props %>%
     var_structural_class = factor(var_structural_class)
   )
 
-# 计算差值
+# Compute differences
 df_div_diff <- compute_diff(df_div_raw, has_length = TRUE)
 df_nmd_diff <- compute_diff(df_nmd_raw, has_length = FALSE)
 
 # ══════════════════════════════════════════════════════════
-# 生成表格
+# Generate tables
 # ══════════════════════════════════════════════════════════
 
 tbl_div_merged <- make_diff_merged_table(
@@ -265,22 +265,22 @@ tbl_nmd_merged <- make_diff_merged_table(
   caption    = "Table 3b: VAR vs WT Peptide Property Changes — NMD Region"
 )
 
-# ── 打印 ──────────────────────────────────────────────────
+# ── Print ──────────────────────────────────────────────────
 
 tbl_div_merged
 tbl_nmd_merged
 
-# ── 导出 HTML ─────────────────────────────────────────────
+# ── Export HTML ─────────────────────────────────────────────
 
 tbl_div_merged %>% as_gt() %>% gt::gtsave("Table3a_Divergent_diff.html")
 tbl_nmd_merged %>% as_gt() %>% gt::gtsave("Table3b_NMD_diff.html")
 
-# ── 导出 RTF ─────────────────────────────────────────────
+# ── Export RTF ─────────────────────────────────────────────
 
 tbl_div_merged %>% as_gt() %>% gt::gtsave("Table3a_Divergent_diff.rtf")
 tbl_nmd_merged %>% as_gt() %>% gt::gtsave("Table3b_NMD_diff.rtf")
 
-# ── 导出 Word ─────────────────────────────────────────────
+# ── Export Word ─────────────────────────────────────────────
 
 doc <- read_docx() %>%
   body_add_par(

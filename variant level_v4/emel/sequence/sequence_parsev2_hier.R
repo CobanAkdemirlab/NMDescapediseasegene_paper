@@ -4,7 +4,7 @@ library(bayesplot)
 library(posterior)
 
 # ═════════════════════════════════════════════════════════════════════
-# 1. 读取数据
+# 1. Read data
 # ═════════════════════════════════════════════════════════════════════
 
 nmd_length_NMDPos_PARSE_v2 <- read_csv(
@@ -13,7 +13,7 @@ nmd_length_NMDPos_PARSE_v2 <- read_csv(
 )
 
 # ═════════════════════════════════════════════════════════════════════
-# 2. 整理数据
+# 2. Tidy data
 # ═════════════════════════════════════════════════════════════════════
 
 parse_dat <- nmd_length_NMDPos_PARSE_v2 %>%
@@ -45,7 +45,7 @@ parse_dat <- nmd_length_NMDPos_PARSE_v2 %>%
   filter(!is.na(source_folder), !is.na(uniprot))
 
 # ═════════════════════════════════════════════════════════════════════
-# 3. 计算 VAR - WT
+# 3. Compute VAR - WT
 # ═════════════════════════════════════════════════════════════════════
 
 parse_dat <- parse_dat %>%
@@ -62,7 +62,7 @@ d_vars <- c(
 )
 
 # ═════════════════════════════════════════════════════════════════════
-# 4. 检查每组数量
+# 4. Check counts per group
 # ═════════════════════════════════════════════════════════════════════
 
 print(table(parse_dat$source_folder))
@@ -82,7 +82,7 @@ get_prior_scale <- function(x) {
 }
 
 # ═════════════════════════════════════════════════════════════════════
-# 6. 批量拟合 Bayesian hierarchical Gaussian models
+# 6. Batch fit Bayesian hierarchical Gaussian models
 # ═════════════════════════════════════════════════════════════════════
 
 model_list <- list()
@@ -90,7 +90,7 @@ model_list <- list()
 for (var in d_vars) {
   
   cat("\n══════════════════════════════════════\n")
-  cat("正在拟合变量：", var, "\n")
+  cat("Fitting variable:", var, "\n")
   cat("══════════════════════════════════════\n")
   
   model_data <- parse_dat %>%
@@ -124,11 +124,11 @@ for (var in d_vars) {
   
   model_list[[var]] <- model
   
-  cat("完成：", var, "\n")
+  cat("Done:", var, "\n")
 }
 
 # ═════════════════════════════════════════════════════════════════════
-# 7. 提取两个主要比较
+# 7. Extract two main comparisons
 #    fs_disease vs fs_control
 #    snv_disease vs snv_control
 # ═════════════════════════════════════════════════════════════════════
@@ -265,15 +265,15 @@ rhat_summary <- map_dfr(d_vars, function(var) {
 print(rhat_summary)
 
 # ═════════════════════════════════════════════════════════════════════
-# 12. 保存结果
+# 12. Save results
 # ═════════════════════════════════════════════════════════════════════
 
 write_csv(results_key, "parse_NMDPos_hierarchical_results.csv")
 write_csv(rhat_summary, "parse_NMDPos_hierarchical_convergence.csv")
 saveRDS(model_list, "parse_NMDPos_hierarchical_model_list.rds")
 
-cat("\n全部完成！\n")
-cat("输出文件：\n")
+cat("\nAll done!\n")
+cat("Output files:\n")
 cat("parse_NMDPos_hierarchical_results.csv\n")
 cat("parse_NMDPos_hierarchical_convergence.csv\n")
 cat("parse_NMDPos_hierarchical_model_list.rds\n")

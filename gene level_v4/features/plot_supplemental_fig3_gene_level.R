@@ -302,7 +302,7 @@ for (i in seq_len(nrow(feature_map))) {
 }
 
 # ── 9. Arrange panels ─────────────────────────────────────────────────────────
-# up to 6 panels in 2 rows × 3 columns
+# up to 6 panels in 2 rows x 3 columns
 ordered_panels <- c("A", "B", "C", "D", "E", "F")
 ordered_panels <- ordered_panels[ordered_panels %in% names(plot_list)]
 

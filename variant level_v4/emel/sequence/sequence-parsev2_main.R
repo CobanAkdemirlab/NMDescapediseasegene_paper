@@ -7,7 +7,7 @@ library(ggpubr)
 library(patchwork)
 
 # ══════════════════════════════════════════════════════════════
-# 0. 参数
+# 0. Parameters
 # ══════════════════════════════════════════════════════════════
 
 MIN_PEPTIDE_LEN <- 10
@@ -15,10 +15,9 @@ base_dir <- "~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/sequence_
 
 
 # ══════════════════════════════════════════════════════════════
-# 1. 读入并统一列名
+# 1. Read in and standardize column names
 # ══════════════════════════════════════════════════════════════
-# ...4/...5 = VAR，...9/...10 = WT（按列顺序）。
-# 请用 names(read_csv(...)) 确认一次列的实际排列。
+# ...4/...5 = VAR, ...9/...10 = WT (by column order)
 
 read_parse <- function(fname, len_var, len_wt) {
   read_csv(file.path(base_dir, fname), show_col_types = FALSE) %>%
@@ -41,7 +40,7 @@ parse_nmd  <- read_parse("nmd_length_NMDPos_PARSE_v2.csv",
 
 
 # ══════════════════════════════════════════════════════════════
-# 2. id 拆分、队列筛选、密度归一化指标
+# 2. ID splitting, cohort filtering, density-normalized metrics
 # ══════════════════════════════════════════════════════════════
 
 make_key <- function(fn) {
@@ -78,19 +77,19 @@ prep_parse <- function(d, region_name, apply_len_filter = TRUE,
   if (apply_len_filter) d <- d %>% filter(var_len >= MIN_PEPTIDE_LEN)
   n2 <- nrow(d)
   
-  # Divergent 区：无义 SNV 不产生新颖肽段（中位长度 0），整体排除
+  # Divergent region: nonsense SNVs yield no novel peptide (median length 0), excluded
   if (drop_snv) {
     d <- d %>% filter(str_starts(source_folder, "fs_"))
   }
   n3 <- nrow(d)
   
-  cat(sprintf("[%-10s] 原始 %d -> 队列 %d -> 长度 %d -> 排除 SNV 后 %d\n",
+  cat(sprintf("[%-10s] raw %d -> cohort %d -> length %d -> after SNV exclusion %d\n",
               region_name, n0, n1, n2, n3))
   
   d %>%
     mutate(
       region = region_name,
-      # ── 密度归一化：区分「序列更短」与「相分离倾向本身更低」 ──
+      # ── Density normalization: distinguish shorter sequence from lower intrinsic PS propensity ──
       ps_dist_per100 = var_ps_dist / var_len * 100,
       idr_fraction   = var_ps_idr  / var_len,
       wt_ps_dist_per100 = wt_ps_dist / wt_len * 100,
@@ -101,7 +100,7 @@ prep_parse <- function(d, region_name, apply_len_filter = TRUE,
     )
 }
 
-cat("=== 清洗记录 ===\n")
+cat("=== Filtering Log ===\n")
 df_full <- prep_parse(parse_full, "Full",      apply_len_filter = FALSE)
 df_div  <- prep_parse(parse_div,  "Divergent", apply_len_filter = TRUE,
                       drop_snv = TRUE)
@@ -109,10 +108,10 @@ df_nmd  <- prep_parse(parse_nmd,  "NMD",       apply_len_filter = TRUE)
 
 
 # ══════════════════════════════════════════════════════════════
-# 3. 诊断：key 匹配率（疾病组样本量偏低，需确认是否漏匹配）
+# 3. Diagnostics: key match rate (disease group n is low, check for missed matches)
 # ══════════════════════════════════════════════════════════════
 
-cat("\n=== key 匹配诊断（疾病组）===\n")
+cat("\n=== Key Match Diagnostics (Disease Group) ===\n")
 key_diag <- imap_dfr(
   list(Full = parse_full, Divergent = parse_div, NMD = parse_nmd),
   function(d, nm) {
@@ -128,20 +127,20 @@ key_diag <- imap_dfr(
 )
 print(as.data.frame(key_diag))
 
-cat("\n未匹配的 file_name 示例（用于核对 indel 表示方式）：\n")
+cat("\nUnmatched file_name examples (to check indel notation):\n")
 parse_full %>%
   separate(id, c("sf", "fn"), sep = "-", extra = "merge") %>%
   filter(str_detect(sf, "disease"),
          !make_key(fn) %in% all_variants$key) %>%
   slice_head(n = 8) %>% pull(fn) %>% print()
 
-cat("\n=== 各区域分组样本量 ===\n")
+cat("\n=== Sample Size by Region and Group ===\n")
 bind_rows(df_full, df_div, df_nmd) %>%
   count(region, group) %>%
   pivot_wider(names_from = group, values_from = n, values_fill = 0) %>%
   as.data.frame() %>% print()
 
-cat("\n=== 零值比例 ===\n")
+cat("\n=== Zero-Value Proportions ===\n")
 bind_rows(df_full, df_div, df_nmd) %>%
   group_by(region, group) %>%
   summarise(n = n(),
@@ -153,10 +152,10 @@ cat("\n")
 
 
 # ══════════════════════════════════════════════════════════════
-# 4. 变量定义
+# 4. Variable definitions
 # ══════════════════════════════════════════════════════════════
-# 绝对量（†）随序列长度增长；密度指标（‡）已归一化，
-# 是判断「相分离倾向本身是否改变」的关键。
+# Absolute measures (†) scale with sequence length; density metrics (‡) are normalized,
+# key to whether phase-separation propensity itself has changed.
 
 var_info <- tribble(
   ~var,              ~label,                             ~type,
@@ -168,13 +167,13 @@ var_info <- tribble(
 ) %>%
   mutate(label_disp = paste0(label, if_else(type == "absolute", "", "")))
 
-# 建模用的列名（密度指标不带 var_ 前缀）
+# Column names used for modeling (density metrics lack var_ prefix)
 col_of <- function(v) if_else(v %in% c("ps_dist_per100", "idr_fraction"),
                               v, paste0("var_", v))
 
 
 # ══════════════════════════════════════════════════════════════
-# 5. 描述性表格
+# 5. Descriptive tables
 # ══════════════════════════════════════════════════════════════
 
 make_desc <- function(d, region_name) {
@@ -261,14 +260,14 @@ desc_nmd  %>% as_gt() %>% gtsave("PARSE_descriptive_NMD.html")
 
 
 # ══════════════════════════════════════════════════════════════
-# 6. 模型
+# 6. Models
 # ══════════════════════════════════════════════════════════════
-# LMM          : value ~ group + (1 | gene)                 主分析
-# LMM+length   : value ~ group + var_len + (1 | gene)       敏感性（仅绝对量）
-# GLMM         : (value > 0) ~ group + (1 | gene)           零膨胀辅助
+# LMM          : value ~ group + (1 | gene)                 primary analysis
+# LMM+length   : value ~ group + var_len + (1 | gene)       sensitivity (absolute only)
+# GLMM         : (value > 0) ~ group + (1 | gene)           zero-inflation auxiliary
 #
-# 只对 VAR 建模：WT 在基因内恒定，被随机截距吸收，Δ 模型与 VAR
-# 模型的组效应在数学上完全相同。
+# Model VAR only: WT is constant within gene, absorbed by random intercept, so Delta model and VAR
+# model give mathematically identical group effects.
 
 fit_lmm <- function(d, v, g_dis, g_con, fam, region_name, adjust_len = FALSE) {
   
@@ -336,15 +335,15 @@ run_region <- function(d, region_name) {
   den_vars <- var_info$var[var_info$type == "density"]
   
   bind_rows(
-    # 主分析：全部变量
+    # Primary analysis: all variables
     imap_dfr(pairs, function(gp, fam)
       map_dfr(var_info$var, ~ fit_lmm(d, .x, gp[1], gp[2], fam, region_name))),
-    # 敏感性：绝对量加长度协变量（长度本身不需要）
+    # Sensitivity: absolute measures plus length covariate (length itself excluded)
     imap_dfr(pairs, function(gp, fam)
       map_dfr(setdiff(abs_vars, "len"),
               ~ fit_lmm(d, .x, gp[1], gp[2], fam, region_name,
                         adjust_len = TRUE))),
-    # 零膨胀辅助
+    # Zero-inflation auxiliary
     imap_dfr(pairs, function(gp, fam)
       map_dfr(c("ps_idr", "ps_dist"),
               ~ fit_glmm(d, .x, gp[1], gp[2], fam, region_name)))
@@ -356,7 +355,7 @@ res_all <- bind_rows(
   run_region(df_div,  "Divergent"),
   run_region(df_nmd,  "NMD")
 ) %>%
-  group_by(family, model) %>%            # 各比较、各模型族内独立校正
+  group_by(family, model) %>%            # independent correction within each comparison and model family
   mutate(q_fdr = p.adjust(p_raw, method = "BH")) %>%
   ungroup() %>%
   left_join(var_info %>% select(var, label, label_disp, type), by = "var") %>%
@@ -379,12 +378,12 @@ write_csv(res_all, "PARSE_model_results.csv")
 
 
 # ══════════════════════════════════════════════════════════════
-# 7. 关键对比：绝对量 vs 密度 vs 长度校正
+# 7. Key comparison: absolute vs density vs length-adjusted
 # ══════════════════════════════════════════════════════════════
-# 密度指标或长度校正后仍显著 -> 相分离倾向本身改变
-# 只有绝对量显著            -> 纯粹是截断效应
+# Density metric or length-adjusted still significant -> intrinsic PS propensity changed
+# Only absolute measure significant -> pure truncation effect
 
-cat("=== 关键对比：截断效应 vs 内在倾向 ===\n")
+cat("=== Key Comparison: Truncation Effect vs Intrinsic Propensity ===\n")
 res_all %>%
   filter(model %in% c("LMM", "LMM + length"),
          var %in% c("ps_dist", "ps_idr", "ps_dist_per100", "idr_fraction")) %>%
@@ -393,7 +392,7 @@ res_all %>%
   arrange(region, family, var, model) %>%
   print(n = Inf)
 
-cat("\n=== 全部模型结果 ===\n")
+cat("\n=== All Model Results ===\n")
 res_all %>%
   select(region, family, model, label, estimate, p_raw, q_fdr, sig,
          n_obs, n_genes) %>%
@@ -403,7 +402,7 @@ res_all %>%
 
 
 # ══════════════════════════════════════════════════════════════
-# 8. 表格
+# 8. Tables
 # ══════════════════════════════════════════════════════════════
 
 fmt_p <- function(x) {
@@ -482,7 +481,7 @@ try(gtsave(tbl_glmm, "PARSE_table_GLMM.docx"), silent = TRUE)
 
 
 # ══════════════════════════════════════════════════════════════
-# 9. 森林图：绝对量与密度指标并列
+# 9. Forest plot: absolute and density metrics side by side
 # ══════════════════════════════════════════════════════════════
 res_all2 <- res_all %>%
   filter(region != "NMD") 

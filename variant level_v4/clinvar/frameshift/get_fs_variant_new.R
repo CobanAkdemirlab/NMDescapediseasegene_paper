@@ -1,15 +1,14 @@
 ##get fs variants from clinvar
 library(stringr)
 library(readr)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) ------------------------------------------------
+#   data_file("x.csv")  locate by filename, error clearly if not found
+#   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -74,15 +73,14 @@ fs_benign_variants<- merge(
 write.csv(fs_variants, 'fs_variants20260201_plp_acat_clinvar.csv', row.names = FALSE)
 write.csv(fs_benign_variants, 'fs_variants20260201_benign_acat_clinvar.csv', row.names = FALSE)
 
-# 新增 helper 函数
 remove_inframe <- function(df) {
   ref <- sub(".*\\|(.+)\\|.*", "\\1", df$key)
   alt <- sub(".*\\|.*\\|(.*)", "\\1", df$key)
   len_diff <- abs(nchar(ref) - nchar(alt))
-  df[len_diff %% 3 != 0, ]   # 保留长度差不是3倍数的（真正的frameshift）
+  df[len_diff %% 3 != 0, ]   # keep length diff not a multiple of 3 (true frameshift)
 }
 
-# 三个数据框都过滤
+# filter all three data frames
 fs_variants2        <- remove_inframe(fs_variants)
 write.csv(fs_variants2, 'fs_variants20260201_plp_clinvar_acat_0.2_filtered.csv', row.names = FALSE)
 fs_vus_variants2    <- remove_inframe(fs_vus_variants)

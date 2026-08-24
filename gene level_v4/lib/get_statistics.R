@@ -97,7 +97,6 @@ get_statistics = function(txnames,input_rds){
       if(length(trig.PTC.ind)>0){
         trig.PTC <- length (unique(sapply(1:length(names(input_rds.ind[trig.PTC.ind])), function(x)
         {
-          #strsplit(names(input_rds.ind[trig.PTC.ind])[x],'\\|')[[1]][2]
           input_rds.ind[trig.PTC.ind[x],]$key
           
         }))) } else {

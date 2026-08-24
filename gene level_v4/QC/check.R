@@ -30,15 +30,15 @@ exon_info <- getBM(
     "exon_chrom_end",
     "genomic_coding_start",
     "genomic_coding_end",
-    "cds_start",        # CDS内的累计起始位置
-    "cds_end",          # CDS内的累计终止位置
-    "rank"              # 外显子顺序
+    "cds_start",        # cumulative CDS start position
+    "cds_end",          # cumulative CDS end position
+    "rank"              # exon order
   ),
   filters = "ensembl_transcript_id",
   values  = unique(all_transcripts),
   mart    = mart
 ) %>%
-  # 只保留有CDS注释的外显子（非UTR）
+  # keep only exons with CDS annotation (non-UTR)
   filter(!is.na(cds_start), !is.na(cds_end)) %>%
   arrange(ensembl_transcript_id, rank)
 

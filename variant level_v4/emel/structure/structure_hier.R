@@ -4,7 +4,7 @@ library(bayesplot)
 library(posterior)
 
 # ═════════════════════════════════════════════════════════════════════
-# 1. 选择要分析的 secondary structure variables
+# 1. Select secondary structure variables to analyze
 # ═════════════════════════════════════════════════════════════════════
 
 sec_vars = c(
@@ -20,7 +20,7 @@ sec_vars = c(
 )
 
 # ═════════════════════════════════════════════════════════════════════
-# 2. 准备 source_folder reference level
+# 2. Set source_folder reference level
 # ═════════════════════════════════════════════════════════════════════
 
 VAR_WT_structural_results = VAR_WT_structural_results %>%
@@ -38,17 +38,17 @@ VAR_WT_structural_results = VAR_WT_structural_results %>%
   )
 
 # ═════════════════════════════════════════════════════════════════════
-# 3. Beta regression 用于 VAR/WT percent
-#    Gaussian 用于 d_ difference
+# 3. Beta regression for VAR/WT percent
+#    Gaussian for d_ difference
 # ═════════════════════════════════════════════════════════════════════
 
 to_beta_01 = function(x) {
-  # 如果是 0-100 percent，转成 0-1
+  # Convert 0-100 percent to 0-1
   if (max(x, na.rm = TRUE) > 1) {
     x = x / 100
   }
   
-  # Beta family 不能有 0 或 1，所以做轻微压缩
+  # Beta family cannot have 0 or 1, so compress slightly
   n = sum(!is.na(x))
   x_beta = (x * (n - 1) + 0.5) / n
   
@@ -61,7 +61,7 @@ get_prior_scale = function(x) {
 }
 
 # ═════════════════════════════════════════════════════════════════════
-# 4. 批量拟合 hierarchical models
+# 4. Batch fit hierarchical models
 # ═════════════════════════════════════════════════════════════════════
 
 model_list = list()
@@ -69,14 +69,14 @@ model_list = list()
 for (var in sec_vars) {
   
   cat("\n══════════════════════════════════════\n")
-  cat("正在拟合变量：", var, "\n")
+  cat("Fitting variable:", var, "\n")
   cat("══════════════════════════════════════\n")
   
   model_data = VAR_WT_structural_results %>%
     select(uniprot_id, source_folder, all_of(var)) %>%
     filter(!is.na(.data[[var]]))
   
-  # d_变量可以为负数，所以用 Gaussian
+  # d_ variables can be negative, so use Gaussian
   if (str_detect(var, "^d_")) {
     
     model_data = model_data %>%
@@ -105,7 +105,7 @@ for (var in sec_vars) {
     
   } else {
     
-    # VAR/WT percent 用 Beta
+    # Use Beta for VAR/WT percent
     model_data = model_data %>%
       mutate(y = to_beta_01(.data[[var]]))
     
@@ -131,11 +131,11 @@ for (var in sec_vars) {
   
   model_list[[var]] = model
   
-  cat("✅ 完成：", var, "\n")
+  cat("Done:", var, "\n")
 }
 
 # ═════════════════════════════════════════════════════════════════════
-# 5. 提取两个主要比较
+# 5. Extract two main comparisons
 #    fs_disease vs fs_control
 #    snv_disease vs snv_control
 # ═════════════════════════════════════════════════════════════════════
@@ -224,7 +224,7 @@ rhat_summary = map_dfr(sec_vars, function(var) {
 print(rhat_summary)
 
 # ═════════════════════════════════════════════════════════════════════
-# 8. 保存结果
+# 8. Save results
 # ═════════════════════════════════════════════════════════════════════
 
 write_csv(results_key, "secondary_structure_hierarchical_results.csv")

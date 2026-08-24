@@ -1,10 +1,10 @@
-# --- 路径解析层（自动插入）---------------------------------
-# 数据文件用 data_file("文件名") 定位；输出用 out_file("文件名")
-# 换数据位置只改 gene level_v3/lib/paths.R 的 DATA_ROOTS
+# --- Path resolution layer (auto-inserted) ---------------------------------
+# Locate data files with data_file("filename"); outputs use out_file("filename")
+# Data location is configured via DATA_ROOTS in gene level_v3/lib/paths.R
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../gene level_v3/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1])
 # ------------------------------------------------------------
 
@@ -137,7 +137,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
       n_can <- get_syn_count(chrom, NMDesc.start, NMDesc.end)
       n_all <- get_syn_count(chrom, cds.start, cds.end)
       
-      # FIX 2: baseline must EXCLUDE the region being tested, otherwise
+      # Baseline must EXCLUDE the region being tested, otherwise
       # can.PTC inflates its own null (conservative, and length-dependent)
       rest.PTC <- all.PTC - can.PTC
       n_rest   <- n_all - n_can
@@ -151,7 +151,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
       } else {
         can.pvalue <- binom.test(can.PTC, n_can, p0, alternative = "greater")$p.value
         
-        # FIX 3: Fisher's exact test — valid with zero cells and small counts,
+        # Fisher's exact test — valid with zero cells and small counts,
         # and treats both counts as random rather than fixing p0
         can.fisher.pvalue <- fisher.test(
           matrix(c(can.PTC, n_can - can.PTC,

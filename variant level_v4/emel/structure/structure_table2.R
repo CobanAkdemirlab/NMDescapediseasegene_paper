@@ -60,7 +60,7 @@ delta_vars <- delta_defs("full")$delta   # names are region-independent
 
 # ── Raw p-values across ALL regions, then BH-FDR ──────────────
 # Delta variables are variant-level (one independent value per variant),
-# so no protein-level deduplication is needed here — unlike the WT
+# no protein-level deduplication needed here
 # features in Table 1.
 
 get_raw_p <- function(data, vars) {

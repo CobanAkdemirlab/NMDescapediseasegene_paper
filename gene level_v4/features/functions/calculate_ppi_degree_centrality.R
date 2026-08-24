@@ -1,4 +1,4 @@
-# 需要的包（source() 本文件即检查；缺包立即报错，不会跑到一半才失败）
+# Required packages (checked on source; missing packages fail immediately)
 for (.pkg in c(
   "STRINGdb",
   "dplyr",
@@ -6,7 +6,7 @@ for (.pkg in c(
   "ggpubr",
   "igraph"
 )) if (!requireNamespace(.pkg, quietly = TRUE))
-  stop(sprintf("缺少包 %s —— install.packages(\"%s\") 或 BiocManager::install(\"%s\")", .pkg, .pkg, .pkg))
+  stop(sprintf("Missing package %s -- install.packages(\"%s\") or BiocManager::install(\"%s\")", .pkg, .pkg, .pkg))
 for (.pkg in c(
   "STRINGdb",
   "dplyr",

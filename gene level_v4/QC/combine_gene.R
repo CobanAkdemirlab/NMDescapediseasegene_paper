@@ -1,13 +1,13 @@
 
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- path resolution layer (auto-inserted) ------------------------------------------------
+# Resolves paths via paths.R:
+#   data_file("x.csv")  locate by filename, errors clearly if missing
+#   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -197,7 +197,7 @@ snv_nmdesc_df$snv_nmdesc_gc_content <- sapply(snv_nmdesc_df$snv_nmdesc_cds, get_
 snv_control_nmdesc_df$snv_control_nmdesc_gc_content <- sapply(snv_control_nmdesc_df$snv_control_nmdesc_cds, get_gc_content)
 
 
-##get fs NMDesc region: fetch it from PTC_info$can_region_start and PTC_info$can_region_end, use the mediam for plus1 and plus2 as the fs value
+## get fs NMDesc region: derive from PTC_info$can_region_start/can_region_end, using median for plus1 and plus2
 PTC_combined = PTC_info %>%
   dplyr::group_by(transcript) %>%
   dplyr::summarise(
@@ -281,10 +281,10 @@ cds_info <- getBM(
 gene_all$cds_length = cds_info$cds_length[match(gene_all$ensembl_transcript_id,cds_info$ensembl_transcript_id)]
 gene_all$row_id <- seq_len(nrow(gene_all))
 
-# 提取 transcript id
+# extract transcript ids
 tx_ids <- unique(gene_all$ensembl_transcript_id)
 
-# 查询 transcript -> UniProt Swiss-Prot
+# query transcript -> UniProt Swiss-Prot
 tx_uniprot <- getBM(
   attributes = c("ensembl_transcript_id", "uniprotswissprot"),
   filters    = "ensembl_transcript_id",
@@ -293,7 +293,7 @@ tx_uniprot <- getBM(
 )
 
 
-# 合并回 gene_all
+# merge back into gene_all
 gene_all <- gene_all %>%
   left_join(tx_uniprot, by = "ensembl_transcript_id")
 

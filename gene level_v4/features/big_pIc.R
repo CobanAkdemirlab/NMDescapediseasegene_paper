@@ -9,15 +9,15 @@ library(patchwork)
 library(AnnotationDbi)
 library(org.Hs.eg.db)
 library(genekitr)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) ------------------------------------------------
+# Resolves paths via paths.R:
+#   data_file("x.csv")  locate by file name, error if not found
+#   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed, not a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -49,12 +49,10 @@ write.csv(omim3, "~/Desktop/new_clinvar/snv_plp_nmd_p_NMDenriched_omim.txt", row
 #object_list = c('all','css','long','can')
 object_list = c('css','long','can','trigger')
 getpath1 = function(input_name){
-  #output_name = paste0("~/Desktop/new_clinvar/snv_list/list4/snv_plp_ptc_p1120_NMDenriched2_",input_name,".txt")
   output_name = paste0("~/Desktop/frameshift/plus1_",input_name,"_gene0115.txt")
   return(output_name)
 }
 getpath2 = function(input_name){
-  #output_name = paste0("~/Desktop/new_clinvar/snv_list/list4/snv_plp_ptc_p1120_NMDenriched2_",input_name,".txt")
   output_name = paste0("~/Desktop/frameshift/plus2_",input_name,"_gene0115.txt")
   return(output_name)
 }
@@ -67,7 +65,6 @@ path_list = c(path_list1,path_list2)
 gnomad.v2.1.1.lof_metrics.by_gene <- read.delim(data_file("gnomad.v2.1.1.lof_metrics.by_gene.txt"))
 i=1
 g <- list()
-# TODO 文件不在仓库中，需从原机器补入: ~/Desktop/cds_length/code/boxplot_clinvar.R
 # source("~/Desktop/cds_length/code/boxplot_clinvar.R")
 for(path in path_list2){
   g[[i]] = boxplot_clinvar(path)

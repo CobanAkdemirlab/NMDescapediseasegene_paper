@@ -3,14 +3,12 @@ library(stringr)
 library(biomaRt)
 
 bp=50
-#ensembl2 <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 ensembl <- useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl", mirror = "asia")
 
 res = readRDS('~/Desktop/new_clinvar/clinvar_1120.rds')
 res2 = unlist(res)
 ptc = which(res2@elementMetadata@listData[["res_aenmd"]]@listData[["is_ptc"]]==T)
 plp = grep('pathogenic',res2@elementMetadata@listData[["clinsig"]],ignore.case = T)
-#res_plp = res2[plp]
 res_plp = res2[plp]
 del = which(res2@elementMetadata@listData[["type"]] == 'del')
 ins = which(res2@elementMetadata@listData[["type"]] == 'ins')
@@ -91,7 +89,7 @@ get_NMDesc_PTC = function(input_seqs,bp,variant_transcript,type='plus1')
   ### get the length of each exon
   exon.length <- (df$cds_end-df$cds_start)+1
   
-  ##rule 1 The PTC located in the last coding exon and rule 2 The PTC located within d_pen bp upstream of the penultimate exon boundary (penultimate exon rule; default: d_pen = 50)
+  ## rule 1: PTC in last coding exon; rule 2: PTC within d_pen bp upstream of penultimate exon boundary (default d_pen = 50)
   #check pen exon
   pen.length = exon.length[length(exon.length)-1]
   if(pen.length<bp){
@@ -232,7 +230,7 @@ get_frameshift_type = function(res,x)
   alt = str_split(key, "_")[[1]][4]
   type = temp@elementMetadata@listData[["type"]]
   yu = (abs(nchar(ref)-nchar(alt)))%%3
-  #if delete 1(4,7) or insert 2 bp, then plus1; 
+  #if delete 1(4,7) or insert 2 bp, then plus1
   if(type=='del' & yu==1 | type=='ins' & yu==2){
     plus_type = 'plus1'
   }

@@ -21,7 +21,7 @@ get_snv_idr_match = function(input_path="~/Downloads/long_idr_region/snv_control
                                       values = idr_loc$hgnc_symbol,
                                       mart = ensembl)
   gene2tr = gene2tr[which(gene2tr$transcript_is_canonical== 1),]
-  #merge idr_loc with gene2tr by hgnc_symbol, keep one row for each gene
+  #merge idr_loc with gene2tr by hgnc_symbol, keep one row per gene
   idr_loc2 = merge(gene2tr,idr_loc,by = 'hgnc_symbol')
   idr_loc2 = idr_loc2[!duplicated(idr_loc2$hgnc_symbol),]
   #from transcript id, get cds information

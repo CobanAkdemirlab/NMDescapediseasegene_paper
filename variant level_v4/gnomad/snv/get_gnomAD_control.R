@@ -1,13 +1,13 @@
 library(dplyr)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) --------------------------------
+# Path helpers from paths.R:
+#   data_file("x.csv") locates by filename, errors clearly if missing
+#   out_file("y.csv")  writes to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") for directories instead of files
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -48,16 +48,16 @@ fs_can_tr <- fs_can_tr %>%
 gnomad_fs = ptc_can_NMD_df2[which(ptc_can_NMD_df2$transcript %in% fs_can_tr$ensembl_transcript_id & ptc_can_NMD_df2$type != 'snv'),]
 length(unique(gnomad_fs$transcript))
 #remove inframe frameshift variants based on the key
-# 从 id 列提取 ref 和 alt，计算长度差，排除3的倍数（inframe）
+# Extract ref and alt from id, compute length diff
 gnomad_fs_filtered = read.csv('gnomad_fs_filtered.csv')
 gnomad_fs_filtered$ref = sub(".*\\|(.+)\\|.*", "\\1", gnomad_fs_filtered$id)
 gnomad_fs_filtered$alt = sub(".*\\|.*\\|(.*)", "\\1", gnomad_fs_filtered$id)
 gnomad_fs_filtered$len_diff = abs(nchar(gnomad_fs_filtered$ref) - nchar(gnomad_fs_filtered$alt))
 
-# 保留长度差不是3的倍数的（真正的frameshift）
+# Keep variants where length diff is not a multiple of 3 (true frameshift)
 gnomad_fs_filtered = gnomad_fs_filtered[gnomad_fs_filtered$len_diff %% 3 != 0, ]
 
-# 清理临时列
+# Remove temporary columns
 gnomad_fs_filtered$ref = NULL
 gnomad_fs_filtered$alt = NULL
 gnomad_fs_filtered$len_diff = NULL

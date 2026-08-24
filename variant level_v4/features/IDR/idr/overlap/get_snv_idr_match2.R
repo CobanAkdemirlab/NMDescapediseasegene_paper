@@ -1,12 +1,10 @@
-# --- 路径解析层（自动插入）---------------------------------
-# 原来这里有旧机器 /Users/jxu14/ 的绝对路径，换机器必断。
-# 现在：数据用 data_file("文件名") 定位，输出用 out_dir()/out_file()。
-# 换数据位置只改 gene level_v3/lib/paths.R 的 DATA_ROOTS。
+# --- Path resolution layer (auto-inserted) ---------------------------------
+# Data located via data_file("filename"), output via out_dir()/out_file()
 .p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
         "../../gene level_v3/lib/paths.R", "../../../gene level_v3/lib/paths.R",
         "../../../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("Cannot find paths.R -- run R from repository root")
 source(.p[1]); rm(.p)
 # ------------------------------------------------------------
 

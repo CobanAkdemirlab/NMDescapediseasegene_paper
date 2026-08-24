@@ -3,7 +3,7 @@ library(brms)
 library(bayesplot)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 1. 查看总体均值分布
+# 1. View overall mean distribution
 # ══════════════════════════════════════════════════════════════════════════════
 mean_dis = NMD_region_NMDPos_peptide_props %>%
   group_by(uniprot_id, source_folder) %>%
@@ -26,7 +26,7 @@ for (var in d_vars) {
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 2. 查看每个 uniprot_id 内部的观测数与分布
+# 2. View observation counts and distribution per uniprot_id
 # ══════════════════════════════════════════════════════════════════════════════
 within_patient_summary = NMD_region_NMDPos_peptide_props %>%
   group_by(uniprot_id, source_folder) %>%
@@ -35,7 +35,7 @@ within_patient_summary = NMD_region_NMDPos_peptide_props %>%
     .groups = "drop"
   )
 
-# 观测数分布
+# Observation count distribution
 obs_count_dist = within_patient_summary %>%
   count(n_obs) %>%
   arrange(n_obs)
@@ -44,12 +44,12 @@ print(obs_count_dist)
 ggplot(within_patient_summary, aes(x = n_obs)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
   facet_wrap(~ source_folder) +
-  labs(title = "每个 uniprot_id 的观测数分布",
-       x = "观测数", y = "频数") +
+  labs(title = "Distribution of observation counts per uniprot_id",
+       x = "Observation count", y = "Frequency") +
   theme_bw()
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 3. 自动计算先验 scale
+# 3. Automatically compute prior scale
 # ══════════════════════════════════════════════════════════════════════════════
 get_prior_scale = function(var, data) {
   s = sd(data[[var]], na.rm = TRUE)
@@ -57,16 +57,16 @@ get_prior_scale = function(var, data) {
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 4. 批量拟合贝叶斯层次模型
+# 4. Batch fit Bayesian hierarchical models
 # ══════════════════════════════════════════════════════════════════════════════
 model_list = list()
 
 for (var in d_vars) {
   cat("\n══════════════════════════════════════\n")
-  cat("正在拟合变量：", var, "\n")
+  cat("Fitting variable:", var, "\n")
   cat("══════════════════════════════════════\n")
   
-  # 准备数据
+  # Prepare data
   model_data = NMD_region_NMDPos_peptide_props %>%
     select(uniprot_id, source_folder, all_of(var)) %>%
     filter(!is.na(.data[[var]])) %>%
@@ -75,11 +75,11 @@ for (var in d_vars) {
       uniprot_id    = factor(uniprot_id)
     )
   
-  # 自动先验
+  # Automatic prior
   prior_scale = get_prior_scale(var, model_data)
-  cat("自动先验 scale =", prior_scale, "\n")
+  cat("Automatic prior scale =", prior_scale, "\n")
   
-  # 拟合模型
+  # Fit model
   model = brm(
     formula = as.formula(paste(var, "~ source_folder + (1 | uniprot_id)")),
     data    = model_data,
@@ -100,15 +100,15 @@ for (var in d_vars) {
   )
   
   model_list[[var]] = model
-  cat("✅ 完成：", var, "\n")
+  cat("✅ Done:", var, "\n")
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 5. 提取两个关键对比的结果
+# 5. Extract results for two key comparisons
 # ══════════════════════════════════════════════════════════════════════════════
 results_key = map_dfr(d_vars, function(var) {
   
-  # 对比1：fs_disease vs fs_control（直接从 fixef 读取）
+  # Comparison 1: fs_disease vs fs_control (read directly from fixef)
   fe = fixef(model_list[[var]])
   fs_row = data.frame(
     variable   = var,
@@ -119,7 +119,7 @@ results_key = map_dfr(d_vars, function(var) {
     Q97.5      = fe["source_folderfs_disease", "Q97.5"]
   )
   
-  # 对比2：snv_disease vs snv_control（hypothesis 做差）
+  # Comparison 2: snv_disease vs snv_control (difference via hypothesis)
   snv_hyp = hypothesis(
     model_list[[var]],
     "source_foldersnv_disease - source_foldersnv_control = 0"
@@ -137,13 +137,13 @@ results_key = map_dfr(d_vars, function(var) {
   bind_rows(fs_row, snv_row)
 }) %>%
   mutate(
-    significant = ifelse(Q2.5 > 0 | Q97.5 < 0, "✅ 显著", "❌ 不显著")
+    significant = ifelse(Q2.5 > 0 | Q97.5 < 0, "✅ Significant", "❌ Not significant")
   )
 
 print(results_key)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 6. 可视化
+# 6. Visualization
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── 6a. Forest plot ───────────────────────────────────────────────────────────
@@ -188,39 +188,38 @@ results_key %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 20, hjust = 1))
 
-# ── 6c. 后验预测检验（每个模型）──────────────────────────────────────────────
+# ── 6c. Posterior predictive check (per model) ──────────────────────────────────────────────
 for (var in d_vars) {
   print(
     pp_check(model_list[[var]], ndraws = 100) +
-      labs(title = paste("后验预测检验：", var))
+      labs(title = paste("Posterior predictive check:", var))
   )
 }
 
-# ── 6d. 收敛诊断（Rhat 总览）────────────────────────────────────────────────
+# ── 6d. Convergence diagnostics (Rhat overview) ────────────────────────────────────────────────
 rhat_summary = map_dfr(d_vars, function(var) {
   rhat_vals = rhat(model_list[[var]])
   data.frame(
     variable = var,
     max_rhat = max(rhat_vals, na.rm = TRUE),
-    converged = ifelse(max(rhat_vals, na.rm = TRUE) < 1.01, "✅ 收敛", "⚠️ 未收敛")
+    converged = ifelse(max(rhat_vals, na.rm = TRUE) < 1.01, "✅ Converged", "⚠️ Not converged")
   )
 })
 print(rhat_summary)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 7. 保存结果
+# 7. Save results
 # ══════════════════════════════════════════════════════════════════════════════
 write_csv(results_key,    "hierarchical_model_key_comparisons.csv")
 write_csv(rhat_summary,   "hierarchical_model_convergence.csv")
 
-# 保存模型对象（方便以后重新加载，不用重跑）
+# Save model object for later reload without rerunning
 saveRDS(model_list, "hierarchical_model_list.rds")
-# 重新加载：model_list = readRDS("hierarchical_model_list.rds")
 
-cat("\n✅ 全部完成！\n")
-cat("── 输出文件 ──\n")
-cat("  hierarchical_model_key_comparisons.csv  ← 主要结果\n")
-cat("  hierarchical_model_convergence.csv      ← 收敛诊断\n")
-cat("  hierarchical_model_list.rds             ← 模型对象\n")
-cat("── 访问单个模型 ──\n")
-cat("  model_list[['d_boman']]                 ← 示例\n")
+cat("\n✅ All done!\n")
+cat("── Output files ──\n")
+cat("  hierarchical_model_key_comparisons.csv  ← main results\n")
+cat("  hierarchical_model_convergence.csv      ← convergence diagnostics\n")
+cat("  hierarchical_model_list.rds             ← model object\n")
+cat("── Access individual model ──\n")
+cat("  model_list[['d_boman']]                 ← example\n")

@@ -49,7 +49,7 @@ snv_NMD_results3_vcf <- snv_NMD_results3 %>%
   )
 
 
-# ✅ 2. Add VCF mandatory columns
+# 2. Add VCF mandatory columns
 snv_NMD_results3_vcf$ID <- "."  # No variant ID
 snv_NMD_results3_vcf$QUAL <- "."  # No quality score
 snv_NMD_results3_vcf$FILTER <- "PASS"  # All variants pass filter
@@ -83,13 +83,12 @@ write.table(
   col.names = FALSE
 )
 
-# ✅ 5. Confirm the file was created
+# 5. Confirm the file was created
 cat("VCF file created successfully at:", vcf_file, "\n")
 
 
 
 snv_NMD_results4 = 
-#select random 200 rows of snv_NMD_results
 snv_NMD_result2 = snv_NMD_results3[sample(nrow(snv_NMD_results3), 200),]
 
 # Load required libraries
@@ -112,7 +111,7 @@ transcript_variants$ID <- rep(".", nrow(transcript_variants))  # Placeholder for
 transcript_variants$ZYG <- rep("Het", nrow(transcript_variants))  # Zygosity
 transcript_variants$FILTER <- rep("PASS", nrow(transcript_variants))  # Filter status
 
-# ✅ 2. Write VCF File for ANNOVAR
+# 2. Write VCF file for ANNOVAR
 vcf_file <- "variants_for_annovar.vcf"
 annovar_input <- cbind(
   transcript_variants$CHR,
@@ -144,7 +143,7 @@ system("perl /path/to/annovar/convert2annovar.pl -format vcf4 variants_for_annov
 system("perl /path/to/annovar/annotate_variation.pl -build hg38 -out variant_frequency_results -dbtype gnomad211_exome variants_for_annovar.avinput /path/to/annovar/humandb/")
 
 # ✅ 5. Read ANNOVAR Output into R
-# Assuming the output file is named 'variant_frequency_results.gnomad211_exome_dropped'
+# Output file named variant_frequency_results.gnomad211_exome_dropped
 variant_freq_file <- "variant_frequency_results.gnomad211_exome_dropped"
 
 if (file.exists(variant_freq_file)) {

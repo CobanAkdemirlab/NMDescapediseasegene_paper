@@ -40,9 +40,9 @@ create_fasta = function(GR,output_dir = "snv_control2"){
   distance_list <- data.frame(Variant_Key = character(), strand = numeric(),
                               Distance = numeric(), cds_mutation_loc = numeric(),
                               ptc_loc = numeric(), stringsAsFactors = FALSE)
-  #select the ones in gene_list2(clinvar can control)
+  #select transcripts present in gene_list2
   snv_NMD_results3 = snv_NMD_results[which(snv_NMD_results$transcript %in% gene_list2$ensembl_transcript_id),]
-  #select random 200 rows of snv_NMD_results
+  #randomly sample 200 rows
   snv_NMD_result2 = snv_NMD_results3[sample(nrow(snv_NMD_results3), 200),]
   
   # Get all transcript IDs from GR
@@ -105,7 +105,6 @@ create_fasta = function(GR,output_dir = "snv_control2"){
   }
   
   # 3. Process each variant
-  #for (i in seq_along(GR)) {
   for(i in 1:nrow(snv_NMD_result2)){
     # Extract variant details
     #transcript_id <- GR@ranges@NAMES[i]
@@ -124,7 +123,6 @@ create_fasta = function(GR,output_dir = "snv_control2"){
     alt_allele <- position_alleles[3]  # "T"
     
     #chromosome <- variant_info[1]
-    #position <- as.numeric(variant_info[2])  # Genomic position
     #ref_allele <- variant_info[3]
     #alt_allele <- variant_info[4]
     

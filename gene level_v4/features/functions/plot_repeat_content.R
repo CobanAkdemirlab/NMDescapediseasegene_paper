@@ -1,10 +1,10 @@
-# 需要的包（source() 本文件即检查；缺包立即报错，不会跑到一半才失败）
+# Required packages (fail fast if missing, not partway through)
 for (.pkg in c(
   "ggplot2",
   "ggpubr",
   "stringr"
 )) if (!requireNamespace(.pkg, quietly = TRUE))
-  stop(sprintf("缺少包 %s —— install.packages(\"%s\") 或 BiocManager::install(\"%s\")", .pkg, .pkg, .pkg))
+  stop(sprintf("Missing package %s -- install.packages(\"%s\") or BiocManager::install(\"%s\")", .pkg, .pkg, .pkg))
 for (.pkg in c(
   "ggplot2",
   "ggpubr",
@@ -76,9 +76,8 @@ plot_repeat_content <- function(
 # ── Usage ─────────────────────────────────────────────────────────────────
 
 # ===========================================================================
-# 以下为原文件末尾的示例调用，已注释。
-# 原来 source() 本文件会立刻执行它们并去读数据文件 —— 函数库不应有副作用。
-# 需要跑的话，复制到你的脚本里，并把路径改成 data_file("文件名")。
+# Example usage below, commented out.
+# Function library should have no side effects.
 # ===========================================================================
 # result <- plot_repeat_content(
 #   gene_all   = gene_all,

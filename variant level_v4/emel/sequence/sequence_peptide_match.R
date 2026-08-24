@@ -39,7 +39,7 @@ fs_control_boman = mean_dis %>%
   filter(source_folder == "fs_control") %>%
   pull(d_boman)
 hist(fs_control_boman, breaks = 30, main = "Distribution of mean d_boman for fs_control", xlab = "mean d_boman")
-shapiro.test(fs_control_boman)  # 若p>0.05，正态假设成立
+shapiro.test(fs_control_boman)  # if p > 0.05, normality holds
 #look at the distribution within each uniprot id
 NMD_region_NMDPos_peptide_props %>%
   group_by(uniprot_id, source_folder) %>% #

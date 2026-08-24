@@ -299,7 +299,7 @@ print(p_fc_fs)
 print(p_fc_snv)
 
 ############################
-## 12. Optional: save plots
+## 12. Save plots
 ############################
 ggsave("repeat1000_fs_estimate_hist.png", p_est_fs, width = 7, height = 5, dpi = 300)
 ggsave("repeat1000_snv_estimate_hist.png", p_est_snv, width = 7, height = 5, dpi = 300)

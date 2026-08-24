@@ -24,7 +24,7 @@ snv_all <- snv_variants2 %>%
     cds_ptc_loc = ptc_pos,
     nmdesc_cds = snv_nmdesc_cds,
   ) %>%
-  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove the original genomic_pos column since we have renamed it to PTC_genomic_pos
+  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove original genomic_pos column
 write.csv(snv_all, 'snv_all.csv', row.names = FALSE)
 
 gnomad_snv_all <- gnomad_snv_filtered2 %>%
@@ -50,7 +50,7 @@ gnomad_snv_all <- gnomad_snv_filtered2 %>%
     mutation_genomic_pos = genomic_loc,
     cds_ptc_loc = ptc_pos,
   ) %>%
-  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove the original genomic_pos column since we have renamed it to PTC_genomic_pos
+  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove original genomic_pos column
 write.csv(gnomad_snv_all, 'gnomad_snv_all.csv', row.names = FALSE)
 
 gnomad_fs_all <- gnomad_fs_filtered2 %>%
@@ -77,7 +77,7 @@ gnomad_fs_all <- gnomad_fs_filtered2 %>%
     mutation_genomic_pos = genomic_loc,
     cds_ptc_loc = ptc_pos,
   ) %>%
-  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove the original genomic_pos column since we have renamed it to PTC_genomic_pos
+  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove original genomic_pos column
 
 write.csv(gnomad_fs_all, 'gnomad_fs_all.csv', row.names = FALSE)
 
@@ -104,7 +104,7 @@ fs_all <- fs_variants2 %>%
     cds_ptc_loc = ptc_pos,
     nmdesc_cds = fs_nmdesc_cds
   ) %>%
-  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove the original genomic_pos column since we have renamed it to PTC_genomic_pos
+  select(-any_of(c("genomic_loc", "PTC_pos"))) # remove original genomic_pos column
 write.csv(fs_all, 'fs_all.csv', row.names = FALSE)
 
 gnomad_fs_all2 <- gnomad_fs_all %>%

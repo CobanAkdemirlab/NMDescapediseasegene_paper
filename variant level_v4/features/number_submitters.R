@@ -29,7 +29,7 @@ df_bin = gene_all %>%
     sd = sd(NumberSubmitters, na.rm = TRUE)
   )
 
-#significant in 2 and 3
+# significant in groups 2 and 3
 df1 <- gene_all %>%
   filter(cds_group %in% c("1-1000"))
 df2 <- gene_all %>%

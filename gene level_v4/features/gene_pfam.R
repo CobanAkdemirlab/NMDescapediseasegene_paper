@@ -18,7 +18,7 @@ pfam_domains <- getBM(
 gene_all_pfam <- gene_all %>%
   left_join(pfam_domains, by = "ensembl_transcript_id") %>%
   mutate(
-    pfam_start_bp = pfam_start * 3 - 2,   # aa坐标转bp坐标，起始更严格些
+    pfam_start_bp = pfam_start * 3 - 2,   # aa coordinate to bp coordinate, stricter start
     pfam_end_bp   = pfam_end * 3
   )
 
@@ -32,8 +32,8 @@ gene_all_pfam <- gene_all_pfam %>%
   )
 
 ###--------------------------------------------------
-### 4. 对每个 row_id，把多个 PFAM overlap 区间 reduce 后求 union 长度
-### 避免多个 PFAM 彼此重叠时重复计数
+### 4. Reduce PFAM overlap intervals per row_id, compute union length
+### Avoid double-counting overlapping PFAM regions
 ###--------------------------------------------------
 idx_list <- split(seq_len(nrow(gene_all_pfam)), gene_all_pfam$row_id)
 
@@ -80,21 +80,20 @@ pfam_overlap_summary <- lapply(idx_list, function(idx) {
 pfam_overlap_summary <- dplyr::bind_rows(pfam_overlap_summary)
 
 ###--------------------------------------------------
-### 5. 合并回原始 gene_all
+### 5. Merge back into gene_all
 ###--------------------------------------------------
 gene_all <- gene_all %>%
   left_join(pfam_overlap_summary, by = "row_id")
 
 ###--------------------------------------------------
-### 6. 检查结果
+### 6. Check results
 ###--------------------------------------------------
 table(gene_all$pfam_overlap_flag, useNA = "ifany")
 summary(gene_all$pfam_overlap_fraction)
 summary(gene_all$pfam_overlap_length)
 
 ###--------------------------------------------------
-### 7. 设置分组顺序和颜色
-### 你可以按自己的分组名字改
+### 7. Set group order and colors
 ###--------------------------------------------------
 gene_all$group <- factor(
   gene_all$group,
@@ -114,7 +113,7 @@ comparisons <- list(
 )
 
 ###--------------------------------------------------
-### 8. 图1：PFAM overlap fraction 分布图
+### 8. Plot 1: PFAM overlap fraction distribution
 ###--------------------------------------------------
 p1 <- ggplot(gene_all, aes(x = group, y = pfam_overlap_fraction, fill = group)) +
   geom_violin(trim = TRUE, alpha = 0.7) +
@@ -139,8 +138,7 @@ p1 <- ggplot(gene_all, aes(x = group, y = pfam_overlap_fraction, fill = group)) 
 print(p1)
 
 ###--------------------------------------------------
-### 9. 图2：PFAM overlap length 分布图
-### 如果想看 log10，可以加 scale_y_log10()
+### 9. Plot 2: PFAM overlap length distribution
 ###--------------------------------------------------
 p2 <- ggplot(gene_all, aes(x = source, y = pfam_overlap_length, fill = source)) +
   geom_violin(trim = TRUE, alpha = 0.7) +
@@ -165,7 +163,7 @@ p2 <- ggplot(gene_all, aes(x = source, y = pfam_overlap_length, fill = source)) 
 print(p2)
 
 ###--------------------------------------------------
-### 10. 图3：PFAM overlap flag 比例图
+### 10. Plot 3: PFAM overlap flag proportions
 ###--------------------------------------------------
 pfam_flag_summary <- gene_all %>%
   group_by(group) %>%
@@ -194,7 +192,7 @@ p3 <- ggplot(pfam_flag_summary, aes(x = group, y = prop_overlap, fill = group)) 
 print(p3)
 
 ###--------------------------------------------------
-### 11. 如果你想做组间比例检验（Fisher）
+### 11. Fisher's exact test for group proportions
 ###--------------------------------------------------
 # snv vs snv_control
 tab_snv <- table(
@@ -213,7 +211,7 @@ print(tab_fs)
 print(fisher.test(tab_fs))
 
 ###--------------------------------------------------
-### 12. 保存结果和图片
+### 12. Save results and plots
 ###--------------------------------------------------
 write.csv(gene_all, "gene_all_with_pfam_overlap.csv", row.names = FALSE)
 

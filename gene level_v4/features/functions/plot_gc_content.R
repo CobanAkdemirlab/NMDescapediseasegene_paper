@@ -1,9 +1,9 @@
-# 需要的包（source() 本文件即检查；缺包立即报错，不会跑到一半才失败）
+# Required packages (checked when this file is sourced; fails immediately if missing)
 for (.pkg in c(
   "ggplot2",
   "ggpubr"
 )) if (!requireNamespace(.pkg, quietly = TRUE))
-  stop(sprintf("缺少包 %s —— install.packages(\"%s\") 或 BiocManager::install(\"%s\")", .pkg, .pkg, .pkg))
+  stop(sprintf("Missing package %s -- install.packages(\"%s\") or BiocManager::install(\"%s\")", .pkg, .pkg, .pkg))
 for (.pkg in c(
   "ggplot2",
   "ggpubr"

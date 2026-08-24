@@ -5,15 +5,14 @@ library(stringr)
 library(ggplot2)
 library(ggpubr)
 library(patchwork)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) ------------------------------------------------
+#   data_file("x.csv")  locate by filename, errors clearly if missing
+#   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed, not a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -141,7 +140,7 @@ stat_results <- aa_comp_all %>%
     )
   )
 
-##2.6 Plot for each group_pairlibrary(ggplot2)
+##2.6 Plot for each group_pair
 plot_group_region_pair <- function(df, region_name, group_name, stat_df) {
   df_filtered <- df %>% filter(region == region_name, group_pair == group_name)
   stat_filtered <- stat_df %>% filter(region == region_name, group_pair == group_name)
@@ -509,7 +508,7 @@ plot_group_region_pair <- function(df, region_name, group_pair, ypad = 2) {
   p
 }
 
-# Rebuild the list (keeps your 12 plots idea)
+# Rebuild plot list for all regions and group pairs
 regions <- unique(aa_comp_all$region)
 group_pairs <- unique(aa_comp_all$group_pair)
 plot_list <- list()
@@ -814,7 +813,5 @@ write.csv(pI_all_FL, "~/Downloads/pI_all_FL.csv", row.names = FALSE)
     write.csv(arom_all_NMD, "~/Downloads/aromaticity_all_NMD.csv", row.names = FALSE)   
     write.csv(arom_all_FL, "~/Downloads/aromaticity_all_FL.csv", row.names = FALSE)
 
-# [自动修复] 原文件在此处缺少 2 个右花括号 —— 文件似乎写到一半未完成。
-# 补齐以使文件可被 parse()/source()。如果这段分析未写完，请检查上文逻辑。
 }
 }

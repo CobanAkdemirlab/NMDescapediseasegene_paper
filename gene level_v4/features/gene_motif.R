@@ -3,15 +3,14 @@ library(stringr)
 library(dplyr)
 library(readxl)
 library(readr)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer -------------------------------------------------
+#   data_file("x.csv") locates by filename, errors clearly if not found
+#   out_file("y.csv") writes to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 

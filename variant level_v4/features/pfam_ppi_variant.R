@@ -31,7 +31,7 @@ variants_all$cds_ptc_loc
  }
  
  ###--------------------------------------------------
- ### 1. make sure your input data has these columns:
+ ### 1. required input columns:
  ### variants_all$uniprot
  ### variants_all$cds_ptc_loc
  ### variants_all$source
@@ -194,7 +194,7 @@ variants_all$cds_ptc_loc
  print(p1)
  
  ###--------------------------------------------------
- ### 6. plot 2: distance from cds_ptc_loc to nearest downstream interface residue
+ ### 6. plot 2: distance to nearest downstream interface residue
  ### only for matched variants
  ###--------------------------------------------------
  p2 <- ggplot(
@@ -440,7 +440,7 @@ variants_all$cds_ptc_loc
  #This function combine snv_dis and snv_variants and pfam_fin to compare pfam loc with variant loc
  compare_pfam_mut = function(dis_df = snv_dis, var_df = snv_variants){
  
-   ##2. join variants_all and pfam_fin by transcript id, so that pfam domain information is added
+   ##2. join variants_all and pfam_fin by transcript id to add pfam domain info
    variants_all3 <- variants_all %>%
      dplyr::left_join(
        pfam_fin %>% dplyr::select(ensembl_transcript_id, pfam, pfam_start, pfam_end, hgnc_symbol),

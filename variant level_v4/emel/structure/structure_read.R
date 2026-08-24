@@ -26,7 +26,7 @@ plddt_features <- tribble(
 )
 
 # ── 2. Prepare data ───────────────────────────────────────────────────────────
-##2.1 rename the folders
+## 2.1 rename the folders
 plddt_data <- VAR_WT_structural_results %>%
   mutate(
     group = factor(source_folder,
@@ -36,7 +36,7 @@ plddt_data <- VAR_WT_structural_results %>%
                               "FS\nDisease",  "FS\nControl"))
   )
 
-##2.2 for disease variants, select the ones that appear in the new variant list
+## 2.2 select disease variants present in new variant list
 snv_genes <- read_csv("snv_can_ADrestricted_bh_FDR0.20_all.txt")
 fs_genes <- read_csv("fs_can_AD_acat_FDR0.20_all.txt")
 all_genes <- bind_rows(snv_genes, fs_genes)

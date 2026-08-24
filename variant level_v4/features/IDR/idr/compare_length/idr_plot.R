@@ -16,7 +16,7 @@ plus1_control_idr0603$group <- "plus1"; plus1_control_idr0603$Is_Control <- TRUE
 minus1_idr0603$group <- "minus1"; minus1_idr0603$Is_Control <- FALSE
 minus1_control_idr0603$group <- "minus1"; minus1_control_idr0603$Is_Control <- TRUE
 
-# Step 2: Combine and add bar_group + control label
+# Combine and add bar_group and control label
 combined_df <- bind_rows(
   snv_idr0603,
   snv_control_idr0603,
@@ -87,7 +87,7 @@ pval_df <- combined_df_trans %>%
 
   
 
-# Step 2: Plot using the transformed column
+# Plot transformed column
 ggplot(combined_df_trans, aes(x = Is_Control_label, y = IDR_log_trans, fill = bar_group)) +
   geom_boxplot(outlier.shape = 21, color = "black") +
   facet_wrap(~ group, scales = "free_y") +

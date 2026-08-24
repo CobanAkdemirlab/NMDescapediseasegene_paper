@@ -41,7 +41,7 @@ df <- df %>%
     group = factor(group, levels = c("fs", "fs_control", "snv", "snv_control"))
   )
 
-# Make sure logical columns are numeric when needed
+# Convert logical columns to numeric
 df <- df %>%
   mutate(
     ppi_overlap = as.numeric(ppi_overlap),

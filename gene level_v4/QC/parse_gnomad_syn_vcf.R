@@ -15,7 +15,7 @@ for(i in 1:22){
   setnames(chr.syn, c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO"))
   syn = chr.syn
   rm(chr.syn)
-  # key: chr:000963993|C|T  (POS 固定 9 位补0)
+  # key: chr:000963993|C|T (POS zero-padded to 9 digits)
   syn[, key := sprintf("%s:%09d|%s|%s", CHROM, POS, REF, ALT)]
   syn[, is_syn := str_detect(INFO, "synonymous_variant")]
   #check for synonymous variants

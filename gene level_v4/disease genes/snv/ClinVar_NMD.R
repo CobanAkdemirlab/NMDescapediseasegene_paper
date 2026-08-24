@@ -1,4 +1,4 @@
-###we will download 1. the latest version of clinvar(3 files) using wget on XX day to XX  2. use aenmd to annotate them again 3. have ptc-generating ones
+### Download latest ClinVar, re-annotate with aenmd, keep PTC-generating variants
 
 setwd("/Users/qkelly/Desktop/autism/data")
 res_clinvar_default_1 = readRDS("clinvar0716_1.rds")
@@ -23,10 +23,8 @@ length(which(clinvar_pat_ptc@elementMetadata@listData[["res_aenmd"]]@listData[["
 
 ### for each transcript
 
-#txnames <- unique(unlist(sapply(1:length(names(res_clinvar_default)),function(x){
   #strsplit(names(res_clinvar_default)[x],'\\|')[[1]][1]
   
-#})))
 
 txnames <- unique(names(clinvar_pat_ptc))
 
@@ -129,10 +127,8 @@ allgenes <- vector()
  OMIM <- read.csv('~/Downloads/OMIM/genemap2.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE,skip=3)
  mim2gene <- read.csv('~/Downloads/OMIM/mim2gene.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE,skip=4)
  
- #mim2gene$MIM.Number <- mim2gene$X..MIM.Number
  colnames(mim2gene)[which(names(mim2gene)=='X..MIM.Number')] <- 'MIM.Number'
  merge_OMIM_mim2gene <- merge(mim2gene,OMIM,by='MIM.Number')
- #merge_OMIM_mim2gene$Raw_gene_name <- merge_OMIM_mim2gene$Approved.Gene.Symbol..HGNC.
  colnames(merge_OMIM_mim2gene)[which(names(merge_OMIM_mim2gene)=='Approved.Gene.Symbol..HGNC.')] <- 'Raw_gene_name'
  genes.mat.1$Raw_gene_name <- genes.mat.1$gene
  

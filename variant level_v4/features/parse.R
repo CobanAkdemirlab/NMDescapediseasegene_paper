@@ -40,7 +40,7 @@ wt_value <- df %>%
 
 cat("WT value used:", wt_value, "\n")  # sanity check
 
-# --- Plot ---library(ggplot2)
+# --- Plot ---
 library(dplyr)
 
 # --- Prepare data ---

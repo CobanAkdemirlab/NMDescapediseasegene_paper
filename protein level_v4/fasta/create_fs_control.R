@@ -35,7 +35,7 @@ library(biomaRt)
 # Output storage
 distance_list <- data.frame(Variant_Key = character(), Distance = numeric(), ptc_loc = numeric(), cds_mutation_loc = numeric(),stringsAsFactors = FALSE)
 
-# Get all transcript IDs from fs_control2
+# Sample transcript IDs from fs_control2
 transcript_ids <- unique(sample(transcript_set_controlfinal,1000))
 fs_control2 = fs_control[which(fs_control@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]] %in% transcript_ids)]
 
@@ -71,7 +71,7 @@ for (i in 1:length(fs_control2)) {
   ref_allele <- variant_info[3]
   alt_allele <- variant_info[4]
   
-  # 2. Get original CDS sequence
+  # Get original CDS sequence
   if (!transcript_id %in% names(cds_seq_map)) next  # Skip if missing
   original_seq <- cds_seq_map[[transcript_id]]
   

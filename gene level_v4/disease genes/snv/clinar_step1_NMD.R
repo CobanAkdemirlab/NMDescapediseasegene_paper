@@ -51,7 +51,7 @@ Total_var_stats <- data.frame(functional_class = c("Variants_in_the_original_dat
 #_____________________________________________________________________________
 
 #_____________________________________________________________________________
-###- 2. Next, we are going to run AENMD on the Clinvar data
+###- 2. Run AENMD on the Clinvar data
 #_____________________________________________________________________________
 #get NA indexes and indexes where the alt is not a standard base (A, G, T, C)
 NA_ind <- which(clinvarClinsig$ALT != "." & !stringr::str_detect(clinvarClinsig$ALT, "R|Y|S|W|K|M|B|D|H|V|N"))

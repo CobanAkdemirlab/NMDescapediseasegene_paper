@@ -1,12 +1,10 @@
-# --- 路径解析层（自动插入）---------------------------------
-# 原来这里有旧机器 /Users/jxu14/ 的绝对路径，换机器必断。
-# 现在：数据用 data_file("文件名") 定位，输出用 out_dir()/out_file()。
-# 换数据位置只改 gene level_v3/lib/paths.R 的 DATA_ROOTS。
+# --- Path resolution layer (auto-inserted) ---------------------------------
+# Data located via data_file("filename"); output via out_dir()/out_file().
 .p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
         "../../gene level_v3/lib/paths.R", "../../../gene level_v3/lib/paths.R",
         "../../../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # ------------------------------------------------------------
 
@@ -39,7 +37,7 @@ LCS_max$uniprot = touni$`Uniprot ID`[match(LCS_max$Protein, touni$Protein)]
 #motif_A$uniprot_ID
 variants_all = read_csv("Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/clinvar/variants_all_with_pfam_distance.csv")
 variants_all$uniprot = variants_all$uniprotswissprot
-# 【2026-08 修复】加变异级行号键 .vm_row，供下方写回用 —— 见写回处注释
+# Add variant-level row key .vm_row, used for write-back below
 variants_all$.vm_row = seq_len(nrow(variants_all))
 merge(motif_max,variants_all, by = "uniprot") -> motif_max3
 
@@ -56,12 +54,11 @@ LCS_max3$variant_LCS_flag = LCS_max3$`LCSs`*3 >= LCS_max3$cds_mutation_loc
 write.csv(LCS_max3, "variant_LCS_max3.csv", row.names = FALSE)
 write.csv(motif_max3, "variant_motif_max3.csv", row.names = FALSE)
 
-#merge the flags back to variants_all —— by VARIANT-level row key, NOT by uniprot
-# 【2026-08 修复】原版 match(variants_all$uniprot, motif_max3$uniprot)：
-# motif_max3 是每【变异】一行，match 键却是每【蛋白】的 uniprot —— match()
-# 只返回每个 uniprot 的第一个命中行，同一蛋白所有变异拿到第一个变异的 flag，
-# 蛋白内变异被抹平，下游随机截距 GLMM 测不到 motif flag 的效应。
-# 修法：match 用变异级行号 .vm_row（每变异唯一）。
+#merge the flags back to variants_all -- by VARIANT-level row key, NOT by uniprot
+# motif_max3 has one row per variant, so matching by uniprot is wrong
+# match() returns only the first hit per uniprot
+# so all variants of a protein would get the same flag, hiding within-protein variation
+# match on the variant-level key .vm_row instead, unique per variant
 variants_all$variant_protein_flag = motif_max3$variant_protein_feature_flag[match(variants_all$.vm_row, motif_max3$.vm_row)]
 variants_all$variant_domain_flag = motif_max3$variant_domains_flag[match(variants_all$.vm_row, motif_max3$.vm_row)]
 variants_all$variant_slim_flag = motif_max3$variant_slim_flag[match(variants_all$.vm_row, motif_max3$.vm_row)]
@@ -110,10 +107,7 @@ to_pipe_style <- function(x, pad = 9) {
   paste0(chrom, ":", pos_padded, "|", ref, "|", alt)
 }
 key_to_transcript$key2 = sapply(key_to_transcript$Variant_Key, to_pipe_style, character(1))
-#dis_2 = merge(all_dis, key_to_transcript, by.x = "Variant_Key", by.y = "key2", all.x = TRUE)
 
-#WT_var_NMD_2ac$key2 = sapply(WT_var_NMD_2ac$id, to_pipe_style, character(1))
-#dis_2 = merge(all_dis, WT_var_NMD_2ac, by.x = "Variant_Key", by.y = "key2", all.x = TRUE)
 
 dis_2 = merge(pfam_all_pervariant, motif_max3, by.x = "uniprotswissprot", by.y = "uniprot")
 w
@@ -121,7 +115,6 @@ w
 dis_3 = dis_2
 dis_3 = dis_3 %>%select(key, uniprotswissprot, cds_mutation_loc, group.x, ends_with("_flag"))
 
-#dis_3 = merge(dis_2, motif_max, by = "uniprot", all.x = TRUE)
 
 
 

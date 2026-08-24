@@ -6,7 +6,7 @@ gene_all <- read_csv("Downloads/gene_all0407 (1).csv", show_col_types = FALSE)
 snv_control = gene_all %>% filter(group == "snv_control") 
 fs_control = gene_all %>% filter(group == "fs_control")
 
-#2. from clinvar, find plp ptc NMDesc variants, the number is 0 due to its defination
+#2. Find ClinVar plp PTC NMDesc variants; count is 0 by definition
 snv_res_can = readRDS('/Users/jxu14/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/clinvar/snv_plp_ptc_nmdesc_can_filtered20260201.rds')
 #get NMDesc variants 
 snv_control_clinvar_variants = data.frame(transcript = snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]][which(snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]] %in% snv_control$ensembl_transcript_id)],
@@ -23,11 +23,11 @@ ptc_can_NMD_df <- read_csv("Desktop/NMDescapediseasegene_paper-main/new_NMDesc/d
 snv_control_gnomad = ptc_can_NMD_df[which(ptc_can_NMD_df$transcript %in% snv_control$ensembl_transcript_id & ptc_can_NMD_df$type == 'snv'),]
 fs_control_gnomad = ptc_can_NMD_df[which(ptc_can_NMD_df$transcript %in% fs_control$ensembl_transcript_id & ptc_can_NMD_df$type != 'snv'),]
 #remove inframe frameshift variants based on the key
-# 从 id 列提取 ref 和 alt，计算长度差，排除3的倍数（inframe）
+# Extract ref/alt from id column, compute length diff, exclude multiples of 3 (inframe)
 fs_control_gnomad$ref = sub(".*\\|(.+)\\|.*", "\\1",fs_control_gnomad$id)
 fs_control_gnomad$alt = sub(".*\\|.*\\|(.*)", "\\1", fs_control_gnomad$id)
 fs_control_gnomad$len_diff = abs(nchar(fs_control_gnomad$ref) - nchar(fs_control_gnomad$alt))
-# 保留长度差不是3的倍数的（真正的frameshift）
+# Keep length diffs not multiples of 3 (true frameshift)
 fs_control_gnomad_filtered = fs_control_gnomad[fs_control_gnomad$len_diff %% 3 != 0, ]
 
 ##4.1 compare ptc distance to cds end
@@ -42,13 +42,13 @@ BM.info4 = BM.info4[order(BM.info4$rank),]
 get_re_loc <- function(location, transcript_match){
   df <- BM.info4[BM.info4$ensembl_transcript_id == transcript_match, ]
   
-  # 通过坐标判断 strand：rank1 比 rank2 大 → 负链（对 MN1 是这样）
+  # Infer strand from coordinates: rank1 > rank2 means minus strand
   is_minus <- nrow(df) >= 2 && df$exon_chrom_start[1] > df$exon_chrom_start[2]
   
   for (i in seq_len(nrow(df))) {
     start <- df$exon_chrom_start[i]
     end   <- df$exon_chrom_end[i]
-    # location 是否落在 exon 区间（不管 start/end 谁大都能判断）
+    # Check if location falls within exon interval
     if (location >= min(start, end) && location <= max(start, end)) {
       if (is_minus) {
         offset <- max(start, end) - location
@@ -114,7 +114,7 @@ can.info <- getBM(
   mart = ensembl
 )
 
-## 只保留 canonical transcript
+## Keep only canonical transcripts
 transcript_set2_fs <- can.info %>%
   filter(transcript_is_canonical == 1) %>%
   pull(ensembl_transcript_id) %>%
@@ -130,7 +130,7 @@ BM.infoo_fs <- getBM(
   mart = ensembl
 )
 
-## 只保留 coding exon 数 > 1 的 transcript
+## Keep transcripts with more than 1 coding exon
 exon.num_fs <- BM.infoo_fs %>%
   group_by(ensembl_transcript_id) %>%
   summarise(max_rank = sum(!is.na(cds_start)), .groups = "drop")
@@ -148,17 +148,17 @@ cds.info_fs <- getBM(
   mart = ensembl
 )
 
-## 只保留这些 transcript 的 exon 信息
+## Keep exon info for these transcripts
 BM.info2_fs <- BM.infoo_fs %>%
   filter(ensembl_transcript_id %in% transcript_set3_fs)
 
 BM.info2_fs$exon_length <- BM.info2_fs$cds_end - BM.info2_fs$cds_start + 1
 
-## 只保留真正 coding 的 exon
+## Keep only true coding exons
 BM.info3_fs <- BM.info2_fs %>%
   filter(!is.na(exon_length), exon_length > 0)
 
-## 注意：这里 cds_length 应该用 sum(exon_length)，不是 max(cds_end)
+## cds_length is sum(exon_length), not max(cds_end)
 BM.info4_fs_len <- BM.info3_fs %>%
   group_by(ensembl_transcript_id) %>%
   summarise(cds_length = sum(exon_length), .groups = "drop")
@@ -401,9 +401,7 @@ fs_control_gnomad_filtered2$ptc_distance_to_cds_end <-
 
 library(dplyr)
 
-# [已删除] 100 次重抽样的 PTC-CDS 末端距离比较 —— 基于重抽样方法，按要求移除。
-# §8 的不做重抽样的组间汇总仍保留。
-##4.2 compare the motif/LCS features of the control gene variants with the case gene variants, and see if there is a significant difference
+##4.2 compare motif/LCS features between control and case variants
 fs_control_gnomad_filtered3 = fs_control_gnomad_filtered2[,c(1,2,3,7,9,10,11,12)]
 
 
@@ -421,7 +419,7 @@ control_variants_all <- control_variants_all %>%
 #rename it to uniprot
 control_variants_all <- control_variants_all %>%
   rename(uniprot = uniprotswissprot)
-# 【2026-08 修复】加变异级行号键 .vm_row，供下方写回用 —— 见写回处注释
+# Add variant-level row key .vm_row for join below
 control_variants_all$.vm_row = seq_len(nrow(control_variants_all))
 merge(motif_max,control_variants_all, by = "uniprot") -> motif_max3
 LCS_max3 = merge(LCS_max, control_variants_all, by = "uniprot")
@@ -434,9 +432,7 @@ motif_max3$variant_ptm_flag = motif_max3$`PTMs`*3 >= motif_max3$cds_mutation_loc
 motif_max3$variant_nls_flag = motif_max3$`NLSs`*3 >= motif_max3$cds_mutation_loc
 LCS_max3$variant_LCS_flag = LCS_max3$`LCSs`*3 >= LCS_max3$cds_mutation_loc
 
-# 【2026-08 修复】原版 match(uniprot)：motif_max3 每变异一行，match 键却是
-# 每蛋白的 uniprot —— 只返回第一个命中行，同一蛋白所有变异拿到第一个变异
-# 的 flag，蛋白内变异被抹平。修法：match 用变异级行号 .vm_row。
+# Match uses variant-level row .vm_row, not protein-level uniprot
 control_variants_all$variant_protein_flag = motif_max3$variant_protein_feature_flag[match(control_variants_all$.vm_row, motif_max3$.vm_row)]
 control_variants_all$variant_domain_flag = motif_max3$variant_domains_flag[match(control_variants_all$.vm_row, motif_max3$.vm_row)]
 control_variants_all$variant_slim_flag = motif_max3$variant_slim_flag[match(control_variants_all$.vm_row, motif_max3$.vm_row)]
@@ -626,7 +622,5 @@ print(ppi_summary)
 print(pfam_summary)
 
 ##################################################
-## [已删除] §9-14：100 次重抽样及其汇总、绘图
-## 基于重抽样方法，按要求整段移除。
-## §8「group-level summary without resampling」保留 —— 那是不重抽样的直接汇总。
+## Section 8 (group-level summary without resampling) is kept
 ##################################################

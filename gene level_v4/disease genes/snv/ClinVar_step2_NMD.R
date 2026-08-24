@@ -34,15 +34,14 @@ all.df <- select(ensgene, keys = keys, columns = cols, keytype="TXNAME")
 all.df.sub <- all.df[which(all.df$TXNAME!='NA'),]
 ### do it for each chromosome
 library(biomaRt)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) ------------------------------------------------
+#   data_file("x.csv")  locates by filename, errors clearly if missing
+#   out_file("y.csv")   outputs to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") used when a directory is needed instead of a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -58,7 +57,6 @@ res_clinvar_default_3 = readRDS(data_file("clinvar0819_3.rds"))
 res_clinvar_default = c(res_clinvar_default_1, res_clinvar_default_2, res_clinvar_default_3)
 rm(res_clinvar_default_1, res_clinvar_default_2, res_clinvar_default_3)
 
-#res_clinvar_default = readRDS(data_file("aenmdDefaultSettings_Clinvar20230616_ClnsigClinDN_ensmbl105_results.rds"))
 
 res_clinvar_default = unlist(res_clinvar_default)
 
@@ -97,10 +95,8 @@ v_all = length(which(clinvar_vus_ptc@elementMetadata@listData[["res_aenmd"]]@lis
 v_all_per = v_all/length(clinvar_vus_ptc)
 v_all_per = v_all/length(vus.ind)
 
-#txnames <- unique(unlist(sapply(1:length(names(res_clinvar_default)),function(x){
   #strsplit(names(res_clinvar_default)[x],'\\|')[[1]][1]
   
-#})))
 chr1 = clinvar_vus_ptc
 txnames <- unique(names(chr1))
 txnames.list <- list()
@@ -241,7 +237,6 @@ for (i in 1: length(txnames)){
     if(length(trig.PTC.ind)>0){
       trig.PTC <- length (unique(sapply(1:length(names(chr1.ind[trig.PTC.ind])), function(x)
       {
-        #strsplit(names(chr1.ind[trig.PTC.ind])[x],'\\|')[[1]][2]
         chr1.ind[trig.PTC.ind[x],]$key
         
       }))) } else {
@@ -307,7 +302,6 @@ allgenes <- vector()
     # only long rule
      #p_indexes[[p]] <- (as.numeric(l[[p]]$long.pvalue) >= 0.87) & l[[p]]$is_canonical
     
-    # p_indexes[[p]] <- grep('NOVA2', l[[p]]$hgnc_symbol)
     # p_indexes[[p]] <- grep('ENST00000378888)', l[[p]]$txname)
   }
   
@@ -392,10 +386,8 @@ allgenes <- vector()
  OMIM <- read.csv('~/Downloads/OMIM/genemap2.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE,skip=3)
  mim2gene <- read.csv('~/Downloads/OMIM/mim2gene.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE,skip=4)
  
- #mim2gene$MIM.Number <- mim2gene$X..MIM.Number
  colnames(mim2gene)[which(names(mim2gene)=='X..MIM.Number')] <- 'MIM.Number'
  merge_OMIM_mim2gene <- merge(mim2gene,OMIM,by='MIM.Number')
- #merge_OMIM_mim2gene$Raw_gene_name <- merge_OMIM_mim2gene$Approved.Gene.Symbol..HGNC.
  colnames(merge_OMIM_mim2gene)[which(names(merge_OMIM_mim2gene)=='Approved.Gene.Symbol..HGNC.')] <- 'Raw_gene_name'
  genes.mat.1$Raw_gene_name <- genes.mat.1$gene
  

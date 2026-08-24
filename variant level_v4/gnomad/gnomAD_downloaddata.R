@@ -73,7 +73,7 @@ file.remove(truncfile)
 
 #Some variants have the alt of "<DEL>" for some weird reason, just make those alt alleles empty:
 #vcf_rng$alt <- ifelse(vcf_rng$alt == "<DEL>", "", vcf_rng$alt)
-#make sure that ref and alt are class biostring:
+#ref and alt must be Biostrings class
 
 
 

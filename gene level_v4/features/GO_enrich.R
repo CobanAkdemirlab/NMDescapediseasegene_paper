@@ -37,10 +37,8 @@ enrich2 = function(input_path){
   
   #pdf(paste0('/Users/jxu14/Desktop/enrich/clinvar_',type,'.pdf'))
   # Adjust margins to increase space for long terms on the left
-  #par(mar = c(5, 15, 4, 2))  # Set bottom, left, top, and right margins respectively
   
   # Create the bar plot with modified margins
-  #barplot(height = -log10(p_values), names.arg = terms, horiz = TRUE, las = 2,
   #        col = "skyblue", main = paste("Gene Enrichment Analysis of Clinvar",type), 
   #        xlab = "-log10(P-value)", ylab = "")
   hg_gs <- geneset::getGO(org = "human",ont = "bp")

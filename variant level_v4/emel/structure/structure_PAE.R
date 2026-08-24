@@ -4,7 +4,7 @@ library(ggpubr)
 library(patchwork)
 
 # ══════════════════════════════════════════════════════════════
-# 1. 队列筛选（与 Table 1 / Table 2 / pLDDT 图一致）
+# 1. Cohort filtering (consistent with Table 1 / Table 2 / pLDDT plot)
 # ══════════════════════════════════════════════════════════════
 
 df_all <- VAR_WT_structural_results %>%
@@ -29,10 +29,10 @@ df_all     <- bind_rows(df_disease, df_control)
 
 
 # ══════════════════════════════════════════════════════════════
-# 2. 数据准备（WT 做蛋白水平去重）
+# 2. Data preparation (WT deduplicated at protein level)
 # ══════════════════════════════════════════════════════════════
 
-# WT 的 PAE 对同一蛋白的所有变异体完全相同，不去重会造成伪重复
+# WT PAE is identical across variants of same protein; dedup avoids pseudoreplication
 prepare_pae_data <- function(data, pae_col, panel_type) {
   
   d <- data %>%
@@ -48,7 +48,7 @@ prepare_pae_data <- function(data, pae_col, panel_type) {
 
 
 # ══════════════════════════════════════════════════════════════
-# 3. p 值与 BH-FDR 校正
+# 3. p-values and BH-FDR correction
 # ══════════════════════════════════════════════════════════════
 
 panel_spec <- tibble::tribble(
@@ -88,8 +88,8 @@ p_raw <- pmap_dfr(
   }
 )
 
-# 默认在本图的 12 个检验内校正，SNV 与 FS 家族分开。
-# 若要与 Table 1 完全一致，见文件末尾的说明。
+# Default: correct within this figure's 12 tests, SNV and FS families separate.
+# For consistency with Table 1, see note at end of file.
 p_annot <- p_raw %>%
   group_by(family) %>%
   mutate(q_val = p.adjust(p_raw, method = "BH")) %>%
@@ -110,7 +110,7 @@ p_annot <- p_annot %>% mutate(label = q_stars(q_val))
 
 
 # ══════════════════════════════════════════════════════════════
-# 4. 单图绘制函数
+# 4. Single-panel plotting function
 # ══════════════════════════════════════════════════════════════
 
 fill_colors <- c("SNV\nDisease" = "#E07B7B",
@@ -124,11 +124,11 @@ plot_pae <- function(df, title, annot, y_label = "PAE (Å, mean)") {
   y_max <- max(df$PAE, na.rm = TRUE)
   y_rng <- y_max - y_min
   
-  # 括号位置 + 上方留白
+  # Bracket position plus top margin
   annot <- annot %>% mutate(y.position = y_max + 0.08 * y_rng)
   
-  # PAE 解读参考线：仅在落入本图数值范围内时才画
-  # (<5 Å 相对位置可信；>10 Å 结构域间位置基本不可确定)
+  # PAE reference lines: drawn only if within this panel's range
+  # (<5 A relative position reliable; >10 A inter-domain position largely undetermined)
   ref_lines <- tibble(yint = c(5, 10),
                       col  = c("#4dac26", "#f1a340")) %>%
     filter(yint >= y_min, yint <= y_max)
@@ -144,7 +144,7 @@ plot_pae <- function(df, title, annot, y_label = "PAE (Å, mean)") {
                  fill  = "white",
                  alpha = 0.8) +
     
-    # 显著性括号：FDR 校正后的 q 值
+    # Significance brackets: FDR-corrected q-values
     stat_pvalue_manual(
       annot,
       label        = "label",
@@ -158,8 +158,7 @@ plot_pae <- function(df, title, annot, y_label = "PAE (Å, mean)") {
                color     = "gray50",
                linewidth = 0.5) +
     
-    # 原脚本这里画的是「四组混合的整体中位数」，位置取决于各组样本量，
-    # 容易被误读为基准线，已改为固定的 PAE 解读阈值。
+    # Uses fixed PAE thresholds instead of a pooled median baseline
     geom_hline(data = ref_lines,
                aes(yintercept = yint),
                color     = ref_lines$col,
@@ -183,7 +182,7 @@ plot_pae <- function(df, title, annot, y_label = "PAE (Å, mean)") {
 
 
 # ══════════════════════════════════════════════════════════════
-# 5. 生成六张图
+# 5. Generate six plots
 # ══════════════════════════════════════════════════════════════
 
 plots <- pmap(
@@ -202,7 +201,7 @@ plots <- pmap(
 
 
 # ══════════════════════════════════════════════════════════════
-# 6. 拼图与导出
+# 6. Combine panels and export
 # ══════════════════════════════════════════════════════════════
 
 combined <-
@@ -238,7 +237,7 @@ ggsave("PAE_comparison_fdr.png", plot = combined,
 
 
 # ══════════════════════════════════════════════════════════════
-# 7. 核对输出
+# 7. Check output
 # ══════════════════════════════════════════════════════════════
 
 p_annot %>%
@@ -258,9 +257,9 @@ pmap_dfr(
   print()
 
 
-# ── 与 Table 1 统一校正（可选）────────────────────────────────
-# 本图默认在自己的 12 个检验内校正，因此 q 值与 Table 1（54 个检验）
-# 不同。若要完全对齐，先运行 Table 1 脚本保留其 p_all，然后：
+# ── Unify correction with Table 1 (optional)────────────────────────────────
+# This figure corrects within its own 12 tests, so q-values differ from Table 1 (54 tests)
+# To align exactly, run the Table 1 script first to keep its p_all, then:
 #
 # t1_lookup <- tibble::tribble(
 #   ~panel_id,  ~t1_variable,
@@ -276,4 +275,4 @@ pmap_dfr(
 #   left_join(p_all, by = c("t1_variable" = "variable")) %>%
 #   mutate(q_val = if_else(family == "SNV", snv_q_raw, fs_q_raw),
 #          label = q_stars(q_val))
-# 然后重新运行第 5、6 节。
+# Then re-run sections 5 and 6.

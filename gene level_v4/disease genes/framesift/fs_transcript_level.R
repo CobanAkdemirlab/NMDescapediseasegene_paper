@@ -91,7 +91,7 @@ get_NMDesc_PTC = function(input_seqs,bp,variant_transcript,type='plus1')
   ### get the length of each exon
   exon.length <- (df$cds_end-df$cds_start)+1
   
-  ##rule 1 The PTC located in the last coding exon and rule 2 The PTC located within d_pen bp upstream of the penultimate exon boundary (penultimate exon rule; default: d_pen = 50)
+  ## NMD escape rules: PTC in last exon, or within d_pen bp of penultimate exon boundary (default 50)
   #check pen exon
   pen.length = exon.length[length(exon.length)-1]
   if(pen.length<bp){

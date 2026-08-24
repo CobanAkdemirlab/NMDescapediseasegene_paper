@@ -35,7 +35,7 @@ for (p in props) {
 d_vars = paste0("d_", props)
 
 
-#2. randomly select one variant for each uniprot id per group, repeat this process 1000 times
+# 2. randomly select one variant per uniprot_id per group, repeat 1000 times
 
 get_paired_p = function(data, d_var, group1, group2) {
   

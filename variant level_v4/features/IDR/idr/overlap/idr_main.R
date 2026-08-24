@@ -1,12 +1,11 @@
-# --- 路径解析层（自动插入）---------------------------------
-# 原来这里有旧机器 /Users/jxu14/ 的绝对路径，换机器必断。
-# 现在：数据用 data_file("文件名") 定位，输出用 out_dir()/out_file()。
-# 换数据位置只改 gene level_v3/lib/paths.R 的 DATA_ROOTS。
+# --- Path resolution layer ---------------------------------
+# Data located via data_file("filename"); output via out_dir()/out_file().
+# Data location set in gene level_v3/lib/paths.R DATA_ROOTS.
 .p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
         "../../gene level_v3/lib/paths.R", "../../../gene level_v3/lib/paths.R",
         "../../../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from repo root")
 source(.p[1]); rm(.p)
 # ------------------------------------------------------------
 
@@ -127,7 +126,7 @@ plus2_NMD_list = plus2_NMD[match(plus2_NMD@ranges@NAMES, plus2_can_list, nomatch
 snv_nf = create_fasta(snv_NMD_list,output_dir = out_dir("snv_can"))
 plus1_nf = create_fasta(plus1_NMD_list,output_dir = out_dir("plus1_can"))
 plus2_nf = create_fasta(plus2_NMD_list,output_dir = out_dir("plus2_can"))
-#test if the overlap length >= 20*3bp
+# test if the overlap length >= 20*3bp
 get_snv_idr_match("~/Downloads/long_idr_region/snv_control2_out.txt")
 plus1_pre = get_fs_idr_match(data_file("plus1_disorder_predictions.csv"),type='plus1')
 plus2_pre = get_fs_idr_match(data_file("plus2_disorder_predictions.csv"),type='plus2')

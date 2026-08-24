@@ -33,7 +33,7 @@ snv_uniprot_ids_out$gene = getBM(attributes = c('hgnc_symbol','uniprotswissprot'
                                     values = snv_uniprot_ids_out$UniProt_ID,
                                     mart = ensembl)$hgnc_symbol
 #mjoin snv_uniprot_ids_out to snv_idr by gene, the Disordered_Domain_Boundaries in snv_uniprot_ids_out
-# will be used to be the wildtype_Disordered_Domain_Boundaries in snv_idr
+# used as wildtype_Disordered_Domain_Boundaries in snv_idr
 snv_idr$wild_Disordered_Domain_Boundaries = snv_uniprot_ids_out$Disordered_Domain_Boundaries[match(snv_idr$gene, snv_uniprot_ids_out$gene)]
 snv_idr <- snv_idr %>%
   mutate(

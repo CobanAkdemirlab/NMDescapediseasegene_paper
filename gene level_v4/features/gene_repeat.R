@@ -97,9 +97,8 @@ get_repeat_content <- function(sequence) {
   }
   
   # ---------------------------------------------------------------
-  # Repeat length distribution (DRL) — tract lengths as a vector,
+  # Repeat length distribution (DRL): tract lengths as a vector
   # mirroring what the paper measures per genome segment.
-  # (原此处说明 bootstrap CI，已随函数一并移除)
   # ---------------------------------------------------------------
   repeat_length_dist <- sort(hits_df$tract_len)
   
@@ -122,8 +121,6 @@ get_repeat_content <- function(sequence) {
 }
 
 
-# [已删除] bootstrap_repeat_ci() —— 基于 bootstrap 的重复长度分布置信区间，
-# 按要求移除。该函数在本仓库内未被任何脚本调用。
 
 detect_repeats <- function(sequence) {
   if (is.na(sequence) || sequence == "") return(0)

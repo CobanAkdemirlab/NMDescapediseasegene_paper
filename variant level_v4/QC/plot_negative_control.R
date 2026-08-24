@@ -1,4 +1,4 @@
-#This R script is to compare set2(variant_plp_control) with set3(control_variants_all2)
+#Compare set2 (variant_plp_control) with set3 (control_variants_all2) on pfam_ppi domains, motifs
 #on pfam_ppi domains, motifs
 
 variant_plp = read_csv("Downloads/variants_all_with_motif_LCS_flags (1).csv", show_col_types = FALSE)

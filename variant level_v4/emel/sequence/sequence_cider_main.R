@@ -16,7 +16,7 @@ FDR_CUTOFF <- 0.05
 base_dir <- "~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/sequence_analysis/CIDER"
 
 # This script assumes all_variants$key has already been created/loaded,
-# as in the PARSE v2 workflow.
+# as in the PARSE v2 workflow
 if (!exists("all_variants") || !"key" %in% names(all_variants)) {
   stop("Please load/create all_variants$key before running this script.")
 }
@@ -294,7 +294,7 @@ desc_all %>%
 # Length-adjusted sensitivity analysis for absolute measures:
 #   value ~ group + var_length + (1 | uniprot_id)
 #
-# As in the PARSE v2 workflow, only VAR metrics are modeled.
+# Only VAR metrics are modeled.
 # WT is retained for descriptive VAR/WT/Δ summaries.
 #
 # Estimate = Disease − Control.

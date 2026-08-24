@@ -7,13 +7,13 @@ library(ggpubr)
 library(patchwork)
 
 # ══════════════════════════════════════════════════════════════
-# 0. 参数
+# 0. Parameters
 # ══════════════════════════════════════════════════════════════
 
-MIN_PEPTIDE_LEN <- 10   # 最小肽段长度（aa）；短肽的理化指标不可靠
+MIN_PEPTIDE_LEN <- 10   # Minimum peptide length (aa); short peptides have unreliable physicochemical properties
 
 # ══════════════════════════════════════════════════════════════
-# 1. 读入
+# 1. Read data
 # ══════════════════════════════════════════════════════════════
 
 base_dir <- "~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/sequence_analysis/peptides"
@@ -25,11 +25,11 @@ nmd_raw <- read_csv(file.path(base_dir, "NMD_region_NMDPos_peptide_props.csv"),
 
 
 # ══════════════════════════════════════════════════════════════
-# 2. file_name -> key，并检查与 all_variants 的匹配率
+# 2. file_name -> key, check match rate against all_variants
 # ══════════════════════════════════════════════════════════════
 # file_name: "1_196745951_C_T"  ->  key: "1:196745951|C|T"
-# 注意染色体位置可能有前导零（如 17_067975880_GT_G），as.numeric 会去掉。
-# 若匹配率很低，说明转换规则需要调整 —— 先看下面的诊断输出。
+# Chromosome position may have leading zeros (e.g. 17_067975880_GT_G); as.numeric strips them
+# Low match rate indicates the key conversion rule needs adjustment
 
 make_key <- function(fn) {
   parts <- str_split_fixed(fn, "_", 4)
@@ -47,16 +47,16 @@ check_key_match <- function(d, nm) {
   )
 }
 
-cat("\n=== key 匹配诊断（疾病组行）===\n")
+cat("\n=== Key match diagnostics (disease group rows) ===\n")
 print(as.data.frame(bind_rows(
   check_key_match(div_raw, "DivergentPos"),
   check_key_match(nmd_raw, "NMDPos")
 )))
-cat("pct_matched 应与结构分析中的疾病组保留比例接近；过低说明 key 转换有误。\n\n")
+cat("pct_matched should be close to the disease group retention rate in structural analysis; too low indicates incorrect key conversion.\n\n")
 
 
 # ══════════════════════════════════════════════════════════════
-# 3. 清洗：分组、队列筛选、去除报错行、长度阈值
+# 3. Cleaning: grouping, cohort filtering, remove error rows, length threshold
 # ══════════════════════════════════════════════════════════════
 
 prep_region <- function(d, region_name, len_var, len_wt) {
@@ -74,7 +74,7 @@ prep_region <- function(d, region_name, len_var, len_wt) {
     ) %>%
     filter(!is.na(group))
   
-  # 队列筛选（与结构分析一致）
+  # Cohort filtering (consistent with structural analysis)
   d <- bind_rows(
     d %>% filter(key %in% all_variants$key),
     d %>% filter(source_folder %in% c("snv_control", "fs_control"))
@@ -82,11 +82,11 @@ prep_region <- function(d, region_name, len_var, len_wt) {
   
   n0 <- nrow(d)
   
-  # 去除计算失败的行
+  # Remove rows where calculation failed
   d <- d %>% filter(is.na(var_error))
   n1 <- nrow(d)
   
-  # 肽段长度：Divergent 文件有长度列，NMD 文件需从序列计算
+  # Peptide length: Divergent file has length column, NMD file computed from sequence
   d <- d %>%
     mutate(
       var_len = if (!is.null(len_var) && len_var %in% names(.)) .data[[len_var]]
@@ -98,7 +98,7 @@ prep_region <- function(d, region_name, len_var, len_wt) {
   d <- d %>% filter(!is.na(var_len), var_len >= MIN_PEPTIDE_LEN)
   n2 <- nrow(d)
   
-  cat(sprintf("[%s] 筛选后 %d 行 -> 去除 var_error %d 行 -> 长度 >= %d aa 后 %d 行\n",
+  cat(sprintf("[%s] after filtering: %d rows -> removed var_error: %d rows -> length >= %d aa: %d rows\n",
               region_name, n0, n0 - n1, MIN_PEPTIDE_LEN, n2))
   
   d %>%
@@ -109,17 +109,17 @@ prep_region <- function(d, region_name, len_var, len_wt) {
     )
 }
 
-cat("=== 清洗记录 ===\n")
+cat("=== Cleaning log ===\n")
 df_div <- prep_region(div_raw, "Divergent", "var_NMD_length", "wt_NMD_length")
 df_nmd <- prep_region(nmd_raw, "NMD", NULL, NULL)
 cat("\n")
 
 
 # ══════════════════════════════════════════════════════════════
-# 4. 变量与标签
+# 4. Variables and labels
 # ══════════════════════════════════════════════════════════════
-# length_proxy = TRUE 的变量与肽段长度近似成正比，
-# 组间差异很可能只是截断程度的重述，解读时需谨慎。
+# Variables with length_proxy = TRUE scale with peptide length,
+# differences may just reflect truncation; interpret with caution.
 
 var_info <- tribble(
   ~var,                 ~label,                ~length_proxy,
@@ -144,10 +144,10 @@ numeric_vars <- var_info$var
 
 
 # ══════════════════════════════════════════════════════════════
-# 5. 原始数据：描述性表格（中位数 IQR）
+# 5. Raw data: descriptive table (median IQR)
 # ══════════════════════════════════════════════════════════════
-# 展示 VAR、WT、Δ 三套值。WT 为变异体水平展示（描述队列现状），
-# 推断检验见第 6 节。
+# Shows VAR, WT, and delta values; WT shown at variant level (describes cohort),
+# inferential testing is in section 6.
 
 make_desc_table <- function(d, region_name) {
   
@@ -212,11 +212,11 @@ desc_nmd %>% as_flex_table() %>% flextable::save_as_docx(
 
 
 # ══════════════════════════════════════════════════════════════
-# 6. 混合模型：value ~ group + (1 | uniprot_id)
+# 6. Mixed model: value ~ group + (1 | uniprot_id)
 # ══════════════════════════════════════════════════════════════
-# 只对 VAR 建模。原因：WT 在基因内恒定，被随机截距完全吸收，
-# 因此 Δ 模型与 VAR 模型的组效应估计和 p 值在数学上完全相同，
-# 同时报告两套等于重复计数并加倍 FDR 惩罚。
+# Models VAR only; WT is constant within gene,
+# absorbed by random intercept, so delta and VAR models are mathematically equivalent,
+# reporting both would double-count and inflate the FDR penalty.
 
 fit_lmm <- function(data, outcome, g_dis, g_con, family_label) {
   
@@ -266,7 +266,7 @@ lmm_all <- bind_rows(
   run_region_lmm(df_div, "Divergent"),
   run_region_lmm(df_nmd, "NMD")
 ) %>%
-  group_by(family) %>%                       # 每个比较内校正（跨两个 region）
+  group_by(family) %>%                       # correct within each comparison (across both regions)
   mutate(q_fdr = p.adjust(p_raw, method = "BH")) %>%
   ungroup() %>%
   mutate(
@@ -292,7 +292,7 @@ lmm_all <- bind_rows(
 
 write_csv(lmm_all, "Peptide_LMM_results.csv")
 
-cat("=== 混合模型结果 ===\n")
+cat("=== Mixed model results ===\n")
 lmm_all %>%
   select(region, family, label, estimate, p_raw, q_fdr, sig, n_obs, n_genes) %>%
   mutate(across(c(estimate, p_raw, q_fdr), ~ signif(.x, 3))) %>%
@@ -301,7 +301,7 @@ lmm_all %>%
 
 
 # ══════════════════════════════════════════════════════════════
-# 7. 混合模型表格：SNV 与 FS 并排
+# 7. Mixed model table: SNV and FS side by side
 # ══════════════════════════════════════════════════════════════
 
 fmt_p <- function(x) {
@@ -391,7 +391,7 @@ try(gtsave(tbl_lmm_nmd, "Peptide_LMM_table_NMD.docx"),       silent = TRUE)
 
 
 # ══════════════════════════════════════════════════════════════
-# 8. 森林图：SNV 与 FS 同图，两个 region 分面
+# 8. Forest plot: SNV and FS combined, faceted by region
 # ══════════════════════════════════════════════════════════════
 
 plot_dat <- lmm_all %>%

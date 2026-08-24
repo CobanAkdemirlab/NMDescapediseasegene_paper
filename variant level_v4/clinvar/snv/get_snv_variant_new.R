@@ -1,7 +1,6 @@
 ##get snv variants from clinvar
 
 #input gene list
-#snv_gene = read.csv('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv', header = T)$V1
 snv_gene 
 snv_gene  = read.csv("snv_can_ADrestricted_bh_FDR0.20_all.txt")$hgnc_symbol
 #get canonical transcript of snv_gene$hgnc

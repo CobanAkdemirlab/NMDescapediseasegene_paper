@@ -2,15 +2,14 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 library(tidyr) 
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) --------------------------------
+#   data_file("x.csv")  locates by filename, errors if not found
+#   out_file("y.csv")   writes to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -31,7 +30,7 @@ snv_control_vep_cadd_dbnsfp_tss_prot_nearestexon <- read_delim("~/Downloads/vep0
                                                                  delim = "\t", escape_double = FALSE, 
                                                                  trim_ws = TRUE, skip = 142)
 
-#2. only keep the rows where variant and gene both match minus1_variants
+#2. Keep rows where variant and gene match filtered variant tables
 snv_variants <- read_csv(data_file("snv_variants0406.csv", must = FALSE))
 snv_control_variants <- read_csv(data_file("snv_gnomAD_variants0406.csv", must = FALSE))
 minus1_variants <- read_csv(data_file("minus1_variants0406.csv", must = FALSE))
@@ -133,7 +132,7 @@ clean_vep <- function(df){
   out
 }
 
-# Build from your filtered objects in #2
+# Build groups list from filtered VEP objects
 groups_list <- list(
   minus1         = minus1_vep,
   minus1_control = minus1_control_vep,

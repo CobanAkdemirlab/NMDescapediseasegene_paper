@@ -3,7 +3,7 @@ library(gtsummary)
 library(gt)
 library(flextable)
 
-# ── 通用分组函数 ───────────────────────────────────────────
+# ── Grouping function ───────────────────────────────────────
 
 make_group <- function(source_folder) {
   factor(
@@ -17,7 +17,7 @@ make_group <- function(source_folder) {
   )
 }
 
-# ── p-value 计算函数 ───────────────────────────────────────
+# ── P-value calculation function ────────────────────────────
 
 calc_pairwise_p <- function(data, variables) {
   
@@ -51,7 +51,7 @@ calc_pairwise_p <- function(data, variables) {
   })
 }
 
-# ── 通用建表函数 ───────────────────────────────────────────
+# ── Table building function ─────────────────────────────────
 
 make_cider_table <- function(data, title) {
   
@@ -180,7 +180,7 @@ make_cider_table <- function(data, title) {
 }
 
 # ══════════════════════════════════════════════════════════
-# 表1：Divergent Region
+# Table 1: Divergent Region
 # ══════════════════════════════════════════════════════════
 
 df_div <- NMD_region_DivergentPos_CIDER %>%
@@ -192,7 +192,7 @@ tbl_div <- make_cider_table(
 )
 
 # ══════════════════════════════════════════════════════════
-# 表2：NMD Region
+# Table 2: NMD Region
 # ══════════════════════════════════════════════════════════
 
 df_nmd <- NMD_region_NMDPos_CIDER %>%
@@ -203,12 +203,12 @@ tbl_nmd <- make_cider_table(
   "Table 2b: CIDER Features — NMD Region"
 )
 
-# ── 打印 ──────────────────────────────────────────────────
+# ── Print ────────────────────────────────────────────────
 
 tbl_div
 tbl_nmd
 
-# ── 导出 Word ─────────────────────────────────────────────
+# ── Export Word ──────────────────────────────────────────
 
 tbl_div %>%
   as_flex_table() %>%
@@ -218,7 +218,7 @@ tbl_nmd %>%
   as_flex_table() %>%
   save_as_docx(path = "Table2b_CIDER_NMD.docx")
 
-# ── 导出 HTML ─────────────────────────────────────────────
+# ── Export HTML ──────────────────────────────────────────
 
 tbl_div %>%
   as_gt() %>%

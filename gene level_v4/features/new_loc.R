@@ -2,15 +2,14 @@ library(GenomicFeatures)
 library(BSgenome.Hsapiens.UCSC.hg38)
 library(GenomicRanges)
 library(AnnotationDbi)
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) ------------------------------------------------
+#   data_file("x.csv")  locate by filename; error if not found
+#   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed, not a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -77,7 +76,7 @@ ggplot(summary_tbl, aes(x = category, y = percentage, fill = cds_nls)) +
 summary_yes <- summary_tbl %>%
   filter(cds_nls == "Yes")
 
-# Create wide contingency table for Fisher’s test
+# Create wide contingency table for Fisher's test
 fisher_matrix <- pli_all %>%
   group_by(category, cds_nls) %>%
   summarise(count = n(), .groups = "drop") %>%
@@ -87,7 +86,7 @@ fisher_matrix <- pli_all %>%
 categories <- unique(fisher_matrix$category)
 comparisons <- combn(categories, 2, simplify = FALSE)
 
-# Run Fisher’s exact test
+# Run Fisher's exact test
 fisher_results <- lapply(comparisons, function(pair) {
   group1 <- fisher_matrix %>% filter(category == pair[1]) %>% select(Yes, No)
   group2 <- fisher_matrix %>% filter(category == pair[2]) %>% select(Yes, No)

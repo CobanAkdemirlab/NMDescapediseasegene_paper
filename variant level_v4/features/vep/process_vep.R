@@ -42,7 +42,7 @@ length(which(snv_control_vep$IMPACT == "MODIFIER"))/length(snv_control_vep$IMPAC
 
 #add cds lenth to each transcript
 minus1_idr_unique <- minus1_idr %>%
-  distinct(Transcript_ID, .keep_all = TRUE)  # 或按特定规则排序后取最新值
+  distinct(Transcript_ID, .keep_all = TRUE)  # keep first row per transcript
 
 merged_minus1 <- left_join(
   minus1_vep,
@@ -56,7 +56,7 @@ merged_minus1$vdis2end = merged_minus1$NMDesc.end - merged_minus1$start_cds
 merged_rn_minus1 = merged_minus1[which(!is.na(merged_minus1$NMDesc.end)),]
 
 minus1_control_idr_unique <- minus1_control_idr %>%
-  distinct(Transcript_ID, .keep_all = TRUE)  # 或按特定规则排序后取最新值
+  distinct(Transcript_ID, .keep_all = TRUE)  # keep first row per transcript
 
 merged_minus1_control <- left_join(
   minus1_control_vep,
@@ -68,7 +68,7 @@ merged_minus1_control$vdis2end = merged_minus1_control$NMDesc.end - merged_minus
 merged_rn_minus1_control = merged_minus1_control[which(!is.na(merged_minus1_control$NMDesc.end)),]
 
 plus1_idr_unique <- plus1_idr %>%
-  distinct(Transcript_ID, .keep_all = TRUE)  # 或按特定规则排序后取最新值
+  distinct(Transcript_ID, .keep_all = TRUE)  # keep first row per transcript
 
 merged_plus1 <- left_join(
   plus1_vep,
@@ -82,7 +82,7 @@ merged_plus1$vdis2end = merged_plus1$NMDesc.end - merged_plus1$start_cds
 merged_rn_plus1 = merged_plus1[which(!is.na(merged_plus1$NMDesc.end)),]
 
 plus1_control_idr_unique <- plus1_control_idr %>%
-  distinct(Transcript_ID, .keep_all = TRUE)  # 或按特定规则排序后取最新值
+  distinct(Transcript_ID, .keep_all = TRUE)  # keep first row per transcript
 
 merged_plus1_control <- left_join(
   plus1_control_vep,
@@ -93,7 +93,7 @@ merged_plus1_control$start_cds = as.numeric(sub("-.*", "", merged_plus1_control$
 merged_plus1_control$vdis2end = merged_plus1_control$NMDesc.end - merged_plus1_control$start_cds
 merged_rn_plus1_control = merged_plus1_control[which(!is.na(merged_plus1_control$NMDesc.end)),]
 snv_idr_unique <- snv_idr %>%
-  distinct(Transcript_ID, .keep_all = TRUE)  # 或按特定规则排序后取最新值
+  distinct(Transcript_ID, .keep_all = TRUE)  # keep first row per transcript
 
 merged_snv <- left_join(
   snv_vep,
@@ -107,7 +107,7 @@ merged_snv$vdis2end = merged_snv$NMDesc.end - merged_snv$start_cds
 merged_rn_snv = merged_snv[which(!is.na(merged_snv$NMDesc.end)),]
 
 snv_control_idr_unique <- snv_control_idr %>%
-  distinct(Transcript_ID, .keep_all = TRUE)  # 或按特定规则排序后取最新值
+  distinct(Transcript_ID, .keep_all = TRUE)  # keep first row per transcript
 
 merged_snv_control <- left_join(
   snv_control_vep,
@@ -119,7 +119,7 @@ merged_snv_control$vdis2end = merged_snv_control$NMDesc.end - merged_snv_control
 merged_rn_snv_control = merged_snv_control[which(!is.na(merged_snv_control$NMDesc.end)),]
 
 
-# 为每个组别添加标识列
+# Add group label column
 merged_rn_minus1$Group <- "minus1"
 merged_rn_minus1_control$Group <- "minus1_control"
 merged_rn_plus1$Group <- "plus1"
@@ -127,7 +127,7 @@ merged_rn_plus1_control$Group <- "plus1_control"
 merged_rn_snv$Group <- "snv"
 merged_rn_snv_control$Group <- "snv_control"
 
-# 合并所有数据
+# Combine all data
 combined_data <- rbind(
   merged_rn_minus1,
   merged_rn_minus1_control,
@@ -137,7 +137,7 @@ combined_data <- rbind(
   merged_rn_snv_control
 )
 
-# 提取变异类型和是否为对照
+# Extract variant type and control flag
 combined_data <- combined_data %>%
   mutate(
     Variant_Type = case_when(
@@ -171,25 +171,25 @@ ggplot(combined_data, aes(x = Variant_Type, y = vdis2end, fill = Is_Control)) +
 
 library(rstatix)
 
-# 比较每个变异类型的实验组 vs 对照组
+# Compare treatment vs control per variant type
 stat_results <- combined_data %>%
   group_by(Variant_Type) %>%
   wilcox_test(vdis2end ~ Is_Control) %>%
   adjust_pvalue(method = "BH") %>%
   add_significance()
 
-# 输出结果
+# Print results
 print(stat_results)
 
-# 创建分面数据标签
+# Create facet label data
 label_data <- data.frame(
   Variant_Type = c("minus1", "plus1", "snv"),
-  label = paste("p =", c("1.3e-11", "1.3e-09", "1.1e-31")),  # 从 stat_results 提取
-  x = 1.5,  # 分面内 x 轴居中位置
+  label = paste("p =", c("1.3e-11", "1.3e-09", "1.1e-31")),  # from stat_results
+  x = 1.5,  # centered x position within facet
   y = max(combined_data$vdis2end, na.rm = TRUE) * 1.1
 )
 
-# 分面箱线图
+# Faceted boxplot
 ggplot(combined_data, aes(x = Is_Control, y = vdis2end)) +
   geom_boxplot(aes(fill = Is_Control)) +
   scale_y_log10() + 

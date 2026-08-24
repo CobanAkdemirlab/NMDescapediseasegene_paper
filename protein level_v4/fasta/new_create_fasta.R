@@ -1,12 +1,11 @@
-# --- 路径解析层（自动插入）---------------------------------
-# 原来这里有旧机器 /Users/jxu14/ 的绝对路径，换机器必断。
-# 现在：数据用 data_file("文件名") 定位，输出用 out_dir()/out_file()。
-# 换数据位置只改 gene level_v3/lib/paths.R 的 DATA_ROOTS。
+# --- Path resolution layer (auto-inserted) ---------------------------------
+# Data location: data_file("filename"); output: out_dir()/out_file().
+# To change data location, edit DATA_ROOTS in gene level_v3/lib/paths.R
 .p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
         "../../gene level_v3/lib/paths.R", "../../../gene level_v3/lib/paths.R",
         "../../../../gene level_v3/lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # ------------------------------------------------------------
 
@@ -198,9 +197,8 @@ get_repeat_content <- function(sequence) {
   }
   
   # ---------------------------------------------------------------
-  # Repeat length distribution (DRL) — tract lengths as a vector,
+  # Repeat length distribution (DRL): tract lengths as a vector,
   # mirroring what the paper measures per genome segment.
-  # (原此处说明 bootstrap CI，已随函数一并移除)
   # ---------------------------------------------------------------
   repeat_length_dist <- sort(hits_df$tract_len)
   
@@ -222,8 +220,6 @@ get_repeat_content <- function(sequence) {
   ))
 }
 
-# [已删除] bootstrap_repeat_ci() —— 基于 bootstrap 的重复长度分布置信区间，
-# 按要求移除。该函数在本仓库内未被任何脚本调用。
 
 create_fasta <- function(variants, output_dir = "fasta_output") {
   if (!dir.exists(output_dir)) dir.create(output_dir)

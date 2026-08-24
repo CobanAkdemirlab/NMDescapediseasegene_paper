@@ -219,10 +219,10 @@ variant_pfam_ppi <- function(
     group_by(ensembl_transcript_id) %>%
     summarise(max_pfam_end = max(pfam_end), .groups = "drop")
   
-  # 函数内部修复：在left_join(max_pfam_end_df)之前加上
+  # Drop stale columns before rejoining max_pfam_end_df
   dat <- dat %>%
     mutate(ptc_aa = .cds2aa(ptc_pos)) %>%
-    select(-any_of(c("max_pfam_end",                    # ← 新增这行
+    select(-any_of(c("max_pfam_end",
                      "dist_ptc_to_max_pfam_end_aa",
                      "ptc_after_max_pfam_end",
                      "ptc_before_max_pfam_end"))) %>%

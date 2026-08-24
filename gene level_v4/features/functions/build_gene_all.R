@@ -1,13 +1,13 @@
 
-# --- 路径解析层（自动插入）------------------------------------------------
-# 原来这里是旧机器 /Users/jxu14/ 的绝对路径，换机器必断。改走 paths.R：
-#   data_file("x.csv")  按文件名定位，找不到会明确报错
-#   out_file("y.csv")   输出到 NMDESC_OUT（默认 ~/Desktop/NMDesc_out）
-#   data_root("clinvar") 需要目录而非文件时用
+# --- Path resolution layer (auto-inserted) ------------------------------------------------
+# Path helpers from paths.R:
+#   data_file("x.csv")  locates by filename, errors clearly if not found
+#   out_file("y.csv")   writes output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
+#   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
-if (!length(.p)) stop("找不到 paths.R —— 请从仓库根目录运行 R")
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
@@ -167,9 +167,8 @@ build_gene_all <- function(
 # ── Usage ───────────────────────────────────────────────────────────────────
 
 # ===========================================================================
-# 以下为原文件末尾的示例调用，已注释。
-# 原来 source() 本文件会立刻执行它们并去读数据文件 —— 函数库不应有副作用。
-# 需要跑的话，复制到你的脚本里，并把路径改成 data_file("文件名")。
+# Example usage from the end of the original file, commented out.
+# Library file should have no side effects on source().
 # ===========================================================================
 # PTC_info <-  read.csv('PTC_info20260201_region.csv')
 # ensembl <- useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", version = 105)

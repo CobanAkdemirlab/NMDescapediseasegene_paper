@@ -4,7 +4,7 @@ library(ggpubr)
 library(patchwork)
 
 # ══════════════════════════════════════════════════════════════
-# 1. 队列筛选（与 Table 1 / Table 2 一致）
+# 1. Cohort filtering (matches Table 1 / Table 2)
 # ══════════════════════════════════════════════════════════════
 
 df_all <- VAR_WT_structural_results %>%
@@ -29,13 +29,13 @@ df_all     <- bind_rows(df_disease, df_control)
 
 
 # ══════════════════════════════════════════════════════════════
-# 2. 绘图数据准备（WT 做蛋白水平去重）
+# 2. Plot data prep (WT deduplicated at protein level)
 # ══════════════════════════════════════════════════════════════
 
-# panel_type = "VAR" -> 变异体水平，每个变异体一行
-# panel_type = "WT"  -> 蛋白水平，每个蛋白每组只保留一行
-#   （WT 特征对同一蛋白的所有变异体完全相同，不去重会造成伪重复：
-#     一个有 200 个变异体的基因会在分布里被计 200 次）
+# panel_type = "VAR" -> variant level, one row per variant
+# panel_type = "WT"  -> protein level, one row per protein per group
+#   WT features are identical across all variants of a protein; skipping dedup causes pseudoreplication:
+#     a gene with 200 variants would be counted 200 times in the distribution
 
 prepare_plddt_data <- function(data, plddt_col, panel_type) {
   
@@ -52,7 +52,7 @@ prepare_plddt_data <- function(data, plddt_col, panel_type) {
 
 
 # ══════════════════════════════════════════════════════════════
-# 3. p 值与 BH-FDR 校正
+# 3. p-values and BH-FDR correction
 # ══════════════════════════════════════════════════════════════
 
 panel_spec <- tibble::tribble(
@@ -65,7 +65,7 @@ panel_spec <- tibble::tribble(
   "wt_div",    "WT",        "Divergent",      "WT_plddt_DivergentPos_mean",   "WT pLDDT — Divergent"
 )
 
-# 每个 panel 跑两个 Wilcoxon 检验（SNV 组对、FS 组对）
+# Two Wilcoxon tests per panel (SNV pair, FS pair)
 p_raw <- pmap_dfr(
   list(panel_spec$panel_id, panel_spec$col, panel_spec$panel_type),
   function(pid, col, ptype) {
@@ -93,17 +93,16 @@ p_raw <- pmap_dfr(
   }
 )
 
-# ── FDR 校正 ──────────────────────────────────────────────────
-# 默认：在本图的 12 个检验内校正（SNV 家族和 FS 家族分开）。
-# 若已运行 Table 1 脚本并保留其 p_all，取消下方注释可直接复用表里的
-# q 值，保证图表数字完全一致（推荐，避免图上标 *** 而表里 q 不显著）。
+# ── FDR correction ──────────────────────────────────────────────────
+# Default: correct within this figure's 12 tests (SNV and FS families separate)
+# Keeps figure and table significance consistent (avoids stars vs non-significant q mismatch)
 
 p_annot <- p_raw %>%
   group_by(family) %>%
   mutate(q_val = p.adjust(p_raw, method = "BH")) %>%
   ungroup()
 
-# --- 复用 Table 1 的 q 值（可选）---------------------------------
+# --- Reuse Table 1's q-values (optional) ---------------------------------
 # t1_lookup <- tibble::tribble(
 #   ~panel_id,  ~t1_variable,
 #   "var_full", "VAR_plddt_full_mean",
@@ -119,7 +118,7 @@ p_annot <- p_raw %>%
 #   mutate(q_val = if_else(family == "SNV", snv_q_raw, fs_q_raw))
 # ----------------------------------------------------------------
 
-# q 值转星号
+# Convert q-value to significance stars
 q_stars <- function(q) {
   case_when(
     is.na(q)   ~ "NA",
@@ -135,7 +134,7 @@ p_annot <- p_annot %>% mutate(label = q_stars(q_val))
 
 
 # ══════════════════════════════════════════════════════════════
-# 4. 单图绘制函数
+# 4. Single-panel plotting function
 # ══════════════════════════════════════════════════════════════
 
 fill_colors <- c("SNV\nDisease" = "#E07B7B",
@@ -145,7 +144,7 @@ fill_colors <- c("SNV\nDisease" = "#E07B7B",
 
 plot_plddt <- function(df, title, annot, y_label = "pLDDT score") {
   
-  # 括号高度：放在数据上方，两个括号同高
+  # Bracket height: above data, both brackets equal height
   y_max <- max(df$pLDDT, na.rm = TRUE)
   annot <- annot %>% mutate(y.position = y_max + 6)
   
@@ -160,7 +159,7 @@ plot_plddt <- function(df, title, annot, y_label = "pLDDT score") {
                  fill  = "white",
                  alpha = 0.8) +
     
-    # 显著性括号：使用 FDR 校正后的 q 值
+    # Significance brackets: using FDR-corrected q-values
     stat_pvalue_manual(
       annot,
       label        = "label",
@@ -198,7 +197,7 @@ plot_plddt <- function(df, title, annot, y_label = "pLDDT score") {
 
 
 # ══════════════════════════════════════════════════════════════
-# 5. 生成六张图
+# 5. Generate six plots
 # ══════════════════════════════════════════════════════════════
 
 plots <- pmap(
@@ -217,7 +216,7 @@ plots <- pmap(
 
 
 # ══════════════════════════════════════════════════════════════
-# 6. 拼图与导出
+# 6. Combine plots and export
 # ══════════════════════════════════════════════════════════════
 
 n_wt_proteins <- df_all %>%
@@ -254,14 +253,14 @@ ggsave("pLDDT_comparison_fdr.png", plot = combined,
        width = 14, height = 9.5, dpi = 300)
 
 
-# ── 检查：打印所有 p / q 值，便于与表格核对 ──────────────────
+# ── Check: print all p / q values for comparison with table ──────────────────
 
 p_annot %>%
   select(panel_id, family, p_raw, q_val, label) %>%
   mutate(across(c(p_raw, q_val), ~ signif(.x, 3))) %>%
   print(n = Inf)
 
-# ── 检查：各 panel 的实际样本量 ──────────────────────────────
+# ── Check: actual sample size per panel ──────────────────────────────
 
 pmap_dfr(
   list(panel_spec$panel_id, panel_spec$col, panel_spec$panel_type),

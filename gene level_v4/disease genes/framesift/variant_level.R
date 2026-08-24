@@ -1,13 +1,13 @@
 get_re_loc <- function(location, transcript_match){
   df <- BM.info4[BM.info4$ensembl_transcript_id == transcript_match, ]
   
-  # 通过坐标判断 strand：rank1 比 rank2 大 → 负链（对 MN1 是这样）
+  # determine strand from coordinates: rank1 > rank2 means minus strand
   is_minus <- nrow(df) >= 2 && df$exon_chrom_start[1] > df$exon_chrom_start[2]
   
   for (i in seq_len(nrow(df))) {
     start <- df$exon_chrom_start[i]
     end   <- df$exon_chrom_end[i]
-    # location 是否落在 exon 区间（不管 start/end 谁大都能判断）
+    # check whether location falls within exon interval
     if (location >= min(start, end) && location <= max(start, end)) {
       if (is_minus) {
         offset <- max(start, end) - location
@@ -29,7 +29,7 @@ get_frameshift_type = function(res,x)
   alt = str_split(key, "\\|")[[1]][3]
   type = temp@elementMetadata@listData[["type"]]
   yu = (abs(nchar(ref)-nchar(alt)))%%3
-  #if delete 1(4,7) or insert 2 bp, then plus1; 
+  #if delete 1(4,7) or insert 2 bp, then plus1
   if(type=='del' & yu==1 | type=='ins' & yu==2){
     plus_type = 'plus1'
   }
@@ -150,7 +150,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-# 1) Clean input + keep only plus1/plus2
+# clean input and keep only plus1/plus2
 region_df <- PTC_info %>%
   select(transcript, type, can_region) %>%
   mutate(
@@ -161,7 +161,7 @@ region_df <- PTC_info %>%
   filter(type %in% c("plus1", "plus2")) %>%
   filter(!is.na(can_region))
 
-# 2) Make wide per transcript (use median if multiple variants per transcript+type)
+# make wide per transcript (use median if multiple variants per transcript+type)
 region_wide <- region_df %>%
   group_by(transcript, type) %>%
   summarise(can_region = median(can_region), .groups = "drop") %>%

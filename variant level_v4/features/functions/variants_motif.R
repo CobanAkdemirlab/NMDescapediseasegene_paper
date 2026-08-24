@@ -53,7 +53,7 @@ variants_motif <- function(variants_all2,
     match(variants_all2$ensembl_transcript_id, bm_raw$ensembl_transcript_id)
   ]
   
-  # ── step 2: load supplement files (mirrors original read_csv / read_excel) ──
+  # ── step 2: load supplement files ──
   touni     <- read_csv(touni_path,  show_col_types = FALSE)
   motif_doc <- read_csv(motif_path,  show_col_types = FALSE)
   LCS_doc   <- read_excel(lcs_path,  sheet = lcs_sheet)
@@ -73,15 +73,13 @@ variants_motif <- function(variants_all2,
   variants_all2$uniprot <- variants_all2$uniprotswissprot
   
   # ── step 6: merge and compute motif flags (mirrors original merge + flag lines)
-  # 【2026-08 修复】原版写回用
-  #   variants_all2$flag <- motif_max3$flag[match(variants_all2$uniprot, motif_max3$uniprot)]
-  # motif_max3 是每【变异】一行的表，而 match 的键是每【蛋白】的 uniprot ——
-  # match() 只返回每个 uniprot 的第一个命中行，于是同一蛋白的所有变异都拿到
-  # 第一个变异的 flag 值，蛋白内变异被抹平（实测 FS 组 67 个蛋白中 26 个
-  # 蛋白内 flag 本有变化，折叠后归零），随机截距 GLMM 因此测不到 motif flag。
-  # 修法：match 的键必须是【变异级】的。调用方的变异键列名不统一
-  # （key / Variant_Key），这里用函数内部行号 .vm_row 作键 —— 每变异唯一、
-  # 不依赖列名；merge 把它带进 motif_max3，写回后删除。
+  # match() only returns the first hit per uniprot
+  # so all variants of a protein inherit that variant's flags
+  # collapsing within-protein flag differences to one value
+  # so the GLMM random intercept cannot detect motif flag differences
+  # fix: match key must be variant-level, not protein-level
+  # variant key column name differs across callers (key vs Variant_Key)
+  # use internal row index .vm_row as key; merge carries it in, dropped after use
   variants_all2$.vm_row <- seq_len(nrow(variants_all2))
   motif_max3 <- merge(motif_max, variants_all2, by = "uniprot")
   

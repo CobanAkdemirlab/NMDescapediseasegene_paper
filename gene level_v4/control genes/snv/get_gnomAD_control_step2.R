@@ -34,7 +34,7 @@ snv_res = res2[snv_ind2]
 snv_res_can = snv_res[which(snv_res@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]] %in% gene_list$ensembl_transcript_id),]
 gene2remove.ind = which(snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["is_last"]] == T |snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["is_penultimate"]]==T)
 gene2remove = unique(snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]][gene2remove.ind])
-#remove genes2remove remove from gene_list$ensemble_transcript_id
+#remove gene2remove from gene_list$ensembl_transcript_id
 genes_remain_in_clinvar = gene_list[-which(gene_list$ensembl_transcript_id %in% gene2remove),]
 snv_gnomAD_control = snv_NMD_results[which(snv_NMD_results$transcript %in% genes_remain_in_clinvar$ensembl_transcript_id),]
 write.csv(snv_gnomAD_control, 'snv_gnomAD_control_variant.csv', row.names = FALSE)
@@ -96,7 +96,7 @@ write.table(
   col.names = FALSE
 )
 
-# ✅ 5. Confirm the file was created
+# 5. Confirm file creation
 cat("VCF file created successfully at:", vcf_file, "\n")
 
 
@@ -125,7 +125,7 @@ transcript_variants$ID <- rep(".", nrow(transcript_variants))  # Placeholder for
 transcript_variants$ZYG <- rep("Het", nrow(transcript_variants))  # Zygosity
 transcript_variants$FILTER <- rep("PASS", nrow(transcript_variants))  # Filter status
 
-# 2. Write VCF File for ANNOVAR
+# 2. Write VCF file for ANNOVAR
 vcf_file <- "variants_for_annovar.vcf"
 annovar_input <- cbind(
   transcript_variants$CHR,
@@ -157,7 +157,6 @@ system("perl /path/to/annovar/convert2annovar.pl -format vcf4 variants_for_annov
 system("perl /path/to/annovar/annotate_variation.pl -build hg38 -out variant_frequency_results -dbtype gnomad211_exome variants_for_annovar.avinput /path/to/annovar/humandb/")
 
 # 5. Read ANNOVAR Output into R
-# Assuming the output file is named 'variant_frequency_results.gnomad211_exome_dropped'
 variant_freq_file <- "variant_frequency_results.gnomad211_exome_dropped"
 
 if (file.exists(variant_freq_file)) {
