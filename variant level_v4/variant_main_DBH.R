@@ -43,7 +43,15 @@ FLAG_COLS_ALL <- c(
   "variant_ppi_overlap", "ptc_after_max_pfam_end", "ptc_before_max_pfam_end",
   "variant_protein_flag", "variant_domain_flag", "variant_slim_flag",
   "variant_morf_flag", "variant_ptm_flag", "variant_nls_flag", "variant_LCS_flag"
-)CONT_COL         <- "dist_to_cds_end_log"
+)
+
+# One flag per feature: ptc_after and ptc_before are complementary sides of the
+# same continuous variable, so only ptc_before enters the analysis.
+FLAG_COLS <- setdiff(FLAG_COLS_ALL, "ptc_after_max_pfam_end")
+
+CONT_COL         <- "dist_to_cds_end_log"
+CONFOUNDERS      <- c("cds_length")
+CONFOUNDERS_FULL <- c("cds_length", "NMDesc_region_length", "GC_Content")
 
 # Flags for the gene-matched panel: one Pfam flag, one PPI flag, plus motifs
 CONT_PREDICTORS <- c("dist_to_cds_end_log")
@@ -265,6 +273,23 @@ variants_all2$dist_to_cds_end = variants_all2$cds_end - variants_all2$ptc_pos
 # # ------------------------------------------------------------------------------
 # 4.0.3  PPI + Pfam annotation (BioMart, human_1_ interactome)
 # ------------------------------------------------------------------------------
+
+# Pfam domain coordinates per transcript, used to build pfam_fin below.
+get_pfam_annotations <- function(transcript_ids, ensembl) {
+  pfam_raw <- getBM(
+    attributes = c("ensembl_transcript_id", "hgnc_symbol", "pfam",
+                   "pfam_start", "pfam_end", "uniprotswissprot"),
+    filters = "ensembl_transcript_id",
+    values  = unique(transcript_ids),
+    mart    = ensembl
+  )
+
+  pfam_raw %>%
+    filter(!is.na(pfam), pfam != "") %>%
+    distinct() %>%
+    mutate(uniprot = uniprotswissprot)
+}
+
 variant_pfam_ppi <- function(variants_all2,
                              human_1_,
                              pfam_fin,
@@ -625,7 +650,7 @@ run_dist_sanity_models <- function(variant_data2) {
   )
 }
 
-# CHANGED: new helper. Tidies the sanity models into one table and BH-adjusts
+# Tidies the sanity models into one table and BH-adjusts
 # across all non-intercept coefficients from all four models.
 tidy_dist_models <- function(models, labels = FLAG_LABELS) {
   purrr::imap_dfr(models, function(fit, nm) {
@@ -835,13 +860,13 @@ write.csv(variants_all5, "variants_all0805.csv", row.names = FALSE)
 
 # --- 4.1: unmatched analysis ---------------------------------------------------
 dist_models  <- run_dist_sanity_models(variants_all5)
-dist_results <- tidy_dist_models(dist_models)          # CHANGED: BH-adjusted table
+dist_results <- tidy_dist_models(dist_models)          # BH-adjusted table
 print(dist_results)
 write.csv(dist_results, file.path(OUT_DIR, "dist_sanity_models_fdr.csv"), row.names = FALSE)
 
 # --- 4.2: mixed-effect model ---------------------------------------------------
 mixed_results <- run_mixed_effect_flag_analysis(variants_all5)
-mixed_tidy    <- tidy_mixed_results(mixed_results)     # CHANGED: keep the adjusted table
+mixed_tidy    <- tidy_mixed_results(mixed_results)     # adjusted table
 write.csv(mixed_tidy, file.path(OUT_DIR, "mixed_effect_fdr.csv"), row.names = FALSE)
 plot_mixed_effect_flags(mixed_results)
 

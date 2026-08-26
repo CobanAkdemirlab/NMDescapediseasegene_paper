@@ -33,7 +33,6 @@ setdiff <- dplyr::setdiff; union <- dplyr::union; intersect <- dplyr::intersect
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
-
 # =============================================================================
 # 0. config
 # =============================================================================
@@ -46,8 +45,18 @@ CONFIG <- list(
   
   ptc_info         = "PTC_info20260201_region.csv",
   omim_ad_symbols  = "omim_AD_symbols.csv",
-  snv_gene_list    = "snv_dbh_AD.csv",
-  fs_gene_list     = "fs_can_AD_gene20260201_simes_FDR0.05.txt",
+
+  # Disease and control gene lists: the same four inputs build_gene_all() takes.
+  # Disease lists are hgnc_symbol; control lists are ensembl_transcript_id.
+  snv_gene_list    = "snv_can_ADrestricted_bh_FDR0.20_all.txt",
+  fs_gene_list     = "fs_can_AD_acat_FDR0.20_all.txt",
+  snv_control_list = "snv_control_genes_AD.csv",
+  fs_control_list  = "fs_control_genes_AD.csv",
+
+  # This script writes two tables (CDS-matched and random controls), so the
+  # single output_csv of build_gene_all() becomes one name per design.
+  out_matched      = "gene_all_0826_matched.csv",
+  out_random       = "gene_all_0826_random.csv",
   ppi_file         = data_file("human (1).txt"),
   gtex_path        = data_file("GTEx_Analysis_v10_RNASeQCv2.4.2_gene_median_tpm.gct",
                                must = FALSE),
@@ -82,26 +91,9 @@ BINARY_FEATURES <- c(
   "gene_morf_flag", "gene_ptm_flag", "gene_nls_flag", "gene_LCS_flag"
 )
 
-
 # =============================================================================
 # 1. biomaRt 
 # =============================================================================
-
-connect_ensembl <- function(version = CONFIG$ensembl_version,
-                            mirror  = CONFIG$ensembl_mirror) {
-  args <- list(biomart = "genes", dataset = "hsapiens_gene_ensembl")
-  if (!is.null(version)) args$version <- version
-  if (!is.null(mirror))  args$mirror  <- mirror
-  mart <- do.call(useEnsembl, args)
-  
-  probe <- tryCatch(
-    getBM(attributes = c("hgnc_symbol", "ensembl_transcript_id"),
-          filters = "hgnc_symbol", values = "MYH9", mart = mart),
-    error = function(e) stop("Ensembl connection error: ", e$message))
-  message(sprintf("MYH9 return %d transcripts）", nrow(probe)))
-  mart
-}
-
 
 getBM_chunked <- function(attributes, filters, values, mart,
                           chunk = CONFIG$chunk_light, pause = 0.2,
@@ -128,13 +120,12 @@ getBM_chunked <- function(attributes, filters, values, mart,
       if (!is.null(res)) break
       Sys.sleep(2 * attempt)
     }
-    if (is.null(res)) warning("chunk ", k, " failed，", length(idx[[k]]), " dropped")
+    if (is.null(res)) warning("chunk ", k, " failed, ", length(idx[[k]]), " dropped")
     Sys.sleep(pause)
     res
   })
   dplyr::bind_rows(out)
 }
-
 
 # =============================================================================
 # 2. read gene list
@@ -152,10 +143,9 @@ read_gene_list <- function(path, label = NULL) {
   x <- x[!is.na(x) & nchar(x) > 0]
   x <- x[!x %in% c("hgnc_symbol", "x", "V1", "transcript", "ensembl_transcript_id")]
   x <- unique(x)
-  if (!is.null(label)) message(sprintf("%-14s %4d 个  (%s)", label, length(x), basename(path)))
+  if (!is.null(label)) message(sprintf("%-14s %4d  (%s)", label, length(x), basename(path)))
   x
 }
-
 
 # =============================================================================
 # 3. create control
@@ -186,7 +176,6 @@ fetch_canonical_cds <- function(symbols, mart, chunk = CONFIG$chunk_light) {
     select(hgnc_symbol, ensembl_transcript_id, cds_length)
 }
 
-
 #get CDS length
 get_pool_cds <- function(omim_AD_symbols, mart, cache = CONFIG$pool_cache) {
   if (file.exists(cache)) {
@@ -198,6 +187,45 @@ get_pool_cds <- function(omim_AD_symbols, mart, cache = CONFIG$pool_cache) {
   pool
 }
 
+# Same as fetch_canonical_cds() but keyed on transcript ID, for the control
+# lists which supply ensembl_transcript_id rather than hgnc_symbol.
+fetch_canonical_cds_by_tx <- function(tx_ids, mart, chunk = CONFIG$chunk_light) {
+  tx_ids <- unique(trimws(as.character(tx_ids)))
+  tx_ids <- tx_ids[!is.na(tx_ids) & nchar(tx_ids) > 0]
+  if (length(tx_ids) == 0) return(data.frame())
+
+  message("  [1/2] symbol + canonical flag ...")
+  tx <- getBM_chunked(
+    attributes = c("hgnc_symbol", "ensembl_transcript_id", "transcript_is_canonical"),
+    filters = "ensembl_transcript_id", values = tx_ids, mart = mart, chunk = chunk) %>%
+    filter(transcript_is_canonical == 1, !is.na(hgnc_symbol), nchar(hgnc_symbol) > 0) %>%
+    distinct(ensembl_transcript_id, .keep_all = TRUE) %>%
+    select(hgnc_symbol, ensembl_transcript_id)
+
+  if (nrow(tx) == 0) return(data.frame())
+
+  message("  [2/2] CDS length ...")
+  len <- getBM_chunked(
+    attributes = c("ensembl_transcript_id", "cds_length"),
+    filters = "ensembl_transcript_id", values = tx$ensembl_transcript_id,
+    mart = mart, chunk = chunk) %>%
+    filter(!is.na(cds_length), cds_length > 0) %>%
+    distinct(ensembl_transcript_id, .keep_all = TRUE)
+
+  tx %>% inner_join(len, by = "ensembl_transcript_id") %>%
+    select(hgnc_symbol, ensembl_transcript_id, cds_length)
+}
+
+# Control pool from an explicit transcript list, cached like get_pool_cds().
+get_pool_from_transcripts <- function(tx_ids, mart, cache = NULL) {
+  if (!is.null(cache) && file.exists(cache)) {
+    message("get cache: ", cache)
+    return(read.csv(cache, stringsAsFactors = FALSE))
+  }
+  pool <- fetch_canonical_cds_by_tx(tx_ids, mart)
+  if (!is.null(cache)) write.csv(pool, cache, row.names = FALSE)
+  pool
+}
 
 #match by log(CDS length)
 build_controls_matched <- function(case_df, pool_df,
@@ -232,7 +260,6 @@ build_controls_matched <- function(case_df, pool_df,
   bind_rows(pairs)
 }
 
-
 ## sensitivity test: random match
 build_controls_random <- function(case_df, pool_df,
                                   seed = CONFIG$seed, label = "random") {
@@ -254,7 +281,6 @@ build_controls_random <- function(case_df, pool_df,
     stringsAsFactors = FALSE)
 }
 
-
 report_match_quality <- function(pairs, n_case, label) {
   message(sprintf("  number of pairs: %d / %d", nrow(pairs), n_case))
   if (nrow(pairs) == 0) return(invisible(NULL))
@@ -262,10 +288,9 @@ report_match_quality <- function(pairs, n_case, label) {
                   stats::median(abs(pairs$log2_ratio)), max(abs(pairs$log2_ratio))
                   ))
   ks <- suppressWarnings(stats::ks.test(pairs$disease_cds, pairs$control_cds))
-  message(sprintf("  CDS length KS test: p = %.4f  （no significant）", ks$p.value))
+  message(sprintf("  CDS length KS test: p = %.4f  (no significant)", ks$p.value))
   invisible(ks)
 }
-
 
 ## build snv/fs contorl
 build_both_controls <- function(disease_genes, pool_all, mart,
@@ -278,7 +303,7 @@ build_both_controls <- function(disease_genes, pool_all, mart,
   pool_df <- pool_all %>%
     filter(!hgnc_symbol %in% union(disease_genes, exclude_genes))
    
-  # FS ：get NMDesc region by PTC_info 
+  # FS: get NMDesc region by PTC_info 
   if (!is.null(require_transcripts)) {
     n0 <- nrow(pool_df)
     pool_df <- pool_df %>% filter(ensembl_transcript_id %in% require_transcripts)
@@ -292,7 +317,6 @@ build_both_controls <- function(disease_genes, pool_all, mart,
   
   list(matched = matched, random = random, case_df = case_df, pool_df = pool_df)
 }
-
 
 # =============================================================================
 # 4. create gene_all
@@ -317,8 +341,7 @@ pairs_to_long <- function(pairs, stratum) {
                           levels = GROUP_LEVELS))
 }
 
-
-## add CDS sequence、NMDesc region、uniprot id
+## add CDS sequence, NMDesc region, uniprot id
 assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
   
   message("\n=== create gene_all", if (nchar(label)) paste0(" [", label, "]") else "", " ===")
@@ -361,7 +384,7 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
     rename(uniprot = uniprotswissprot) %>%
     left_join(PTC_combined, by = c("ensembl_transcript_id" = "transcript"))
   
-  # NMDesc region：FS  - PTC_info，SNV - biomart
+  # NMDesc region: FS - PTC_info, SNV - biomart
   out <- out %>%
     mutate(
       NMD_region_start = ifelse(stratum == "FS" & !is.na(median_can_region_start),
@@ -388,7 +411,6 @@ assemble_gene_all <- function(long_df, mart, PTC_combined, label = "") {
   
   out
 }
-
 
 # =============================================================================
 # 5. add features
@@ -419,7 +441,6 @@ annotate_sequence_features <- function(gene_all) {
            homopolymer_fraction        = vapply(coding,     homo_frac, numeric(1)),
            nmdesc_homopolymer_fraction = vapply(nmdesc_cds, homo_frac, numeric(1)))
 }
-
 
 annotate_pfam <- function(gene_all, mart) {
   tx <- unique(gene_all$ensembl_transcript_id)
@@ -467,7 +488,6 @@ annotate_pfam <- function(gene_all, mart) {
   gene_all %>% left_join(summ, by = "row_id")
 }
 
-
 annotate_ppi_interface <- function(gene_all, ppi_file) {
   hp <- fread(path.expand(ppi_file), data.table = FALSE)
   
@@ -489,7 +509,6 @@ annotate_ppi_interface <- function(gene_all, ppi_file) {
   }
   gene_all
 }
-
 
 annotate_string_degree <- function(gene_all, score_threshold = 400) {
   if (!requireNamespace("STRINGdb", quietly = TRUE) ||
@@ -517,7 +536,6 @@ annotate_string_degree <- function(gene_all, score_threshold = 400) {
   gene_all %>% left_join(res, by = "hgnc_symbol")
 }
 
-
 annotate_tau <- function(gene_all, gtex_path) {
   message("  GTEx tau ...")
   gtex <- read_tsv(gtex_path, skip = 2, show_col_types = FALSE)
@@ -543,7 +561,6 @@ annotate_constraint <- function(gene_all, lof_path) {
     distinct(gene, .keep_all = TRUE)
   gene_all %>% left_join(lof, by = c("hgnc_symbol" = "gene"))
 }
-
 
 annotate_motif_flags_dbh <- function(gene_all, path_touni, path_motif, path_lcs) {
   flags <- c("gene_protein_flag","gene_domains_flag","gene_slim_flag",
@@ -581,7 +598,6 @@ annotate_motif_flags_dbh <- function(gene_all, path_touni, path_motif, path_lcs)
     add_flag(lcs, "LCSs",             "gene_LCS_flag")
 }
 
-
 annotate_all <- function(gene_all, mart) {
   gene_all %>%
     annotate_sequence_features() %>%
@@ -592,7 +608,6 @@ annotate_all <- function(gene_all, mart) {
     annotate_constraint(CONFIG$lof_metrics_path) %>%
     annotate_motif_flags_dbh(CONFIG$path_touni, CONFIG$path_motif, CONFIG$path_lcs)
 }
-
 
 # =============================================================================
 # 6. descriptive data
@@ -631,26 +646,24 @@ summarise_by_group <- function(gene_all, label) {
   
   sc <- unique(gene_all$hgnc_symbol[gene_all$group == "snv_control"])
   fc <- unique(gene_all$hgnc_symbol[gene_all$group == "fs_control"])
-  cat(sprintf("\nsnv_control 与 fs_control matched gene counts: %d\n", length(intersect(sc, fc))))
+  cat(sprintf("\nsnv_control and fs_control matched gene counts: %d\n", length(intersect(sc, fc))))
   
   sd_ <- unique(gene_all$hgnc_symbol[gene_all$group == "snv"])
   fd_ <- unique(gene_all$hgnc_symbol[gene_all$group == "fs"])
-  cat(sprintf("snv 与 fs disease gene overlap counts: %d\n", length(intersect(sd_, fd_))))
+  cat(sprintf("snv and fs disease gene overlap counts: %d\n", length(intersect(sd_, fd_))))
   
   invisible(list(desc = desc, features = feat_tab))
 }
 
-
 write_by_group <- function(gene_all, label) {
   for (g in GROUP_LEVELS) {
     sub <- gene_all %>% filter(group == g)
-    if (nrow(sub) == 0) { message(sprintf("  %-12s 空", g)); next }
+    if (nrow(sub) == 0) { message(sprintf("  %-12s empty", g)); next }
     fn <- sprintf("gene_all_%s_%s.csv", label, g)
     write_csv(sub, fn)
     cat(sprintf("  %-12s %3d gene -> %s\n", g, n_distinct(sub$hgnc_symbol), fn))
   }
 }
-
 
 ## create significance label
 fmt_p_label <- function(p, alpha = CONFIG$alpha) {
@@ -682,7 +695,6 @@ add_group_brackets <- function(g, ymax, yrange, res_feat, alpha = CONFIG$alpha) 
   }
   g + coord_cartesian(ylim = c(NA, ymax + 0.22 * yrange))
 }
-
 
 plot_four_groups <- function(gene_all, features, label, res = NULL,
                              ncol = 3, alpha = CONFIG$alpha) {
@@ -752,7 +764,6 @@ plot_four_groups <- function(gene_all, features, label, res = NULL,
   invisible(fig)
 }
 
-
 # =============================================================================
 # 7. do feature comparisions 
 # =============================================================================
@@ -763,7 +774,6 @@ make_pair_table <- function(gene_all, feature) {
     pivot_wider(names_from = role, values_from = all_of(feature)) %>%
     filter(!is.na(case), !is.na(control))
 }
-
 
 ## paired match analysis
 test_paired <- function(gene_all, feature, stratum_now, exact_cutoff = 25) {
@@ -811,7 +821,6 @@ test_paired <- function(gene_all, feature, stratum_now, exact_cutoff = 25) {
   }
 }
 
-
 ## random match analysis
 test_unpaired <- function(gene_all, feature, stratum_now) {
   
@@ -841,7 +850,6 @@ test_unpaired <- function(gene_all, feature, stratum_now) {
   }
 }
 
-
 run_all_tests <- function(gene_all, paired = TRUE) {
   feats <- intersect(c(CONTINUOUS_FEATURES, BINARY_FEATURES), names(gene_all))
   feats <- feats[vapply(feats, function(f) any(!is.na(gene_all[[f]])), logical(1))]
@@ -854,7 +862,6 @@ run_all_tests <- function(gene_all, paired = TRUE) {
     else        test_unpaired(gene_all, grid$feature[k], grid$stratum[k])
   }))
 }
-
 
 # =============================================================================
 # 8. multiple test correction
@@ -899,7 +906,6 @@ correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NU
   res
 }
 
-
 # =============================================================================
 # 9. main analysis
 # =============================================================================
@@ -912,18 +918,30 @@ PTC_combined <- PTC_info %>%
             median_can_region_end   = round(median(can_region_end,   na.rm = TRUE)),
             .groups = "drop")
 
-snv_gene        <- read_gene_list(CONFIG$snv_gene_list,   "snv (DBH)")
-fs_gene         <- read_gene_list(CONFIG$fs_gene_list,    "fs (Simes)")
+snv_gene        <- read_gene_list(CONFIG$snv_gene_list,   "snv candidates")
+fs_gene         <- read_gene_list(CONFIG$fs_gene_list,    "fs candidates")
+snv_control_tx  <- read_gene_list(CONFIG$snv_control_list, "snv_control tx")
+fs_control_tx   <- read_gene_list(CONFIG$fs_control_list,  "fs_control tx")
+
+# OMIM AD acts as a filter on the assembled table, matching build_gene_all().
+# It no longer supplies the control pool.
 omim_AD_symbols <- read_gene_list(CONFIG$omim_ad_symbols, "OMIM AD")
 
 cat(sprintf("\nsnv n = %d | fs n = %d | overlap = %d\n",
             length(snv_gene), length(fs_gene), length(intersect(snv_gene, fs_gene))))
 
-pool_all <- get_pool_cds(omim_AD_symbols, ensembl)
+# Control pools come from the two *_control_genes_AD.csv transcript lists, one
+# pool per stratum.
+pool_snv <- get_pool_from_transcripts(snv_control_tx, ensembl,
+                                      cache = "pool_snv_control_cds.csv")
+pool_fs  <- get_pool_from_transcripts(fs_control_tx,  ensembl,
+                                      cache = "pool_fs_control_cds.csv")
+cat(sprintf("control pools: snv %d | fs %d transcripts with canonical CDS\n",
+            nrow(pool_snv), nrow(pool_fs)))
 
-ctrl_snv <- build_both_controls(snv_gene, pool_all, ensembl,
+ctrl_snv <- build_both_controls(snv_gene, pool_snv, ensembl,
                                 exclude_genes = fs_gene, label = "SNV")
-ctrl_fs  <- build_both_controls(fs_gene, pool_all, ensembl,
+ctrl_fs  <- build_both_controls(fs_gene, pool_fs, ensembl,
                                 exclude_genes = snv_gene,
                                 require_transcripts = unique(PTC_info$transcript),
                                 label = "FS")
@@ -933,7 +951,6 @@ write_csv(ctrl_fs$matched,  "pairs_fs_matched.csv")
 write_csv(ctrl_snv$random,  "pairs_snv_random.csv")
 write_csv(ctrl_fs$random,   "pairs_fs_random.csv")
 
-
 # ---- 9a. match by CDS length + paired analysis -----------------------------------
 
 long_matched <- bind_rows(pairs_to_long(ctrl_snv$matched, "SNV"),
@@ -942,7 +959,7 @@ long_matched <- bind_rows(pairs_to_long(ctrl_snv$matched, "SNV"),
 gene_all_matched <- assemble_gene_all(long_matched, ensembl, PTC_combined, "matched") %>%
   annotate_all(ensembl)
 
-write_csv(gene_all_matched, "gene_all_matched.csv")
+write_csv(gene_all_matched, CONFIG$out_matched)
 write_by_group(gene_all_matched, "matched")
 summarise_by_group(gene_all_matched, "matched")
 res_matched <- run_all_tests(gene_all_matched, paired = TRUE) %>%
@@ -952,7 +969,6 @@ res_matched <- run_all_tests(gene_all_matched, paired = TRUE) %>%
 plot_four_groups(gene_all_matched, c(CONTINUOUS_FEATURES, BINARY_FEATURES),
                  "matched", res = res_matched)
 
-
 # ---- 9b. compare cds match with random match ---------------------------------
 
 long_random <- bind_rows(pairs_to_long(ctrl_snv$random, "SNV"),
@@ -961,7 +977,7 @@ long_random <- bind_rows(pairs_to_long(ctrl_snv$random, "SNV"),
 gene_all_random <- assemble_gene_all(long_random, ensembl, PTC_combined, "random") %>%
   annotate_all(ensembl)
 
-write_csv(gene_all_random, "gene_all_random.csv")
+write_csv(gene_all_random, CONFIG$out_random)
 write_by_group(gene_all_random, "random")
 summarise_by_group(gene_all_random, "random")
 res_random <- run_all_tests(gene_all_random, paired = FALSE) %>%
@@ -970,4 +986,3 @@ res_random <- run_all_tests(gene_all_random, paired = FALSE) %>%
 
 plot_four_groups(gene_all_random, c(CONTINUOUS_FEATURES, BINARY_FEATURES),
                  "random", res = res_random)
-
