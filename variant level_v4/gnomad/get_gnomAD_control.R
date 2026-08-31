@@ -14,21 +14,31 @@ source(.p[1]); rm(.p)
 
 ###1. get snv variants in gnomAD using ptc_can_df
 #input snv disease gene list
-#snv_gene = read_csv("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv")
-snv_gene = read_csv(data_file("snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_binom_enriched_can.txt"), 
-                   col_names = FALSE)
+snv_gene = read_csv("snv_can_ADrestricted_bh_FDR0.20_all.txt")
 ptc_can_NMD_df2 =  read_csv("~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/gnomad/snv_fs/ptc_can_NMD_df.csv")
 #filter for gnomad variants corresponding to the gene list
-gnomad_snv = ptc_can_NMD_df2[which(ptc_can_NMD_df2$transcript %in% snv_can_tr & ptc_can_NMD_df2$type == 'snv'),]
-#remove plp and vus variants in clinvar
-clinvar_snv_plp = snv_variants$key
-clinvar_snv_vus = snv_vus_variants$key
-gnomad_snv_filtered = gnomad_snv[!gnomad_snv$id %in% clinvar_snv_plp & !gnomad_snv$id %in% clinvar_snv_vus,]
+snv_can_tr <- getBM(
+  attributes = c(
+    "hgnc_symbol",
+    "ensembl_gene_id",
+    "ensembl_transcript_id",
+    "transcript_is_canonical",
+    "transcript_mane_select"
+  ),
+  filters = "hgnc_symbol",
+  values  = unique(snv_gene$hgnc_symbol),
+  mart    = ensembl
+) |>
+  dplyr::filter(transcript_is_canonical == 1)
+
+gnomad_snv = ptc_can_NMD_df2[which(ptc_can_NMD_df2$transcript %in% snv_can_tr$ensembl_transcript_id & ptc_can_NMD_df2$type == 'snv'),]
+#remove plp variants in clinvar
+snv_lp_variants = read.csv
+gnomad_snv_filtered = gnomad_snv[!gnomad_snv$id %in% snv_plp_variants,]
 
 ###2. get frameshift variants in gnomAD using ptc_can_df
 #input fs disease gene list
-#fs_gene = read.csv('fs_can_syn_AD_gene_filtered_greater_20260201.txt', header = TRUE, stringsAsFactors = FALSE)
-fs_gene = read_csv(data_file("fs_can_AD_FDR0.05_gene.csv", must = FALSE))
+fs_gene = read_csv("fs_can_AD_acat_FDR0.20_all.txt")
 #get canonical transcripts
 fs_can_tr <- getBM(
   attributes = c(
@@ -46,10 +56,10 @@ fs_can_tr <- fs_can_tr %>%
   filter(transcript_is_canonical == 1)
 
 gnomad_fs = ptc_can_NMD_df2[which(ptc_can_NMD_df2$transcript %in% fs_can_tr$ensembl_transcript_id & ptc_can_NMD_df2$type != 'snv'),]
+gnomad_fs_filtered = gnomad_fs[!gnomad_fs$id %in% fs_plp_variants,]
 length(unique(gnomad_fs$transcript))
 #remove inframe frameshift variants based on the key
 # Extract ref and alt from id, compute length diff
-gnomad_fs_filtered = read.csv('gnomad_fs_filtered.csv')
 gnomad_fs_filtered$ref = sub(".*\\|(.+)\\|.*", "\\1", gnomad_fs_filtered$id)
 gnomad_fs_filtered$alt = sub(".*\\|.*\\|(.*)", "\\1", gnomad_fs_filtered$id)
 gnomad_fs_filtered$len_diff = abs(nchar(gnomad_fs_filtered$ref) - nchar(gnomad_fs_filtered$alt))
@@ -92,8 +102,8 @@ gnomad_snv_filtered2 = merge(
   all.x = TRUE
 )
 
-write.csv(gnomad_snv_filtered, 'gnomad_snv_filtered_wald.csv', row.names = FALSE)
-write.csv(gnomad_fs_filtered, 'gnomad_fs_filtered_wald.csv', row.names = FALSE)
+write.csv(gnomad_snv_filtered, 'gnomad_snv_filtered_acat_0831.csv', row.names = FALSE)
+write.csv(gnomad_fs_filtered, 'gnomad_fs_filtered_bh_0831.csv', row.names = FALSE)
 length(unique(gnomad_fs_filtered_wald$transcript))
 
 #for each tr, do a table to show how many clinvar plp and gnomad benign variants

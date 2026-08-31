@@ -65,7 +65,7 @@ all.df.sub <- all.df[which(all.df$TXNAME!='NA'),]
 rm(all.df)
 BM.info <- getBM(attributes=c("ensembl_gene_id","ensembl_transcript_id","hgnc_symbol","transcript_is_canonical"),mart=ensembl)
 
-vcf_file = data_file("clinvar_20260201.vcf.gz")
+vcf_file = ("clinvar_20260201.vcf.gz")
 vcf = aenmd:::parse_vcf_VariantAnnotation(vcf_file)
 vcf_rng = vcf$vcf_rng
 #add clinical significance
@@ -78,6 +78,7 @@ ind_out =  Biostrings::vcountPattern("N", vcf_rng_fil$alt) > 0
 vcf_rng_fil = vcf_rng_fil[!ind_out]
 #- back to the original workflow
 res = annotate_nmd(vcf_rng_fil, rettype="gr")
+saveRDS(res, file = "clinvar_20260201_nmd.rds")
 
 #2. get nmdesc enriched genes
 snv_ind = which(res@elementMetadata@listData[["type"]] == 'snv')
@@ -90,6 +91,10 @@ benign_ind = which(grepl("benign", clnsig_str, ignore.case = TRUE))
 ptc_ind = which(res@elementMetadata@listData[["res_aenmd"]]@listData[["is_ptc"]]==T)
 length(unique(res@elementMetadata@listData[["key"]][intersect(plp_ind,ptc_ind)]))
 
+fs_plp_variants = res[intersect(fs_ind, plp_ind)]
+saveRDS(fs_plp_variants, file = "fs_plp_variants.rds")
+fs_plp_variants = fs_plp_variants@elementMetadata@listData[["key"]]
+ 
 nmdesc_ind = which(res@elementMetadata@listData[["res_aenmd"]]@listData[["is_last"]] == T | res@elementMetadata@listData[["res_aenmd"]]@listData[["is_penultimate"]]==T)
 length(unique(res@elementMetadata@listData[["key"]][nmdesc_ind]))
 #filter for canonical transcript
@@ -222,6 +227,8 @@ variant_summary$key = paste0(
 rm(v_cs, v_gr, v_re)
 #output v_ch
 write.csv(v_ch,'v_ch20260201.csv',row.names = F)
+v_ch = read.csv('v_ch20260201.csv',header = T,stringsAsFactors = F)
+
 #return this information to res, build res3
 #the problem is, not all tr in res appeared in this variant_summary
 res2 = res[which(res@elementMetadata@listData[["key"]] %in% v_ch$key)]
@@ -234,7 +241,11 @@ table(snv_plp_ptc_nmdesc_can$NumberSubmitters,useNA = "ifany")
 tx_n$canonical_by_vs = v_ch$tx_canonical[match(tx_n$gene, v_ch$key)]
 
 saveRDS(snv_plp_ptc_nmdesc_can,'snv_plp_ptc_nmdesc_can20260201.rds')
+snv_plp_variants  = readRDS('snv_plp_ptc_nmdesc_can20260201.rds')
+snv_plp_variants = snv_plp_variants@elementMetadata@listData[["key"]]
 saveRDS(snv_benign_ptc_nmdesc_can,'snv_benign_ptc_nmdesc_can20260201.rds')
+snv_benign_variants = readRDS('snv_benign_ptc_nmdesc_can20260201.rds')
+snv_benign_variants = snv_benign_variants@elementMetadata@listData[["key"]]
 #filter for the variants in v_ch2
 snv_plp_ptc_nmdesc_can_filtered = snv_plp_ptc_nmdesc_can[which(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 snv_plp_ptc_can_filtered = snv_plp_ptc_can[which(snv_plp_ptc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]

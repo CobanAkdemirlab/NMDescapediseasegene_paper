@@ -87,7 +87,7 @@ ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 snv_variants = read.csv('snv_variants20260201_plp_dbh_clinvar.csv')
 snv_dis <- create_fasta(snv_variants, output_dir = "snv_disease_fasta_output_test2")
 
-snv_control_variants = read.csv('gnomad_snv_filtered_wald.csv')
+snv_control_variants = read.csv('gnomad_snv_filtered_acat_0831.csv')
 gnomad_snv_filtered <- snv_control_variants
 gnomad_snv_filtered$key <- gnomad_snv_filtered$id
 gnomad_snv_variants <- gnomad_snv_filtered[,  c("transcript", "key")]
@@ -96,7 +96,7 @@ gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = "snv_control_fa
 fs_variants = read.csv('fs_variants20260201_plp_acat_clinvar.csv')
 fs_dis <- create_fasta(fs_variants, output_dir = "fs_disease_fasta_output_test2")
 
-fs_control_variants = read.csv('gnomad_fs_filtered_wald.csv')
+fs_control_variants = read.csv('gnomad_fs_filtered_bh_0831.csv')
 gnomad_fs_filtered  <- fs_control_variants
 gnomad_fs_filtered$key  <- gnomad_fs_filtered$id
 #remove inframe indel, get gnomad_fs_filtered2
