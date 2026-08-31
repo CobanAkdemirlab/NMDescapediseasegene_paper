@@ -1,0 +1,353 @@
+basename,n_scripts,any_absolute,path,bytes,found
+y.csv,21,False,,,False
+x.csv,21,False,,,False
+omim_AD_symbols.csv,6,False,/Users/qkelly/Desktop/clinvar/omim_AD_symbols.csv,15284.0,True
+gnomad.v2.1.1.lof_metrics.by_gene.txt,6,True,/Users/qkelly/Desktop/clinvar/others/gnomad.v2.1.1.lof_metrics.by_gene.txt,13203203.0,True
+NIHMS1818854-supplement-2(B).csv,6,False,/Users/qkelly/Desktop/clinvar/others/NIHMS1818854-supplement-2(B).csv,10635382.0,True
+NIHMS1818854-supplement-2(A).csv,6,False,/Users/qkelly/Desktop/clinvar/others/NIHMS1818854-supplement-2(A).csv,11630900.0,True
+human (1).txt,5,False,/Users/qkelly/Desktop/clinvar/others/human (1).txt,173984636.0,True
+.fasta,5,False,/Users/qkelly/Downloads/plus2_can 2/.fasta,1185.0,True
+gene_all0407 (1).csv,5,False,,,False
+PTC_info20260201_region.csv,5,False,/Users/qkelly/Desktop/clinvar/PTC_info20260201_region.csv,4380017.0,True
+genemap2.txt,4,True,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/autism/data/genemap2.txt,3373451.0,True
+snv_plp_ptc_nmdesc_can_filtered20260201.rds,4,True,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_filtered20260201.rds,3710276.0,True
+variants_all_with_motif_LCS_flags (1).csv,4,False,,,False
+snv_control_genes_AD.csv,4,False,/Users/qkelly/Desktop/clinvar/snv_control_genes_AD.csv,14296.0,True
+fs.rds,4,True,/Users/qkelly/Desktop/clinvar/fs.rds,49015658.0,True
+.txt,4,False,,,False
+fs_control_genes_AD.csv,4,False,/Users/qkelly/Desktop/clinvar/fs_control_genes_AD.csv,6610.0,True
+.rds,3,False,,,False
+snv_can_ADrestricted_bh_FDR0.20_all.txt,3,False,/Users/qkelly/Desktop/clinvar/snv_can_ADrestricted_bh_FDR0.20_all.txt,506.0,True
+gene_motif_flags.csv,3,False,/Users/qkelly/Desktop/clinvar/gene_motif_flags.csv,5085781.0,True
+fs_can_AD_acat_FDR0.20_all.txt,3,False,/Users/qkelly/Desktop/clinvar/fs_can_AD_acat_FDR0.20_all.txt,769.0,True
+variant_frequencies_with_transcripts.csv,3,False,,,False
+gnomad_fs_filtered_wald.csv,3,False,/Users/qkelly/Desktop/clinvar/gnomad_fs_filtered_wald.csv,53925.0,True
+nmd_length_NMDPos_PARSE_v2.csv,3,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/parse_v2/nmd_length_NMDPos_PARSE_v2.csv,4378270.0,True
+mim2gene.txt,3,True,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/autism/data/mim2gene.txt,959722.0,True
+gnomad_snv_filtered_wald.csv,3,False,/Users/qkelly/Desktop/clinvar/gnomad_snv_filtered_wald.csv,43011.0,True
+gene_LCS_flags.csv,3,False,/Users/qkelly/Desktop/clinvar/gene_LCS_flags.csv,5030315.0,True
+clinvar_1112.rds,3,True,,,False
+snv_gnomAD_control_variant.csv,3,False,,,False
+clinvar0819_1.rds,2,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/0819/clinvar0819_1.rds,5757808.0,True
+gc_content.csv,2,False,/Users/qkelly/Desktop/clinvar/gc_content.csv,71068.0,True
+snv_gnomAD_control_genes.csv,2,False,,,False
+clinvar0819_2.rds,2,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/0819/clinvar0819_2.rds,5753323.0,True
+centrality_data.csv,2,False,/Users/qkelly/Desktop/clinvar/centrality_data.csv,102785.0,True
+snv_gnomAD_variants0406.csv,2,False,/Users/qkelly/Downloads/0406/snv_gnomAD_variants0406.csv,188430.0,True
+snv_plp_ptc_can_filtered20260201.rds,2,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_can_filtered20260201.rds,4368111.0,True
+full_length_PARSE_v2.csv,2,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/parse_v2/full_length_PARSE_v2.csv,12960845.0,True
+clinvar0819_3.rds,2,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/0819/clinvar0819_3.rds,6003243.0,True
+gnomAD_NMDescape_depleted_genes.txt,2,True,,,False
+fs_NMD_result20260201.csv,2,False,/Users/qkelly/Desktop/clinvar/fs_NMD_result20260201.csv,4257879.0,True
+control_set_comparison_pvalues.csv,2,False,,,False
+control_set_comparison_summary.csv,2,False,,,False
+repeat_content.csv,2,False,/Users/qkelly/Desktop/clinvar/repeat_content.csv,155060.0,True
+fs_variants20260201_plp_acat_clinvar.csv,2,False,/Users/qkelly/Desktop/clinvar/fs_variants20260201_plp_acat_clinvar.csv,100129.0,True
+repeated_sampling_1000_matched_fs.csv,2,False,/Users/qkelly/Desktop/clinvar/repeated_sampling_1000_matched_fs.csv,122173.0,True
+repeated_sampling_1000_matched_snv.csv,2,False,/Users/qkelly/Desktop/clinvar/repeated_sampling_1000_matched_snv.csv,124140.0,True
+repeated_sampling_1000_matched_summary.csv,2,False,/Users/qkelly/Desktop/clinvar/repeated_sampling_1000_matched_summary.csv,372.0,True
+fs_variants20260201_plp_clinvar_acat_0.2_filtered.csv,2,False,/Users/qkelly/Desktop/clinvar/fs_variants20260201_plp_clinvar_acat_0.2_filtered.csv,129303.0,True
+gene_all.csv,2,False,/Users/qkelly/Desktop/clinvar/gene_all.csv,5010888.0,True
+gene_all0407.csv,2,False,,,False
+fs_can_syn_AD_gene_filtered_greater_20260201.txt,2,False,/Users/qkelly/Desktop/clinvar/fs_can_syn_AD_gene_filtered_greater_20260201.txt,753.0,True
+snv_benign_ptc_nmdesc_can_filtered20260201.rds,2,False,/Users/qkelly/Desktop/clinvar/snv_benign_ptc_nmdesc_can_filtered20260201.rds,3640934.0,True
+snv_control2_out.txt,2,True,,,False
+fs_can_AD_FDR0.05_wald_gene.csv,2,False,/Users/qkelly/Desktop/clinvar/fs_can_AD_FDR0.05_wald_gene.csv,588.0,True
+fs_can_AD_FDR0.05_gene.csv,2,False,,,False
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv,2,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv,680.0,True
+fs_benign.rds,2,False,/Users/qkelly/Desktop/clinvar/fs_benign.rds,13300819.0,True
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30.rds,2,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30.rds,321201.0,True
+_gene_all.csv,2,False,,,False
+snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_binom_enriched_can.txt,2,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_binom_enriched_can.txt,2046.0,True
+minus1_control_uniprot_ids_out.txt,2,True,/Users/qkelly/Downloads/idr_batch_results/minus1_control_uniprot_ids_out.txt,33738.0,True
+plus1_control_idr.txt,2,False,,,False
+plus1_control_gnomAD_variants0406.csv,2,False,/Users/qkelly/Downloads/0406/plus1_control_gnomAD_variants0406.csv,218341.0,True
+None of the requested flag columns were found in gene_all0407 (1).csv,2,False,,,False
+No features in feature_map were found in gene_all0407 (1).csv,2,False,,,False
+NMD_region_NMDPos_peptide_props.csv,2,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/peptides/NMD_region_NMDPos_peptide_props.csv,6553216.0,True
+NMD_region_NMDPos_CIDER.csv,2,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/CIDER/NMD_region_NMDPos_CIDER.csv,6460381.0,True
+NMD_region_DivergentPos_peptide_props.csv,2,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/peptides/NMD_region_DivergentPos_peptide_props.csv,3809575.0,True
+NMD_region_DivergentPos_CIDER.csv,2,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/CIDER/NMD_region_DivergentPos_CIDER.csv,2856249.0,True
+v_ch20260201.csv,2,False,/Users/qkelly/Desktop/clinvar/v_ch20260201.csv,2185495489.0,True
+nmd_length_DivergentPos_PARSE_v2.csv,2,True,/Users/qkelly/Desktop/clinvar/raw data/sequence_analysis/parse_v2/nmd_length_DivergentPos_PARSE_v2.csv,668518.0,True
+CLinvar_genes_NMDdata.txt,2,True,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/CLinvar_genes_NMDdata.txt,2833850.0,True
+pfam_influenced_variant_counts.csv,2,False,/Users/qkelly/Desktop/clinvar/pfam_influenced_variant_counts.csv,436.0,True
+variants_all_with_pfam_distance.csv,2,False,,,False
+variants_annotated.csv,2,False,/Users/qkelly/Desktop/clinvar/variants_annotated.csv,384700537.0,True
+.cut.syn.csv,2,False,,,False
+plus1_control_merged_uni_loc.csv,2,False,,,False
+ptc_can_NMD_df.csv,2,True,,,False
+snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_wald_enriched_can.txt,2,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_wald_enriched_can.txt,3508.0,True
+snv_variants20260201_plp_bh0.2_clinvar.csv,2,False,/Users/qkelly/Desktop/clinvar/snv_variants20260201_plp_bh0.2_clinvar.csv,36849.0,True
+plus1_disorder_predictions.csv,2,True,/Users/qkelly/Desktop/idr/plus1_disorder_predictions.csv,20069.0,True
+matching_log_v2.csv,2,True,,,False
+snv_plp_ptc_p1120_NMDenriched2_can.txt,2,True,,,False
+plus1_control_vep_uniprot_intact.txt,1,False,/Users/qkelly/Downloads/vep0512 2/plus1_control_vep_uniprot_intact.txt,17271091.0,True
+pfam_overlap_gene_all.csv,1,False,/Users/qkelly/Desktop/clinvar/pfam_overlap_gene_all.csv,5035690.0,True
+plus1_variants0406.csv,1,False,/Users/qkelly/Downloads/0406/plus1_variants0406.csv,27794.0,True
+plddt_all_NMD.csv,1,True,,,False
+plddt_all_FL.csv,1,True,,,False
+ppi_all_AD_with_gene_symbols.csv,1,False,,,False
+ppi_data.csv,1,False,,,False
+ppi_flag_summary.csv,1,False,/Users/qkelly/Desktop/clinvar/ppi_flag_summary.csv,189.0,True
+pfam_variant_counts.csv,1,False,,,False
+plus1_uniprot_ids_out.txt,1,True,/Users/qkelly/Downloads/idr_batch_results/plus1_uniprot_ids_out.txt,3556.0,True
+ppi_interface_variant_counts_AD.csv,1,False,,,False
+plus1_trigger_gene0115.txt,1,True,,,False
+ppi_interface_variant_counts.csv,1,False,,,False
+pli_all_cate.csv,1,False,/Users/qkelly/Desktop/clinvar/others/pli_all_cate.csv,54562.0,True
+pfam_flag_summary.csv,1,False,/Users/qkelly/Desktop/clinvar/pfam_flag_summary.csv,319.0,True
+pfam_data.csv,1,False,,,False
+parse_NMDPos_hierarchical_results.csv,1,False,/Users/qkelly/Desktop/clinvar/parse_NMDPos_hierarchical_results.csv,866.0,True
+ppi_overlap_gene_all.csv,1,False,/Users/qkelly/Desktop/clinvar/ppi_overlap_gene_all.csv,5010902.0,True
+plus1_idr0603.rds,1,False,,,False
+parse_NMDPos_hierarchical_model_list.rds,1,False,/Users/qkelly/Desktop/clinvar/parse_NMDPos_hierarchical_model_list.rds,238891858.0,True
+plus1_merged_uni_loc.csv,1,True,,,False
+pli_AD_genes.csv,1,False,/Users/qkelly/Desktop/clinvar/pli_AD_genes.csv,54623.0,True
+plus1_can_gene0217.txt,1,True,,,False
+plus1_can_gene0115.txt,1,True,,,False
+plus2_disorder_predictions.csv,1,False,/Users/qkelly/Desktop/idr/plus2_disorder_predictions.csv,18335.0,True
+plus2_control_ADgenes.csv,1,False,,,False
+plus1_control_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,1,True,/Users/qkelly/Downloads/plus1_control_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,22114758.0,True
+plus1_control_uniprot_ids_out.txt,1,True,/Users/qkelly/Downloads/idr_batch_results/plus1_control_uniprot_ids_out.txt,33994.0,True
+plus1_control_idr0603.rds,1,False,,,False
+plus1_css_gene0115.txt,1,True,,,False
+plus2_css_gene0115.txt,1,True,,,False
+plus1_control_disorder_predictions.csv,1,True,/Users/qkelly/Downloads/plus1_control_disorder_predictions.csv,168852.0,True
+plus2_can_gene0115.txt,1,True,,,False
+plus1_fs_results20260201_AD.rds,1,False,/Users/qkelly/Desktop/clinvar/plus1_fs_results20260201_AD.rds,28911.0,True
+plus2_fs_results20260201_AD.rds,1,False,/Users/qkelly/Desktop/clinvar/plus2_fs_results20260201_AD.rds,27786.0,True
+plus2_can_gene0217.txt,1,True,,,False
+plus1_idr.txt,1,False,,,False
+plus1_long_gene0115.txt,1,True,,,False
+plus1_vep_uniprot_intact.txt,1,False,/Users/qkelly/Downloads/vep0512 2/plus1_vep_uniprot_intact.txt,3949013.0,True
+plus2_long_gene0115.txt,1,True,,,False
+plus2_trigger_gene0115.txt,1,True,,,False
+plus1_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,1,True,/Users/qkelly/Downloads/plus1_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,5049692.0,True
+pool_fs_control_cds.csv,1,False,,,False
+plus1_control_data.txt,1,True,/Users/qkelly/Downloads/plus1_control_data.txt,160173.0,True
+pool_snv_control_cds.csv,1,False,,,False
+plus2_gnomAD_control_genes.csv,1,True,,,False
+snv_control_ADvariants.csv,1,False,,,False
+ppi_pfam_flag_summary.csv,1,False,,,False
+snv_variants20260201_plp_dbh_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_variants20260201_plp_dbh_clinvar.csv,29562.0,True
+structural_summary_NMD_1000_repeats.csv,1,False,/Users/qkelly/Desktop/clinvar/structural_summary_NMD_1000_repeats.csv,1016.0,True
+snv_wald_AD.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_wald_AD.csv,1795.0,True
+snv_vus_ptc_nmdesc_can_filtered20260201.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_vus_ptc_nmdesc_can_filtered20260201.rds,3706001.0,True
+snv_vep_uniprot_intact.txt,1,False,/Users/qkelly/Downloads/vep0512 2/snv_vep_uniprot_intact.txt,4163278.0,True
+snv_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,1,True,/Users/qkelly/Downloads/snv_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,6472622.0,True
+snv_variants20260201_plp_wald_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_variants20260201_plp_wald_clinvar.csv,51868.0,True
+snv_variants20260201_plp_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_variants20260201_plp_clinvar.csv,34568.0,True
+syn_all_can_only.csv,1,False,/Users/qkelly/Desktop/clinvar/syn_all_can_only.csv,653130791.0,True
+snv_variants20260201_benign_bh0.2_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_variants20260201_benign_bh0.2_clinvar.csv,175.0,True
+snv_variants0406.csv,1,False,/Users/qkelly/Downloads/0406/snv_variants0406.csv,35477.0,True
+snv_uniprot_ids_out.txt,1,True,/Users/qkelly/Downloads/idr_batch_results/snv_uniprot_ids_out.txt,5151.0,True
+snv_plp_ptc_p1120_NMDenriched2_trig.txt,1,True,,,False
+snv_plp_ptc_p1120_NMDenriched2_long.txt,1,True,,,False
+snv_plp_ptc_p1120_NMDenriched2_css.txt,1,True,,,False
+submit_info.csv,1,False,/Users/qkelly/Desktop/clinvar/submit_info.csv,197920708.0,True
+t find gene_all_matched.csv,1,False,,,False
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can.txt,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can.txt,819.0,True
+variants_all5.csv,1,False,/Users/qkelly/Desktop/clinvar/variants_all5.csv,35643279.0,True
+wald_ppi_degree_centrality_results.csv,1,False,/Users/qkelly/Desktop/clinvar/wald_ppi_degree_centrality_results.csv,86990.0,True
+variants_all_with_motif_LCS_flags.csv,1,False,,,False
+variants_all_distance_list.csv,1,False,/Users/qkelly/Desktop/clinvar/variants_all_distance_list.csv,62510582.0,True
+variants_all_continuous_summary.csv,1,False,,,False
+variants_all_binary_summary.csv,1,False,,,False
+variants_all5_1_0621.csv,1,False,/Users/qkelly/Desktop/clinvar/variants_all5_1_0621.csv,34001314.0,True
+variants_all0805.csv,1,False,/Users/qkelly/Desktop/clinvar/variants_all0805.csv,39170405.0,True
+tau_all.csv,1,False,/Users/qkelly/Desktop/clinvar/tau_all.csv,5033494.0,True
+variants_all.csv,1,False,,,False
+variant_summary.txt,1,False,/Users/qkelly/Desktop/clinvar/variant_summary.txt,3793890169.0,True
+variant_motif_max3.csv,1,False,/Users/qkelly/Desktop/clinvar/variant_motif_max3.csv,30997066.0,True
+variant_LCS_max3.csv,1,False,/Users/qkelly/Desktop/clinvar/variant_LCS_max3.csv,30806655.0,True
+unipLocSignal.bed.csv,1,True,,,False
+tau_gene_matrix.csv,1,False,/Users/qkelly/Desktop/clinvar/tau_gene_matrix.csv,21787646.0,True
+snv_plp_ptc_p1120_NMDenriched2_all.txt,1,True,,,False
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30_NMDesc_dbh_enriched_can.txt,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30_NMDesc_dbh_enriched_can.txt,437.0,True
+ptc_variant_distance_all_groups_table.csv,1,False,,,False
+snv_ADvariants.csv,1,False,,,False
+snv_control_genes.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_control_genes.csv,70330.0,True
+snv_control_distance_list.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_control_distance_list.csv,69016.0,True
+pairs_snv_random.csv,1,False,/Users/qkelly/Desktop/clinvar/pairs_snv_random.csv,6424.0,True
+snv_control_ADgenes.csv,1,True,,,False
+snv_benign_ptc_nmdesc_can20260201.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_benign_ptc_nmdesc_can20260201.rds,3641991.0,True
+snv_all.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_all.csv,4824660.0,True
+secondary_structure_hierarchical_results.csv,1,False,,,False
+snv_control_idr.txt,1,False,,,False
+secondary_structure_hierarchical_model_list.rds,1,False,,,False
+secondary_structure_hierarchical_convergence.csv,1,False,,,False
+results_random_unpaired.csv,1,False,/Users/qkelly/Desktop/clinvar/results_random_unpaired.csv,6448.0,True
+results_matched_paired.csv,1,False,/Users/qkelly/Desktop/clinvar/results_matched_paired.csv,6383.0,True
+resetID_clinvar_20240819_Clnsig.txt,1,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/0819/resetID_clinvar_20240819_Clnsig.txt,166316941.0,True
+repeated_sampling_1000_matched_all.csv,1,False,/Users/qkelly/Desktop/clinvar/repeated_sampling_1000_matched_all.csv,246207.0,True
+snv_control_gnomAD_variants0406.csv,1,False,,,False
+snv_control_idr0603.rds,1,False,,,False
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds,163117.0,True
+snv_idr0603.rds,1,False,,,False
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds,163496.0,True
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH020.rds,1,False,,,False
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_p_f_syn_20260201.rds,281822.0,True
+snv_plp_ptc_nmdesc_can_filtered20260201_check.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can_filtered20260201_check.rds,3729134.0,True
+snv_plp_ptc_nmdesc_can20260201.rds,1,False,/Users/qkelly/Desktop/clinvar/snv_plp_ptc_nmdesc_can20260201.rds,3784961.0,True
+snv_plp_nmd_p_NMDenriched_omim.txt,1,True,,,False
+snv_idr.txt,1,False,,,False
+snv_control_uniprot_ids_out.txt,1,True,/Users/qkelly/Downloads/idr_batch_results/snv_control_uniprot_ids_out.txt,38465.0,True
+snv_gene_summary_wald.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_gene_summary_wald.csv,2844.0,True
+snv_disorder_predictions.csv,1,False,/Users/qkelly/Desktop/idr/snv_disorder_predictions.csv,10351.0,True
+snv_disease_distance_list.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_disease_distance_list.csv,77148.0,True
+snv_dbh_AD.csv,1,False,/Users/qkelly/Desktop/clinvar/snv_dbh_AD.csv,428.0,True
+snv_control_vep_uniprot_intact.txt,1,False,/Users/qkelly/Downloads/vep0512 2/snv_control_vep_uniprot_intact.txt,16153526.0,True
+snv_control_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,1,True,/Users/qkelly/Downloads/snv_control_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,25481938.0,True
+parse_NMDPos_hierarchical_convergence.csv,1,False,/Users/qkelly/Desktop/clinvar/parse_NMDPos_hierarchical_convergence.csv,169.0,True
+%s_%s.txt,1,False,,,False
+pairs_snv_matched.csv,1,False,/Users/qkelly/Desktop/clinvar/pairs_snv_matched.csv,5826.0,True
+aa_comp_stats_all_regions.csv,1,True,,,False
+_summary.csv,1,False,,,False
+_pli_loeuf_category.csv,1,False,,,False
+_mixed_model.csv,1,False,,,False
+_idr0603_uni.txt,1,False,,,False
+_gene_matrix.csv,1,False,,,False
+_gene0115.txt,1,False,,,False
+_full_annotated.csv,1,False,,,False
+_fixed_model.csv,1,False,,,False
+_exon_counts.csv,1,False,,,False
+_all.csv,1,False,,,False
+WT_vars_full_length_plus1_strand[16].csv,1,True,,,False
+WT_vars_NMD_region_plus1_strand[53].csv,1,True,,,False
+WT_var_full_4c_AD.csv,1,True,,,False
+WT_var_NMD_4c_AD.csv,1,True,/Users/qkelly/Desktop/clinvar/WT_var_NMD_4c_AD.csv,347269.0,True
+WT_full_NMD_structural.csv,1,True,/Users/qkelly/Desktop/clinvar/raw data/structure/WT_full_NMD_structural.csv,69745.0,True
+aa_comp_all_regions.csv,1,True,,,False
+abs_sasa_mean_WT_FL.csv,1,True,,,False
+WT-vars_full-length.csv,1,True,,,False
+abs_sasa_mean_var_FL.csv,1,True,,,False
+enriched_genes_dbh.csv,1,False,,,False
+dist_sanity_models_fdr.csv,1,False,/Users/qkelly/Desktop/clinvar/plots/pfam_ppi_analysis/dist_sanity_models_fdr.csv,1091.0,True
+control_variants_all_with_ppi_pfam_data.csv,1,False,,,False
+control_variants_all_with_motif_LCS_flags.csv,1,False,,,False
+control_set_distance_summary.csv,1,False,,,False
+control_set_distance_pvalues.csv,1,False,,,False
+clinvar_gene_list.txt,1,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/clinvar_gene_list.txt,18592.0,True
+clinvar_1120.rds,1,True,,,False
+clinvar0716_3.rds,1,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/autism/data/clinvar0716_3.rds,5936038.0,True
+clinvar0716_2.rds,1,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/autism/data/clinvar0716_2.rds,5706438.0,True
+clinvar0716_1.rds,1,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/autism/data/clinvar0716_1.rds,5680714.0,True
+aromaticity_all_NMD.csv,1,True,,,False
+aromaticity_all_FL.csv,1,True,,,False
+analysis_table.csv,1,False,/Users/qkelly/Desktop/clinvar/derived/analysis_table.csv,3098732.0,True
+all_p_results_structural_NMD_1000_repeats.csv,1,False,/Users/qkelly/Desktop/clinvar/all_p_results_structural_NMD_1000_repeats.csv,947855.0,True
+WT-vars_full-length_corrected[10].csv,1,True,,,False
+WT-vars_NMD_region_corrected[65].csv,1,True,,,False
+pairs_fs_random.csv,1,False,/Users/qkelly/Desktop/clinvar/pairs_fs_random.csv,9647.0,True
+Clinvar_0820NMD.rds,1,True,,,False
+ClinVar_pathogenic_allgenes.txt,1,True,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/ClinVar_pathogenic_allgenes.txt,37124.0,True
+ClinVar_pathogenic_NMDescapeneriched.genes.txt,1,True,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/ClinVar_pathogenic_NMDescapeneriched.genes.txt,1830.0,True
+ClinVar_all_vus_allgenes.txt,1,True,,,False
+ClinVar_all_vus_NMDescapeneriched.genes.txt,1,True,,,False
+ClinVar_NMD.rds,1,True,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/ClinVar_NMD.rds,3338637.0,True
+CIDER_model_results.csv,1,False,/Users/qkelly/Desktop/clinvar/CIDER_model_results.csv,18294.0,True
+CIDER_descriptive_summary.csv,1,False,/Users/qkelly/Desktop/clinvar/CIDER_descriptive_summary.csv,23584.0,True
+BM_info.csv,1,False,/Users/qkelly/Desktop/clinvar/BM_info.csv,24831869.0,True
+AD_gene_sets_v3.rds,1,False,/Users/qkelly/Desktop/clinvar/AD_gene_sets_v3.rds,2108.0,True
+AD_Tugce.csv,1,False,,,False
+<CHR>_<zero*POS>_<REF>_<ALT>.fasta,1,False,,,False
+3_01014662_CAA_C.fasta,1,False,,,False
+17_00770305_TGA_T.fasta,1,False,,,False
+.nmdesc_path_index.rds,1,False,/Users/qkelly/Desktop/clinvar/.nmdesc_path_index.rds,309509.0,True
+.cut.syn.can.csv,1,False,,,False
+ClinVar_vus_NMD0906.rds,1,False,/Users/qkelly/Desktop/桌面 - q的MacBook Pro/clinvar/rds_with_pvalue/ClinVar_vus_NMD0906.rds,4542024.0,True
+Clinvar_p_NMD0906.rds,1,False,,,False
+WT-vars_NMD_region.csv,1,True,,,False
+Kat6b_PARSEV2_SCORES.csv,1,True,,,False
+VARs_full_NMD_structural.csv,1,True,/Users/qkelly/Desktop/clinvar/raw data/structure/VARs_full_NMD_structural.csv,1769177.0,True
+VAR-WT_structural_results.csv,1,True,/Users/qkelly/Desktop/clinvar/raw data/structure/VAR-WT_structural_results.csv,1892341.0,True
+Tugce_genelist_fortheppaer.xlsx,1,True,,,False
+Supplemental_Figure_3_variant_level_summary.csv,1,False,,,False
+Supplemental_Figure_3_gene_level_summary.csv,1,False,,,False
+Peptide_LMM_results.csv,1,False,/Users/qkelly/Desktop/clinvar/Peptide_LMM_results.csv,17834.0,True
+POGZ_combined_Pfam_PPI_locations.csv,1,False,,,False
+POGZ_Pfam_domains_biomart.csv,1,False,,,False
+POGZ_PPI_interface_residues.csv,1,False,,,False
+POGZ_PPI_interface_ranges.csv,1,False,,,False
+PARSE_model_results.csv,1,False,/Users/qkelly/Desktop/clinvar/PARSE_model_results.csv,13087.0,True
+NMD_esc_extensive_list.xlsx,1,True,,,False
+Matched_Gene_Level_Enrichment_summary.csv,1,False,,,False
+Matched_Gene_Level_Enrichment_4panels_summary.csv,1,False,,,False
+LMM_results_all.csv,1,False,/Users/qkelly/Desktop/clinvar/LMM_results_all.csv,27504.0,True
+feature_summary_statistics.csv,1,False,,,False
+fs_AD_acat_full_annotated.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_AD_acat_full_annotated.csv,134160.0,True
+fs_all.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_all.csv,14274686.0,True
+minus1_merged_uni_loc.csv,1,True,,,False
+minus1_idr.txt,1,False,,,False
+%s_FDR0.20_all.txt,1,False,,,False
+minus1_control_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,1,True,/Users/qkelly/Downloads/minus1_control_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,24070412.0,True
+minus1_control_merged_uni_loc.csv,1,True,,,False
+minus1_control_idr0603.rds,1,False,,,False
+minus1_control_idr.txt,1,False,,,False
+minus1_control_gnomAD_variants0406.csv,1,False,/Users/qkelly/Downloads/0406/minus1_control_gnomAD_variants0406.csv,257319.0,True
+matching_log.csv,1,False,/Users/qkelly/Desktop/clinvar/matching_log.csv,15116.0,True
+matched_gc.csv,1,False,/Users/qkelly/Desktop/clinvar/matched_gc.csv,42951.0,True
+idr_metrics.csv,1,False,/Users/qkelly/Desktop/clinvar/derived/idr_metrics.csv,1736297.0,True
+hierarchical_model_list.rds,1,False,,,False
+hierarchical_model_key_comparisons.csv,1,False,/Users/qkelly/Desktop/clinvar/hierarchical_model_key_comparisons.csv,4040.0,True
+hierarchical_model_convergence.csv,1,False,,,False
+group_summary_%s.csv,1,False,,,False
+group_features_%s.csv,1,False,,,False
+minus1_idr0603.rds,1,False,,,False
+minus1_uniprot_ids_out.txt,1,True,/Users/qkelly/Downloads/idr_batch_results/minus1_uniprot_ids_out.txt,3316.0,True
+fs_can_AD_%s_FDR%.2f.txt,1,False,,,False
+minus1_variants0406.csv,1,False,/Users/qkelly/Downloads/0406/minus1_variants0406.csv,27479.0,True
+pairs_fs_matched.csv,1,False,/Users/qkelly/Desktop/clinvar/pairs_fs_matched.csv,9352.0,True
+p_less.csv,1,False,/Users/qkelly/Desktop/clinvar/p_less.csv,13508.0,True
+pI_all_NMD.csv,1,True,,,False
+pI_all_FL.csv,1,True,,,False
+omim_AD_cds_length.csv,1,False,/Users/qkelly/Desktop/clinvar/omim_AD_cds_length.csv,58490.0,True
+nmdesc_path_index.rds,1,False,,,False
+nmd_esc_strict_list.xlsx,1,True,,,False
+net_charge_var_nmd.csv,1,True,,,False
+net_charge_var_FL.csv,1,True,,,False
+net_charge_WT_nmd.csv,1,True,,,False
+net_charge_WT_FL.csv,1,True,,,False
+model_comparison_unmixed_vs_mixed.csv,1,False,/Users/qkelly/Desktop/clinvar/model_comparison_unmixed_vs_mixed.csv,982.0,True
+mixed_effect_fdr.csv,1,False,/Users/qkelly/Desktop/clinvar/plots/pfam_ppi_analysis/mixed_effect_fdr.csv,3536.0,True
+minus1_vep_uniprot_intact.txt,1,False,/Users/qkelly/Downloads/vep0512 2/minus1_vep_uniprot_intact.txt,3704186.0,True
+minus1_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,1,True,/Users/qkelly/Downloads/minus1_vep_cadd_dbnsfp_tss_prot_nearestexon.txt,4542025.0,True
+gnomad_snv_all.csv,1,False,/Users/qkelly/Desktop/clinvar/gnomad_snv_all.csv,3809325.0,True
+gnomad_fs_filtered.csv,1,False,/Users/qkelly/Desktop/clinvar/gnomad_fs_filtered.csv,53925.0,True
+gnomad_fs_all.csv,1,False,/Users/qkelly/Desktop/clinvar/gnomad_fs_all.csv,8088441.0,True
+genes7_canonical_variants.csv,1,False,,,False
+fs_p_plus2_NMDenriched2_long.txt,1,True,,,False
+fs_p_plus2_NMDenriched2_css.txt,1,True,,,False
+fs_p_plus2_NMDenriched2_can.txt,1,True,,,False
+fs_p_plus1_NMDenriched2_long.txt,1,True,,,False
+fs_p_plus1_NMDenriched2_css.txt,1,True,,,False
+fs_p_plus1_NMDenriched2_can.txt,1,True,,,False
+fs_gene_summary_wald.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_gene_summary_wald.csv,996.0,True
+fs_disease_distance_list.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_disease_distance_list.csv,155006.0,True
+fs_control_gene.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_control_gene.csv,18514.0,True
+fs_control_distance_list.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_control_distance_list.csv,84747.0,True
+fs_combined_results20260201_AD_v3.rds,1,False,/Users/qkelly/Desktop/clinvar/fs_combined_results20260201_AD_v3.rds,106988.0,True
+fs_combined_results20260201_AD_v3.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_combined_results20260201_AD_v3.csv,295558.0,True
+fs_can_AD_acat_suggestive_%.2f-%.2f.txt,1,False,,,False
+fs_can_AD_acat_significant_FDR%.2f.txt,1,False,,,False
+fs_can_AD_acat_FDR%.2f_all.txt,1,False,,,False
+fs_variants20260201_benign_acat_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_variants20260201_benign_acat_clinvar.csv,683.0,True
+fs_variants20260201_plp_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_variants20260201_plp_clinvar.csv,122814.0,True
+fs_variants20260201_plp_wald_clinvar.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_variants20260201_plp_wald_clinvar.csv,105722.0,True
+gene_all_matched.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_all_matched.csv,2149570.0,True
+gene_motif_max_AD.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_motif_max_AD.csv,409.0,True
+gene_motif_max3.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_motif_max3.csv,3066301.0,True
+gene_model_data.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_model_data.csv,5272554.0,True
+gene_level_pli_loeuf_category.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_level_pli_loeuf_category.csv,56014.0,True
+gene_all_with_pfam_overlap.csv,1,False,,,False
+gene_all_random.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_all_random.csv,1838661.0,True
+gene_all_0826_random.csv,1,False,,,False
+fs_variants20260201_vus_clinvar_acat_filtered.csv,1,False,/Users/qkelly/Desktop/clinvar/fs_variants20260201_vus_clinvar_acat_filtered.csv,9017.0,True
+gene_all_0826_matched.csv,1,False,,,False
+gene_all_%s_%s.csv,1,False,,,False
+gene_LCS_max_AD.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_LCS_max_AD.csv,298.0,True
+gene_LCS_max3.csv,1,False,/Users/qkelly/Desktop/clinvar/gene_LCS_max3.csv,3035759.0,True
+gene.matrix.csv,1,False,/Users/qkelly/Desktop/clinvar/gene.matrix.csv,21787646.0,True
+fs_vus.rds,1,False,/Users/qkelly/Desktop/clinvar/fs_vus.rds,17408405.0,True
+minus1_control_vep_uniprot_intact.txt,1,False,/Users/qkelly/Downloads/minus1_control_vep_uniprot_intact.txt,19262169.0,True
