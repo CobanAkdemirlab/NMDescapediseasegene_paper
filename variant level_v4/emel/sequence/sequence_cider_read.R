@@ -7,7 +7,9 @@ str(NMD_region_DivergentPos_CIDER)
 NMD_region_NMDPos_CIDER <- read_csv("~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/sequence_analysis/CIDER/NMD_region_NMDPos_CIDER.csv")
 str(NMD_region_NMDPos_CIDER)
 
-
+NMD_region_DivergentPos_CIDER$key = 
+  
+NMD_region_DivergentPos_CIDER_match = 
 
 # ── Colors & comparisons ──────────────────────────────────────────────────────
 comparisons <- list(

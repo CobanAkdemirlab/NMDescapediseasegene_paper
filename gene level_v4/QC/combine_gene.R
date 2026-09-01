@@ -12,9 +12,8 @@ source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
 #This Rscript is to combine gene list from disease and control, then add necessary variables including NMDesc_region_length
-snv_gene           = read_csv(data_file("snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_wald_enriched_can.txt"), 
-                              col_names = FALSE)
-fs_gene            = read_csv("fs_can_AD_FDR0.05_wald_gene.csv")
+snv_gene           = read_csv("snv_can_ADrestricted_bh_FDR0.20_all.txt")
+fs_gene            = read_csv("fs_can_AD_acat_FDR0.20_all.txt")
 snv_control_gene_AD = read_csv("snv_control_genes_AD.csv")
 fs_control_gene_AD  = read_csv("fs_control_genes_AD.csv")
 PTC_info = read.csv('PTC_info20260201_region.csv')

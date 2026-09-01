@@ -7,7 +7,7 @@ library(gt)
 # 1. Data preparation (consistent with Table 1 / Table 2)
 # ══════════════════════════════════════════════════════════════
 
-df_all <- VAR_WT_structural_results %>%
+df_all <- VAR_WT_structural_match %>%
   mutate(
     group = case_when(
       source_folder == "snv_disease" ~ "SNV Disease",

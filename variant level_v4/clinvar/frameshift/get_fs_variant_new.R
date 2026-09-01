@@ -25,7 +25,7 @@ fs_can_tr = getBM(attributes=c('ensembl_transcript_id','transcript_is_canonical'
 fs_can_tr = fs_can_tr[which(fs_can_tr$transcript_is_canonical == 1),1]
 
 #in clinvar fs ptc, nmdesc variants, select those corresponding to the canonical transcript of gene list
-fs_res = read_rds('fs.rds')
+fs_res = read_rds('fs.rds') #fs = res_plp_ptc[union(del_ind,ins_ind)]
 fs_vus_res = read_rds('fs_vus.rds')
 fs_benign_res = read_rds('fs_benign.rds')
 #select NMDesc variants by canonical rule

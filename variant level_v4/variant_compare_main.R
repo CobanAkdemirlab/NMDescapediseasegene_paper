@@ -27,8 +27,8 @@ library(ggpubr)
 # 4.0.1  Paths and constants
 # ------------------------------------------------------------------------------
 
-.p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
-        "../../gene level_v3/lib/paths.R")
+.p <- c("gene level_v4/lib/paths.R", "../gene level_v4/lib/paths.R",
+        "../../gene level_v4/lib/paths.R")
 .p <- .p[file.exists(.p)]
 source(.p[1]); rm(.p)
 
@@ -86,28 +86,40 @@ setwd(CLINVAR_DIR)
 #hold them
 #4.0 load data and add annotations
 #4.0.1 adds cds_mutation_loc, dist_to_cds_end, etc
-source(file.path(SCRIPT_DIR, "new_create_fasta_functions.R"))
+#source(file.path(SCRIPT_DIR, "new_create_fasta_functions.R"))
+source('/Users/jxu14/NMDescapediseasegene_paper/variant level_v4/new_create_fasta_functions.R')
+PTC_info = read.csv('PTC_info20260201_region.csv')
 #useEnsembl is the current entry point; useMart is kept as a fallback
 ensembl = tryCatch(useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl"),
                    error = function(e)
                      useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",
                              host = "https://www.ensembl.org"))
-snv_variants = read.csv(data_file('snv_variants20260201_plp_dbh_clinvar.csv'))
+snv_variants = read.csv('snv_variants20260201_plp_dbh_clinvar.csv')
 snv_dis <- create_fasta(snv_variants, output_dir = "snv_disease_fasta_output")
 
-snv_control_variants = read.csv(data_file('gnomad_snv_filtered_acat_0831.csv'))
+snv_control_variants = read.csv('gnomad_snv_filtered_acat_0831.csv')
 gnomad_snv_filtered <- snv_control_variants
 gnomad_snv_filtered$key <- gnomad_snv_filtered$id
 gnomad_snv_variants <- gnomad_snv_filtered[,  c("transcript", "key")]
-gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = "snv_control_fasta_output")
+#gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = "snv_control_fasta_output")
+gnomad_snv_dis   <- create_fasta(gnomad_snv_variants, refs,
+                        output_dir = "snv_control_fasta_output",
+                        ptc_info   = PTC_info)
 
-fs_variants = read.csv(data_file('fs_variants20260201_plp_acat_clinvar.csv'))
-fs_dis <- create_fasta(fs_variants, output_dir = "fs_disease_fasta_output")
+fs_variants = read.csv('fs_variants20260201_plp_acat_clinvar.csv')
+#fs_dis <- create_fasta(fs_variants, output_dir = "fs_disease_fasta_output")
+fs_dis  <- create_fasta(fs_variants, refs,
+                        output_dir = "fs_disease_fasta_output",
+                        ptc_info   = PTC_info)
 
-fs_control_variants = read.csv(data_file('gnomad_fs_filtered_bh_0831.csv'))
+fs_control_variants = read.csv('gnomad_fs_filtered_bh_0831.csv')
 gnomad_fs_filtered  <- fs_control_variants
+gnomad_fs_filtered$key <- gnomad_fs_filtered$id
 gnomad_fs_variants  <- gnomad_fs_filtered[,  c("transcript", "key")]
-gnomad_fs_dis <- create_fasta(gnomad_fs_variants, output_dir = "fs_control_fasta_output")
+#gnomad_fs_dis <- create_fasta(gnomad_fs_variants, output_dir = "fs_control_fasta_output")
+gnomad_fs_dis   <- create_fasta(gnomad_fs_variants, refs,
+                                 output_dir = "fs_control_fasta_output",
+                                 ptc_info   = PTC_info)
 
 variants_all1 <- bind_rows(
   fs_dis %>% mutate(group = "fs_disease"),
@@ -120,7 +132,7 @@ variants_all1$ensembl_transcript_id = sapply(strsplit(variants_all1$Variant_Key,
 all_variants = bind_rows(fs_variants, snv_variants, gnomad_fs_variants, gnomad_snv_variants)
 #get transcript id from all_variants
 variants_all1$ensembl_transcript_id = all_variants$transcript[match(variants_all1$Variant_Key, all_variants$key)]
-
+write.csv(variants_all1, file = "variants_all1_0901.csv", row.names = FALSE)
 #4.0.2 merges variant-level info with gene-level info
 #run combine_gene.R get snv_nmdesc_df
 snv_all <- snv_variants %>%
@@ -173,7 +185,7 @@ gnomad_snv_all <- gnomad_snv_filtered %>%
   ) %>%
   dplyr::select(-any_of(c("genomic_loc", "PTC_pos"))) # remove the original genomic_pos column since we have renamed it to PTC_genomic_pos
 
-gnomad_fs_all <- gnomad_fs_filtered2 %>%
+gnomad_fs_all <- gnomad_fs_filtered %>%
   left_join(
     gnomad_fs_dis %>%
       dplyr::select(Variant_Key, ptc_pos, cds_mutation_loc),
@@ -267,6 +279,7 @@ variants_all2 = variants_all %>%
 variants_all2$cds_mutation_loc = variants_all2$cds_mutation_loc.x
 variants_all2$cds_end = nchar(variants_all2$coding)
 variants_all2$dist_to_cds_end = variants_all2$cds_end - variants_all2$ptc_pos
+write.csv(variants_all2, 'variant_all20901.csv', row.names = FALSE)
 
 # # ------------------------------------------------------------------------------
 # 4.0.3  PPI + Pfam annotation (BioMart, human_1_ interactome)
@@ -840,7 +853,7 @@ plot_bayesian_by_geneset <- function(fit_lists) {
 ##run analysis
 # --- 4.0: data + annotation ---------------------------------------------------
 pfam_fin     <- get_pfam_annotations(variants_all2$ensembl_transcript_id, ensembl)
-human_1_     <- read_delim(data_file("human (1).txt"),
+human_1_     <- read_delim("/Users/jxu14/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/others/human (1).txt",
                            delim = "\t", escape_double = FALSE, trim_ws = TRUE)
 variants_all2 <- variants_all2 %>% filter(!is.na(group))
 variants_all2$Variant_Key = variants_all2$key
@@ -854,7 +867,7 @@ variants_all4 <- annotate_motifs(variants_all3, ensembl)
 variants_all5 <- prepare_final_variant_table(variants_all4)
 #remove cds_mutation_loc.x and cds_mutation_loc.y columns
 variants_all5 <- variants_all5 %>% dplyr::select(-cds_mutation_loc.x, -cds_mutation_loc.y)
-write.csv(variants_all5, "variants_all0805.csv", row.names = FALSE)
+write.csv(variants_all5, "variants_all5_0901.csv", row.names = FALSE)
 
 # --- 4.1: unmatched analysis ---------------------------------------------------
 dist_models  <- run_dist_sanity_models(variants_all5)

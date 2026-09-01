@@ -31,11 +31,16 @@ cider_div <- read_csv(
   show_col_types = FALSE
 )
 
+cider_div$key = filename_to_key(cider_div$file_name)
+cider_div = cider_div %>%
+  filter(key %in% variants_all5$key)
 cider_nmd <- read_csv(
   file.path(base_dir, "NMD_region_NMDPos_CIDER.csv"),
   show_col_types = FALSE
 )
-
+cider_nmd$key = filename_to_key(cider_nmd$file_name)
+cider_nmd = cider_nmd %>%
+  filter(key %in% variants_all5$key)
 
 # ══════════════════════════════════════════════════════════════
 # 2. Variant key, cohort filtering, and region filtering

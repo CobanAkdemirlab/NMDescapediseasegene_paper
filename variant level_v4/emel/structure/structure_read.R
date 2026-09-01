@@ -9,6 +9,11 @@ VAR_WT_structural_results <- read_csv("~/Desktop/NMDescapediseasegene_paper-main
 VARs_full_NMD_structural <- read_csv("~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/structure/VARs_full_NMD_structural.csv")
 WT_full_NMD_structural <- read_csv("~/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/structure/WT_full_NMD_structural.csv")
 
+sum(VAR_WT_structural_results$key %in% variants_all5$key)
+VAR_WT_structural_match <- VAR_WT_structural_results %>%
+  filter(key %in% variants_all5$key)
+table(VAR_WT_structural_match$source_folder)
+
 str(VAR_WT_structural_results)
 str(VARs_full_NMD_structural)
 str(WT_full_NMD_structural)
