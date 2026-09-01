@@ -82,34 +82,24 @@ setwd(CLINVAR_DIR)
 
 #4.0 load data and add annotations
 #4.0.1 adds cds_mutation_loc, dist_to_cds_end, etc
-source(here::here("variant level_v3/new_create_fasta_functions.R"))
+source("new_create_fasta_functions.R")
 ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 snv_variants = read.csv('snv_variants20260201_plp_dbh_clinvar.csv')
-snv_dis <- create_fasta(snv_variants, output_dir = "snv_disease_fasta_output_test2")
+snv_dis <- create_fasta(snv_variants, output_dir = "snv_disease_fasta_output")
 
 snv_control_variants = read.csv('gnomad_snv_filtered_acat_0831.csv')
 gnomad_snv_filtered <- snv_control_variants
 gnomad_snv_filtered$key <- gnomad_snv_filtered$id
 gnomad_snv_variants <- gnomad_snv_filtered[,  c("transcript", "key")]
-gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = "snv_control_fasta_output_test2")
+gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = "snv_control_fasta_output")
 
 fs_variants = read.csv('fs_variants20260201_plp_acat_clinvar.csv')
-fs_dis <- create_fasta(fs_variants, output_dir = "fs_disease_fasta_output_test2")
+fs_dis <- create_fasta(fs_variants, output_dir = "fs_disease_fasta_output")
 
 fs_control_variants = read.csv('gnomad_fs_filtered_bh_0831.csv')
 gnomad_fs_filtered  <- fs_control_variants
-gnomad_fs_filtered$key  <- gnomad_fs_filtered$id
-#remove inframe indel, get gnomad_fs_filtered2
-gnomad_fs_filtered$ref = sub(".*\\|(.+)\\|.*", "\\1", gnomad_fs_filtered$id)
-gnomad_fs_filtered$alt = sub(".*\\|.*\\|(.*)", "\\1", gnomad_fs_filtered$id)
-gnomad_fs_filtered$len_diff = abs(nchar(gnomad_fs_filtered$ref) - nchar(gnomad_fs_filtered$alt))
-gnomad_fs_filtered2 = gnomad_fs_filtered[gnomad_fs_filtered$len_diff %% 3 != 0, ]
-gnomad_fs_filtered2$ref = NULL
-gnomad_fs_filtered2$alt = NULL
-gnomad_fs_filtered2$len_diff = NULL
-
 gnomad_fs_variants  <- gnomad_fs_filtered[,  c("transcript", "key")]
-gnomad_fs_dis <- create_fasta(gnomad_fs_variants, output_dir = "fs_control_fasta_output_test2")
+gnomad_fs_dis <- create_fasta(gnomad_fs_variants, output_dir = "fs_control_fasta_output")
 
 variants_all1 <- bind_rows(
   fs_dis %>% mutate(group = "fs_disease"),
