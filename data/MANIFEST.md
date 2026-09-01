@@ -5,7 +5,7 @@ stage scripts (`gene_get_main.R`, `variant_get_main.R`, `gene_compare_main.R`,
 `variant_compare_main.R`) plus `run_analysis.R`, then resolving every data file
 name they reference.
 
-`ship/` holds 37 files, 204 MB, largest 49 MB — every file is
+`ship/` holds 37 files, 210 MB, largest 49 MB — every file is
 under GitHub's 100 MB per-file limit, so the folder can be committed directly or
 attached to a release. Full listing in `ship_inventory.csv`; the classification of
 all 99 referenced names is in `classification.csv`.

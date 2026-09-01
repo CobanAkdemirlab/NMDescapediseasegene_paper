@@ -116,25 +116,33 @@ run_one <- function(script, label, args = NULL) {
 
 # Acquisition first, then comparison. The second name on each line is the
 # pre-rename file, used when a checkout still carries it.
-run_one(c("gene_get_main.R", "main.R"),
-        "1/4  Disease gene lists: NMDesc enrichment, AD-restricted candidates")
+STAGES <- list(
+  list(c("gene_get_main.R", "main.R"),
+       "1/4  Disease gene lists: NMDesc enrichment, AD-restricted candidates"),
+  list(c("variant_get_main.R"),
+       "2/4  Variant sets: ClinVar P/LP and gnomAD controls on the same transcripts"),
+  list(c("gene_compare_main.R", "gene_main_dbh.R"),
+       "3/4  Gene level: matched by CDS length, feature comparison within pairs"),
+  list(c("variant_compare_main.R", "variant_main_DBH.R"),
+       "4/4  Variant level: mixed-effect model, Bayesian sensitivity model"))
 
-run_one(c("variant_get_main.R"),
-        "2/4  Variant sets: ClinVar P/LP and gnomAD controls on the same transcripts")
-
-run_one(c("gene_compare_main.R", "gene_main_dbh.R"),
-        "3/4  Gene level: matched by CDS length, feature comparison within pairs")
-
-run_one(c("variant_compare_main.R", "variant_main_DBH.R"),
-        "4/4  Variant level: mixed-effect model, Bayesian sensitivity model")
+for (s in STAGES) run_one(s[[1]], s[[2]])
 
 # ---- 6) list outputs --------------------------------------------------------
-# Scripts write to REPO/figures, to out_dir() from paths.R, or to an "out"
-# directory beside themselves.
+# Scripts write to REPO/figures, to out_dir() from paths.R, to an "out" directory
+# beside themselves, or into their own directory when the path is relative.
 cat("\n", strrep("=", 70), "\ngenerated files\n", strrep("=", 70), "\n", sep = "")
 beside <- list.dirs(REPO, recursive = TRUE, full.names = TRUE)
 beside <- beside[basename(beside) == "out" & !grepl("/backup/", beside)]
-dirs <- unique(c(OUTDIR, tryCatch(out_dir(), error = function(e) NULL), beside))
+beside <- normalizePath(beside, mustWork = FALSE)
+stage_dirs <- unlist(lapply(STAGES, function(s) {
+  p <- .locate(s[[1]])
+  # normalized, so a v3 compatibility link and its v4 target count once
+  if (is.na(p)) NULL else normalizePath(dirname(p), mustWork = FALSE)
+}))
+dirs <- unique(c(OUTDIR, tryCatch(out_dir(), error = function(e) NULL),
+                 beside, stage_dirs))
+dirs <- dirs[dir.exists(dirs)]
 for (d in dirs) {
   fs <- list.files(d, pattern = "[.](pdf|png|csv)$", full.names = TRUE)
   cat("\n ", sub(path.expand("~"), "~", d), "\n")

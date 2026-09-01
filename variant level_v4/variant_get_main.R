@@ -16,6 +16,9 @@
 # disease variants, with anything P/LP in ClinVar removed. That makes the
 # disease/control contrast a within-gene contrast, which is what the
 # (1 | gene) random intercept in the downstream model is there to exploit.
+#
+# Merged from: get_fs_variant_new.R, get_snv_variant_new.R,
+#              get_snv_control_variant_new.R, get_gnomAD_control.R
 # =============================================================================
 
 suppressPackageStartupMessages({
@@ -358,3 +361,47 @@ if (exists("snv_ctrl_gene") && !is.null(snv_ctrl_gene))
   write_out(snv_ctrl_gene, "snv_control_gene_variants_gnomad")
 if (exists("fs_ctrl_gene") && !is.null(fs_ctrl_gene))
   write_out(fs_ctrl_gene, "fs_control_gene_variants_gnomad")
+
+# ---------------------------------------------------------------------------
+# 7. Per-gene summary (disease vs control counts)
+# ---------------------------------------------------------------------------
+
+msg("\n=== 6. per-gene summary ===")
+
+gene_summary <- function(disease, control, tx, dis_col, ctl_col) {
+  d <- disease %>% dplyr::group_by(hgnc_symbol) %>%
+    dplyr::summarise(!!dis_col := dplyr::n_distinct(key), .groups = "drop")
+  c_ <- control %>% dplyr::group_by(hgnc_symbol) %>%
+    dplyr::summarise(!!ctl_col := dplyr::n_distinct(id), .groups = "drop")
+  tx %>%
+    dplyr::select(hgnc_symbol) %>% dplyr::distinct() %>%
+    dplyr::left_join(d, by = "hgnc_symbol") %>%
+    dplyr::left_join(c_, by = "hgnc_symbol") %>%
+    tidyr::replace_na(stats::setNames(list(0L, 0L), c(dis_col, ctl_col))) %>%
+    dplyr::arrange(dplyr::desc(.data[[dis_col]]))
+}
+
+if (requireNamespace("tidyr", quietly = TRUE) &&
+    !is.null(snv_plp) && !is.null(fs_plp)) {
+  snv_summary <- gene_summary(snv_plp, snv_ctrl, snv_tx, "n_clinvar_snv", "n_gnomad_snv")
+  fs_summary  <- gene_summary(fs_plp,  fs_ctrl,  fs_tx,  "n_clinvar_fs",  "n_gnomad_fs")
+
+  utils::write.csv(snv_summary, out_file(sprintf("snv_gene_summary_%s.csv", CFG$tag)), row.names = FALSE)
+  utils::write.csv(fs_summary,  out_file(sprintf("fs_gene_summary_%s.csv",  CFG$tag)),  row.names = FALSE)
+
+  # Genes with no variants on one side contribute nothing to a within-gene
+  # contrast -- worth knowing before fitting (1 | gene).
+  msg("snv: %d genes with 0 disease variants, %d with 0 control variants",
+      sum(snv_summary$n_clinvar_snv == 0), sum(snv_summary$n_gnomad_snv == 0))
+  msg("fs:  %d genes with 0 disease variants, %d with 0 control variants",
+      sum(fs_summary$n_clinvar_fs == 0), sum(fs_summary$n_gnomad_fs == 0))
+  msg("snv: %d genes have both; fs: %d genes have both",
+      sum(snv_summary$n_clinvar_snv > 0 & snv_summary$n_gnomad_snv > 0),
+      sum(fs_summary$n_clinvar_fs  > 0 & fs_summary$n_gnomad_fs  > 0))
+  print(utils::head(snv_summary))
+  print(utils::head(fs_summary))
+} else {
+  msg("per-gene summary skipped (tidyr missing, or a ClinVar set is unavailable)")
+}
+
+msg("\ndone.")
