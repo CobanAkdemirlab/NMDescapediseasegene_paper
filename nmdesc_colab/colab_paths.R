@@ -66,4 +66,15 @@ run_script <- function(script, echo = TRUE) {
   invisible(dst)
 }
 
+# Sources a script where it lives, with the working directory set to its own
+# directory, so relative helper lookups inside the script resolve. Use this for
+# entry points; run_script() suits scripts that carry hardcoded data paths.
+run_in_place <- function(script, echo = FALSE) {
+  path <- file.path(REPO_DIR, script)
+  wd <- getwd(); on.exit(setwd(wd), add = TRUE)
+  setwd(dirname(path))
+  source(basename(path), echo = echo, max.deparse.length = 200)
+  invisible(path)
+}
+
 cat("colab_paths.R loaded\n  DATA_DIR:", DATA_DIR, "\n  REPO_DIR:", REPO_DIR, "\n")

@@ -18,9 +18,14 @@ DATA_ROOTS <- c(
   new_clinvar= path.expand("~/Desktop/new_clinvar"),
   gnomAD_snv = path.expand("~/Desktop/gnomAD_snv"),
   idr        = path.expand("~/Desktop/idr"),
-  syn        = path.expand("~/Desktop/syn"),
-  legacy     = path.expand("~/Desktop/桌面 - q的MacBook Pro")
+  syn        = path.expand("~/Desktop/syn")
 )
+# The legacy root is a localised Desktop folder, matched by pattern so this file
+# stays ASCII.
+.legacy <- Sys.glob(path.expand("~/Desktop/*MacBook*"))
+.legacy <- .legacy[dir.exists(.legacy)]
+if (length(.legacy)) DATA_ROOTS <- c(DATA_ROOTS, legacy = .legacy[1])
+rm(.legacy)
 # Overridable via env var: export NMDESC_DATA=/other/location
 if (nzchar(Sys.getenv("NMDESC_DATA"))) {
   DATA_ROOTS <- c(main = Sys.getenv("NMDESC_DATA"), DATA_ROOTS)

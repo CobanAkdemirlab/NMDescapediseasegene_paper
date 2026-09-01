@@ -57,6 +57,16 @@ CFG <- list(
   fs_control_gene_file  = NULL,
   snv_control_gene_file = NULL,
 
+  # --- output names read by variant_compare_main.R -------------------------
+  # These four are written verbatim, so the downstream script finds them by the
+  # names it reads. Every other set keeps the dated "<stem>_<tag>.csv" form.
+  out_names = c(
+    snv_disease_variants_clinvar_plp = "snv_variants20260201_plp_dbh_clinvar.csv",
+    fs_disease_variants_clinvar_plp  = "fs_variants20260201_plp_acat_clinvar.csv",
+    snv_control_variants_gnomad      = "gnomad_snv_filtered_acat_0831.csv",
+    fs_control_variants_gnomad       = "gnomad_fs_filtered_bh_0831.csv"
+  ),
+
   # --- run options ---------------------------------------------------------
   out_dir       = "out",
   tag           = format(Sys.Date(), "%Y%m%d"),
@@ -221,7 +231,9 @@ write_out <- function(df, stem) {
     msg("  SKIPPED %s (input missing)", stem)
     return(invisible(NULL))
   }
-  path <- out_file(sprintf("%s_%s.csv", stem, CFG$tag))
+  nm <- if (!is.null(CFG$out_names) && stem %in% names(CFG$out_names))
+          CFG$out_names[[stem]] else sprintf("%s_%s.csv", stem, CFG$tag)
+  path <- out_file(nm)
   utils::write.csv(df, path, row.names = FALSE)
   msg("  wrote %-46s %6d variants  %4d transcripts",
       basename(path), nrow(df), dplyr::n_distinct(df$transcript))

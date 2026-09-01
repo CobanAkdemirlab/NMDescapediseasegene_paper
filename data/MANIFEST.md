@@ -5,7 +5,7 @@ stage scripts (`gene_get_main.R`, `variant_get_main.R`, `gene_compare_main.R`,
 `variant_compare_main.R`) plus `run_analysis.R`, then resolving every data file
 name they reference.
 
-`ship/` holds 36 files, 199 MB, largest 49 MB — every file is
+`ship/` holds 37 files, 204 MB, largest 49 MB — every file is
 under GitHub's 100 MB per-file limit, so the folder can be committed directly or
 attached to a release. Full listing in `ship_inventory.csv`; the classification of
 all 99 referenced names is in `classification.csv`.
@@ -80,3 +80,10 @@ Subdirectory layout inside the data root does not matter; lookup is by file name
 The contents were not inspected for restricted or identifiable data. Files such
 as `submit_info.csv` and the `variants_annotated` family derive from clinical
 variant records. Review them before making the folder public.
+
+## One file comes from outside the four stages
+
+`PTC_info20260201_region.csv` is read by `gene_compare_main.R` but written by
+`gene level_v4/disease genes/framesift/fs_transcript_level.R`, which is not one of the
+four stages. A four-stage run therefore never produces it, so it is shipped here. Adding
+that script as a stage would make it reproducible instead.

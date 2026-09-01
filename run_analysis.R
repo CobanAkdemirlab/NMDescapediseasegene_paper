@@ -1,16 +1,37 @@
 # ---- 1) look for where is the raw data ------------------------------------------------------
 .find_repo <- function() {
   p <- tryCatch(dirname(normalizePath(sys.frame(1)$ofile)), error = function(e) NA)
-  if (!is.na(p) && dir.exists(file.path(p, "gene level_v3"))) return(p)
+  if (!is.na(p) && dir.exists(file.path(p, "gene level_v4"))) return(p)
   for (cand in c("~/Desktop/NMDesc/repo_cleaned", getwd(),
                  dirname(getwd()))) {
     cand <- path.expand(cand)
-    if (dir.exists(file.path(cand, "gene level_v3"))) return(cand)
+    if (dir.exists(file.path(cand, "gene level_v4"))) return(cand)
   }
   stop("can't locate",
        call. = FALSE)
 }
 REPO <- if (exists("REPO")) path.expand(REPO) else .find_repo()
+# Absolute, because run_one() moves the working directory.
+REPO <- normalizePath(REPO, mustWork = TRUE)
+
+# The analysis scripts look for paths.R and helpers under "* level_v3" names and
+# under a top-level "lib". These links point both at the v4 directories, so
+# data_file() is available instead of each script's bare-relative-path fallback.
+.link_compat <- function(repo) {
+  pairs <- lapply(c("gene", "variant", "protein"),
+                  function(v) c(paste0(v, " level_v4"), paste0(v, " level_v3")))
+  pairs <- c(pairs, list(c("gene level_v4/lib", "lib")))
+  for (p in pairs) {
+    src <- file.path(repo, p[1]); dst <- file.path(repo, p[2])
+    if (dir.exists(src) && !file.exists(dst))
+      tryCatch(file.symlink(src, dst),
+               warning = function(w) cat("  no link for", p[2], "\n"))
+  }
+}
+.link_compat(REPO)
+
+# paths.R supplies data_file(), data_root() and out_dir() to every script.
+source(file.path(REPO, "gene level_v4/lib/paths.R"))
 
 # ---- 2) check necessary packages --------------------------------------------------------------
 need_main  <- c("dplyr", "tidyr", "readr", "ggplot2", "purrr", "patchwork", "lme4")
@@ -18,6 +39,10 @@ need_bayes <- c("brms")
 
 miss_main  <- need_main [!vapply(need_main,  requireNamespace, logical(1), quietly = TRUE)]
 miss_bayes <- need_bayes[!vapply(need_bayes, requireNamespace, logical(1), quietly = TRUE)]
+
+if (length(miss_main))  cat("missing packages:", paste(miss_main, collapse = ", "), "\n")
+RUN_BAYES <- length(miss_bayes) == 0
+cat("Bayesian sensitivity model:", if (RUN_BAYES) "on" else "off (brms absent)", "\n")
 
 # ---- 3) find raw file ------------------------------------------------------------
 DATA_DIRS <- path.expand(c("~/Desktop/clinvar", "~/Desktop/clinvar/derived"))
@@ -41,7 +66,8 @@ for (k in c("F_MATCHED", "F_RANDOM", "F_TABLE", "F_IDR")) {
   cat(sprintf("  %-14s %s\n", k,
               if (is.na(v)) "miss" else sub(path.expand("~"), "~", v)))
 }
-if (is.na(F_MATCHED)) stop("can't find gene_all_matched.csv", call. = FALSE)
+if (is.na(F_MATCHED))
+  cat("  gene_all_matched.csv absent; scripts that need it will report it\n")
 
 # ---- 4) output dir ------------------------------------------------------------
 OUTDIR <- file.path(REPO, "figures")
@@ -49,34 +75,71 @@ dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE)
 cat("\n output loc:", sub(path.expand("~"), "~", OUTDIR), "\n")
 
 # ---- 5) run analysis --------------------------------------------------------------
-run_one <- function(script, args, label) {
-  path <- file.path(REPO, "scripts", script)
-  if (!file.exists(path)) { cat("\n跳过", label, "—— 找不到", script, "\n"); return(invisible()) }
+# script is a path relative to the repository root. Each script resolves its own
+# helpers through paths relative to its own directory, so the working directory
+# moves there for the duration of the call.
+# Stages are given by file name, located inside the repository, so a script that
+# moves between directories still runs. Several names may be supplied; the first
+# one present wins, which covers a rename that has not reached every copy yet.
+.locate <- function(names) {
+  for (n in names) {
+    if (grepl("/", n) && file.exists(file.path(REPO, n))) return(file.path(REPO, n))
+    hits <- list.files(REPO, pattern = paste0("^", basename(n), "$"),
+                       recursive = TRUE, full.names = TRUE)
+    hits <- hits[!grepl("/backup/", hits)]
+    if (length(hits)) return(hits[1])
+  }
+  NA_character_
+}
+
+run_one <- function(script, label, args = NULL) {
+  path <- .locate(script)
+  if (is.na(path)) { cat("\nskipping", label, "-- not found:",
+                         paste(script, collapse = " / "), "\n")
+                     return(invisible()) }
   cat("\n", strrep("=", 70), "\n", label, "\n", strrep("=", 70), "\n", sep = "")
-  old <- commandArgs
+  wd <- getwd(); old <- commandArgs
   res <- tryCatch({
-    assign("commandArgs", function(trailingOnly = FALSE) args, envir = globalenv())
-    sys.source(path, envir = new.env(parent = globalenv()))
+    setwd(dirname(path))
+    if (!is.null(args))
+      assign("commandArgs", function(trailingOnly = FALSE) args, envir = globalenv())
+    # Global environment, because the stage scripts call source() themselves and
+    # that lands in globalenv: a separate environment splits their definitions
+    # from the objects those definitions read.
+    sys.source(basename(path), envir = globalenv())
     "OK"
-  }, error = function(e) paste("失败:", conditionMessage(e)))
+  }, error = function(e) paste("failed:", conditionMessage(e)))
+  setwd(wd)
   assign("commandArgs", old, envir = globalenv())
   cat("\n[", label, "]", res, "\n")
 }
 
-run_one("fig_gene_level.R",
-        c(F_MATCHED, if (is.na(F_RANDOM)) "NA" else F_RANDOM, OUTDIR),
-        "Gene level：matched by CDS length")
+# Acquisition first, then comparison. The second name on each line is the
+# pre-rename file, used when a checkout still carries it.
+run_one(c("gene_get_main.R", "main.R"),
+        "1/4  Disease gene lists: NMDesc enrichment, AD-restricted candidates")
 
+run_one(c("variant_get_main.R"),
+        "2/4  Variant sets: ClinVar P/LP and gnomAD controls on the same transcripts")
 
-  run_one("fig_variant_level.R",
-          c(F_TABLE, F_IDR, OUTDIR, if (RUN_BAYES) "bayes" else "nobayes"),
-          "Variant level：mixed effect（main）+ Bayesian（sensitivity）")
+run_one(c("gene_compare_main.R", "gene_main_dbh.R"),
+        "3/4  Gene level: matched by CDS length, feature comparison within pairs")
 
-# ---- 6) main ----------------------------------------------------------------
+run_one(c("variant_compare_main.R", "variant_main_DBH.R"),
+        "4/4  Variant level: mixed-effect model, Bayesian sensitivity model")
+
+# ---- 6) list outputs --------------------------------------------------------
+# Scripts write to REPO/figures, to out_dir() from paths.R, or to an "out"
+# directory beside themselves.
 cat("\n", strrep("=", 70), "\ngenerated files\n", strrep("=", 70), "\n", sep = "")
-fs <- list.files(OUTDIR, pattern = "[.](pdf|png|csv)$", full.names = TRUE)
-if (length(fs)) {
-  for (f in fs[order(file.mtime(fs), decreasing = TRUE)])
-    cat(sprintf("  %8.0f KB  %s\n", file.size(f) / 1024, basename(f)))
-  cat(sprintf('  system("open \\"%s\\"")\n', OUTDIR))
-} else cat("  missing files \n")
+beside <- list.dirs(REPO, recursive = TRUE, full.names = TRUE)
+beside <- beside[basename(beside) == "out" & !grepl("/backup/", beside)]
+dirs <- unique(c(OUTDIR, tryCatch(out_dir(), error = function(e) NULL), beside))
+for (d in dirs) {
+  fs <- list.files(d, pattern = "[.](pdf|png|csv)$", full.names = TRUE)
+  cat("\n ", sub(path.expand("~"), "~", d), "\n")
+  if (length(fs)) {
+    for (f in fs[order(file.mtime(fs), decreasing = TRUE)])
+      cat(sprintf("  %8.0f KB  %s\n", file.size(f) / 1024, basename(f)))
+  } else cat("   no files\n")
+}

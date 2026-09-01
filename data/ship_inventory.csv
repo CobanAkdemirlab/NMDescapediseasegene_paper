@@ -7,8 +7,9 @@ fs_benign.rds,13.3
 NIHMS1818854-supplement-2(A).csv,11.63
 NIHMS1818854-supplement-2(B).csv,10.64
 pfam_overlap_gene_all.csv,5.04
-gene_all.csv,5.01
 ppi_overlap_gene_all.csv,5.01
+gene_all.csv,5.01
+PTC_info20260201_region.csv,4.38
 snv_vus_ptc_nmdesc_can_filtered20260201.rds,3.71
 analysis_table.csv,3.1
 gene_all_matched.csv,2.15
@@ -17,8 +18,8 @@ idr_metrics.csv,1.74
 snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30.rds,0.32
 .nmdesc_path_index.rds,0.31
 snv_plp_ptc_nmdesc_can_p_f_syn_20260201.rds,0.28
-snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds,0.16
 snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds,0.16
+snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds,0.16
 repeat_content.csv,0.16
 wald_ppi_degree_centrality_results.csv,0.09
 gnomad_fs_filtered_bh_0831.csv,0.07
