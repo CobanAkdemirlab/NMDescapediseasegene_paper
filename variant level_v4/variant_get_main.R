@@ -105,8 +105,12 @@ read_gene_list <- function(path) {
 .mart <- NULL
 get_mart <- function() {
   if (is.null(.mart)) {
-    .mart <<- biomaRt::useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl",
-                                  host = CFG$ensembl_host)
+    # "genes" is the current biomart name; the configured host is the fallback
+    .mart <<- tryCatch(
+      biomaRt::useEnsembl("genes", dataset = "hsapiens_gene_ensembl"),
+      error = function(e)
+        biomaRt::useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl",
+                            host = CFG$ensembl_host))
   }
   .mart
 }

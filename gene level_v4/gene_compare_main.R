@@ -132,6 +132,8 @@ getBM_chunked <- function(attributes, filters, values, mart,
 # =============================================================================
 
 read_gene_list <- function(path, label = NULL) {
+  #a bare name is resolved under the data roots
+  if (!file.exists(path)) path <- data_file(path)
   if (!file.exists(path)) stop("file does not exist: ", path)
   x <- if (grepl("\\.csv$", path, ignore.case = TRUE)) {
     df <- read.csv(path, stringsAsFactors = FALSE)
@@ -910,7 +912,7 @@ correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NU
 # 9. main analysis
 # =============================================================================
 
-PTC_info <- read.csv(CONFIG$ptc_info)
+PTC_info <- read.csv(data_file(CONFIG$ptc_info))
 
 PTC_combined <- PTC_info %>%
   group_by(transcript) %>%
@@ -929,6 +931,15 @@ omim_AD_symbols <- read_gene_list(CONFIG$omim_ad_symbols, "OMIM AD")
 
 cat(sprintf("\nsnv n = %d | fs n = %d | overlap = %d\n",
             length(snv_gene), length(fs_gene), length(intersect(snv_gene, fs_gene))))
+
+# biomaRt connection for the fetch helpers below
+if (!exists("ensembl")) {
+  ensembl <- tryCatch(
+    useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl"),
+    error = function(e)
+      useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",
+              host = "https://www.ensembl.org"))
+}
 
 # Control pools come from the two *_control_genes_AD.csv transcript lists, one
 # pool per stratum.

@@ -82,12 +82,16 @@ FLAG_LABELS <- c(
 SCRIPT_DIR <- normalizePath(".")
 setwd(CLINVAR_DIR)
 
+#data_file() resolves the four variant sets, so the working directory need not
+#hold them
 #4.0 load data and add annotations
 #4.0.1 adds cds_mutation_loc, dist_to_cds_end, etc
 source(file.path(SCRIPT_DIR, "new_create_fasta_functions.R"))
-ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-#data_file() locates each set under the data roots, so the working directory
-#does not have to be the directory holding them
+#useEnsembl is the current entry point; useMart is kept as a fallback
+ensembl = tryCatch(useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl"),
+                   error = function(e)
+                     useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",
+                             host = "https://www.ensembl.org"))
 snv_variants = read.csv(data_file('snv_variants20260201_plp_dbh_clinvar.csv'))
 snv_dis <- create_fasta(snv_variants, output_dir = "snv_disease_fasta_output")
 

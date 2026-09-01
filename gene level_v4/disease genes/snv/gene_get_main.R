@@ -144,7 +144,7 @@ length(unique(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]]))
 variant_summary <- read_delim("variant_summary.txt", 
                               delim = "\t", escape_double = FALSE, 
                               trim_ws = TRUE)
-#ReviewStatus does not contain either of “no assertion” or “no interpretation”
+#ReviewStatus does not contain either of "no assertion" or "no interpretation"
 #variant_summary$ReviewStatus
 v_re = variant_summary %>%
   filter(
@@ -153,9 +153,9 @@ v_re = variant_summary %>%
   )
 v_re[which(v_re$`#AlleleID` == '2831360'),]
 
-#ClinicalSignificance does not contain any of “not provided”, “drug
-#response”, “other”, “risk”, “low penetrance”, “conflicting”, “affects”, “association”, “protective”, “confers
-#sensitivity”
+#ClinicalSignificance does not contain any of "not provided", "drug
+#response", "other", "risk", "low penetrance", "conflicting", "affects", "association", "protective", "confers
+#sensitivity"
 exclude_terms <- c(
   "not provided", "drug response", "other", "risk", "low penetrance",
   "conflicting", "affects", "association", "protective", "confers sensitivity"
@@ -759,7 +759,7 @@ ggplot(combined, aes(x = OR, y = reorder(flag, OR), color = sig, shape = gene_se
     scale_x_log10() +
     labs(
       title    = "PPI overlap across PPI sources: Unadjusted vs Gene-matched",
-      subtitle = "Unadjusted: logistic regression | Gene-matched: paired Wilcoxon\nPDB = 实验结构 | HM = 同源建模 | PIONEER = 计算预测",
+      subtitle = "Unadjusted: logistic regression | Gene-matched: paired Wilcoxon\nPDB = experimental structure | HM = homology model | PIONEER = computational prediction",
       x        = "OR / Mean proportion ratio (log scale)",
       y        = "PPI source", color = "p-value", shape = "Gene set"
     ) +
