@@ -82,10 +82,13 @@ ind_out =  Biostrings::vcountPattern("N", vcf_rng_fil$alt) > 0
 vcf_rng_fil = vcf_rng_fil[!ind_out]
 #- back to the original workflow
 res = annotate_nmd(vcf_rng_fil, rettype="gr")
+res = readRDS("clinvar_20260201_nmd.rds")
 
 #2. get nmdesc enriched genes
 snv_ind = which(res@elementMetadata@listData[["type"]] == 'snv')
 fs_ind = which(res@elementMetadata@listData[["type"]] %in% c('del','ins'))
+length(unique(res@elementMetadata@listData[["key"]][snv_ind]))
+length(unique(res@elementMetadata@listData[["key"]][fs_ind]))
 clnsig_str = sapply(res$CLNSIG, function(x) paste(as.character(x), collapse="|"))
 plp_ind = which(grepl("pathogenic", clnsig_str, ignore.case = TRUE))
 length(unique(res@elementMetadata@listData[["key"]][plp_ind]))
@@ -230,6 +233,10 @@ v_ch = read.csv('v_ch20260201.csv')
 #return this information to res, build res3
 #the problem is, not all tr in res appeared in this variant_summary
 res2 = res[which(res@elementMetadata@listData[["key"]] %in% v_ch$key)]
+res2_snv_ind = which(res2@elementMetadata@listData[["type"]] == "snv")
+res2_fs_ind = which(res2@elementMetadata@listData[["type"]]%in% c('del','ins'))
+length(unique(res2@elementMetadata@listData[["key"]][res2_snv_ind]))
+length(unique(res2@elementMetadata@listData[["key"]][res2_fs_ind]))
 snv_plp_ptc_nmdesc_can$NumberSubmitters = v_ch$NumberSubmitters[match(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]], v_ch$key)]
 snv_plp_ptc_nmdesc_can$NumberSubmitters = variant_summary$NumberSubmitters[match(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]], variant_summary$key)]
 variant_summary_match = variant_summary[match(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]], variant_summary$key),]

@@ -5,7 +5,7 @@
 ![badge](https://img.shields.io/badge/data-ClinVar-orange)
 ![badge](https://img.shields.io/badge/purpose-NMD%20annotation-purple)
 
-The **NMDesc pipeline** annotates and analyzes **premature termination codon (PTC) variants from ClinVar and gnomAD**, classifying them by whether they **escape Nonsense-Mediated Decay (NMD)** under canonical **Exon Junction Complex (EJC) rules**.  
+The **NMDesc pipeline** annotates and analyzes **premature termination codon (PTC) variants from ClinVar**, classifying them by whether they **escape Nonsense-Mediated Decay (NMD)** under canonical **Exon Junction Complex (EJC) rules**.  
 It additionally extracts **gene-, variant-, and protein-level features** from multiple genomic and structural databases.
 
 ---
@@ -15,16 +15,16 @@ It additionally extracts **gene-, variant-, and protein-level features** from mu
 - Canonical NMD escape determination using EJC rules  
 - Automated extraction of:
   - Gene-level features (pLI, LOEUF, enrichment analysis, tau, etc.)
-  - Variant-level features (VEP annotation, CDS position of the PTC, variant distance to CDS end)
+  - Variant-level features (PPI annotation, CDS position of the PTC, variant distance to CDS end)
   - Protein-level features (IDRs, Pfam, AlphaFold2)
-- FASTA and VCF generation from key 
+- FASTA and VCF generation from key(loc:ref:alt) 
 - Modular script design for flexible expansion  
 
 ---
 
 ## Directory Structure
 
-This project includes gene level(NMDesc disease genes and control disease genes), variant level(NMDesc variants from clinvar and gnomad) and protein level analysis.
+This project includes gene level(NMDesc disease genes and control disease genes), variant level(NMDesc variants from ClinVar and gnomAD) and protein level analysis.
 
 ```text
 NMDescapediseasegene_paper/
@@ -59,7 +59,7 @@ NMDescapediseasegene_paper/
 │   │   │   ├── process_syn.R
 │   │   │   └── variant_level.R
 │   │   └── snv/
-│   │       ├── main.R        <- entry point
+│   │       ├── gene_get_main.R        <- entry point
 │   │       ├── clinar_step1_NMD.R
 │   │       ├── ClinVar_NMD.R
 │   │       ├── ClinVar_step2_NMD.R
@@ -101,7 +101,7 @@ NMDescapediseasegene_paper/
 │   ├── lib/
 │   │   ├── get_statistics.R
 │   │   └── paths.R
-│   └── gene_main_dbh.R        <- entry point
+│   └── gene_compare_main.R        <- entry point
 ├── protein level_v4/
 │   ├── AF2/
 │   │   └── AF2_draw.R
@@ -197,7 +197,7 @@ NMDescapediseasegene_paper/
 │   │   ├── snv/
 │   │   │   └── get_gnomAD_control.R
 │   │   └── gnomAD_downloaddata.R
-│   ├── variant_main_DBH.R        <- entry point
+│   ├── variant_compare_main.R        <- entry point
 │   └── new_create_fasta_functions.R
 └── run_analysis.R        <- entry point
 ```
@@ -233,7 +233,7 @@ install.packages(c(
 ## Quick Start
 
 ```{r step1, eval=FALSE}
-source("main.R")
+source("run_analysis.R")
 ```
 
 This script generate all core variant objects used throughout the NMDesc pipeline.
@@ -290,22 +290,6 @@ ClinVar
   └─ Get_NMD_enrichment (modify output txt name)
          plus1_can_gene0217.txt
 
-
-R helper scripts / metadata
-───────────────────────────
-
-Gene-level
-  ├─ BM.info4(cds, exon_chrom, transcript_id, rank)
-  └─ Snv_tx (canonical transcript names)
-
-Variant-level
-  ├─ Get_snv_variant_new.R
-  │      (remove repeated steps for creating res file)
-  └─ Snv_variants(snv_variants0406.csv,
-                  includes uniprot id, transcript, key)
-
-Key mapping
-  └─ Snv_key_to_transcript   (key is not unique)
 
 
 FASTA / VCF branches
@@ -364,9 +348,6 @@ From Snv_variants:
 | `variant_results/` | variant level features |
 | `fasta/` | FASTA files for protein-based analyses |
 | `vcf/` | VCF files for VEP input |
-| `idr/` | Intrinsic disorder predictions & plots |
-| `af2/` | AlphaFold2 structural features |
-| `vep/` | VEP annotations and processed tables |
 
 ---
 
@@ -378,11 +359,11 @@ and all of them expect `paths.R` to resolve the inputs.
 
 ```r
 # 1. Gene level
-source("gene level_v4/disease genes/snv/main.R")   # ClinVar SNV enrichment
-source("gene level_v4/gene_main_dbh.R")            # gene-level feature assembly
+source("gene level_v4/disease genes/snv/gene_get_main.R")   # ClinVar SNV enrichment
+source("gene level_v4/gene_compare_main.R")            # gene-level feature assembly
 
 # 2. Variant level
-source("variant level_v4/variant_main_DBH.R")      # variant feature matrix + models
+source("variant level_v4/variant_compare_main.R")      # variant feature matrix + models
 
 # 3. Protein level
 source("protein level_v4/fasta/new_create_fasta.R")  # FASTA for IDR / AF2 input

@@ -27,8 +27,8 @@ library(ggpubr)
 # 4.0.1  Paths and constants
 # ------------------------------------------------------------------------------
 
-.p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
-        "../../gene level_v3/lib/paths.R")
+.p <- c("gene level_v4/lib/paths.R", "../gene level_v4/lib/paths.R",
+        "../../gene level_v4/lib/paths.R")
 .p <- .p[file.exists(.p)]
 source(.p[1]); rm(.p)
 
@@ -620,51 +620,83 @@ plot_or_forest <- function(results, facet_var = "model", shape_var = NULL,
   p
 }
 
-
 # ==============================================================================
-# 4.1  UNMATCHED ANALYSIS
+# 4.1  UNADJUSTED FLAG MODELS (sanity check, no random effect)
 # ------------------------------------------------------------------------------
-# Comparisons of disease vs. control variants: PTC-distance sanity
-# checks, PPI-overlap by interactome source, and the full flag panel
-# (unadjusted vs. covariate-adjusted).
+# Same panel as 4.2 (gene set x flag), but plain logistic regression.
+# Comparing 4.1 vs 4.2 shows how much the transcript random effect changes
+# each feature's estimate.
 # ==============================================================================
 
-# ------------------------------------------------------------------------------
-# 4.1.1  Simple unadjusted PTC-distance models (sanity check)
-# ------------------------------------------------------------------------------
-
-run_dist_sanity_models <- function(variant_data2) {
-  variant_data2 <- variant_data2 %>%
-    mutate(is_nmdesc = if_else(group %in% c("fs_control", "snv_control"), 0L, 1L))
+fit_one_glm <- function(dat, flag, gs) {
+  df <- dat %>%
+    dplyr::select(is_disease, all_of(flag)) %>%
+    filter(!is.na(.data[[flag]])) %>%
+    mutate(across(all_of(flag), as.integer))
   
-  snv_df <- filter(variant_data2, group %in% c("snv_disease", "snv_control"))
-  fs_df  <- filter(variant_data2, group %in% c("fs_disease",  "fs_control"))
+  base <- tibble(gene_set = gs, flag = flag, n = nrow(df),
+                 OR = NA_real_, OR_low = NA_real_, OR_high = NA_real_,
+                 p_value = NA_real_, method = NA_character_, min_cell = NA_integer_)
   
-  list(
-    snv_dist        = glm(is_nmdesc ~ dist_to_cds_end,           data = snv_df, family = binomial),
-    fs_dist         = glm(is_nmdesc ~ dist_to_cds_end,           data = fs_df,  family = binomial),
-    snv_dist_cdsend = glm(is_nmdesc ~ dist_to_cds_end + cds_end, data = snv_df, family = binomial),
-    fs_dist_cdsend  = glm(is_nmdesc ~ dist_to_cds_end + cds_end, data = fs_df,  family = binomial)
-  )
+  if (nrow(df) == 0 || n_distinct(df[[flag]]) < 2) {
+    base$method <- "skipped"; return(base)
+  }
+  
+  tab <- table(df[[flag]], df$is_disease)
+  base$min_cell <- as.integer(min(tab))
+  
+  # Firth fallback when a cell is empty (separation)
+  if (base$min_cell == 0) {
+    fit <- tryCatch(logistf::logistf(as.formula(paste("is_disease ~", flag)), data = df),
+                    error = function(e) NULL)
+    if (is.null(fit)) { base$method <- "failed"; return(base) }
+    ci <- confint(fit)
+    base$OR      <- unname(exp(coef(fit)[flag]))
+    base$OR_low  <- unname(exp(ci[flag, 1]))
+    base$OR_high <- unname(exp(ci[flag, 2]))
+    base$p_value <- unname(fit$prob[flag])
+    base$method  <- "Firth"
+    return(base)
+  }
+  
+  fit <- tryCatch(glm(as.formula(paste("is_disease ~", flag)), data = df, family = binomial),
+                  error = function(e) NULL)
+  if (is.null(fit)) { base$method <- "failed"; return(base) }
+  
+  tid <- broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) %>% filter(term == flag)
+  base$OR      <- tid$estimate[1]
+  base$OR_low  <- tid$conf.low[1]
+  base$OR_high <- tid$conf.high[1]
+  base$p_value <- tid$p.value[1]
+  base$method  <- "GLM"
+  base
 }
 
-# Tidies the sanity models into one table and BH-adjusts
-# across all non-intercept coefficients from all four models.
-tidy_dist_models <- function(models, labels = FLAG_LABELS) {
-  purrr::imap_dfr(models, function(fit, nm) {
-    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) %>%
-      filter(term != "(Intercept)") %>%
-      mutate(model = nm)
-  }) %>%
-    mutate(
-      p_adj = p.adjust(p.value, method = FDR_METHOD),
-      sig   = case_when(
-        p_adj < 0.001 ~ "***",
-        p_adj < 0.01  ~ "**",
-        p_adj < 0.05  ~ "*",
-        TRUE          ~ "ns"
-      )
-    )
+run_unadjusted_flag_analysis <- function(variants_all5,
+                                         flag_cols = FLAG_COLS,
+                                         gene_sets = c("SNV", "FS")) {
+  map_dfr(gene_sets, function(gs) {
+    dat <- filter(variants_all5, gene_set == gs)
+    map_dfr(intersect(flag_cols, names(dat)), ~ fit_one_glm(dat, .x, gs))
+  })
+}
+
+# BH within each gene set, same family definition as 4.2
+tidy_unadjusted_results <- function(res, labels = FLAG_LABELS) {
+  res %>%
+    filter(!is.na(p_value)) %>%
+    mutate(model = "Unadjusted") %>%
+    add_fdr_sig(group_vars = c("gene_set", "model")) %>%
+    mutate(flag = ifelse(flag %in% names(labels), labels[flag], flag))
+}
+
+plot_unadjusted_flags <- function(res) {
+  plot_or_forest(
+    tidy_unadjusted_results(res),
+    facet_var = "gene_set", shape_var = NULL,
+    title    = "Unadjusted logistic model: disease association per feature",
+    subtitle = "Plain GLM, no random effect (OR, 95% CI, BH-adjusted p within gene set)"
+  )
 }
 
 # 4.2  MIXED-EFFECT MODEL  
@@ -855,12 +887,17 @@ variants_all5 <- prepare_final_variant_table(variants_all4)
 #remove cds_mutation_loc.x and cds_mutation_loc.y columns
 variants_all5 <- variants_all5 %>% dplyr::select(-cds_mutation_loc.x, -cds_mutation_loc.y)
 write.csv(variants_all5, "variants_all0805.csv", row.names = FALSE)
+variants_all5 = read.csv("variants_all0901.csv")
+variants_all5 = variants_all5 %>% 
+  mutate(transcript = transcript.x) %>%
+  dplyr::select(-transcript.x, -transcript.y)
 
 # --- 4.1: unmatched analysis ---------------------------------------------------
-dist_models  <- run_dist_sanity_models(variants_all5)
-dist_results <- tidy_dist_models(dist_models)          # BH-adjusted table
-print(dist_results)
-write.csv(dist_results, file.path(OUT_DIR, "dist_sanity_models_fdr.csv"), row.names = FALSE)
+unadj_results <- run_unadjusted_flag_analysis(variants_all5)
+unadj_tidy    <- tidy_unadjusted_results(unadj_results)
+print(as.data.frame(unadj_tidy), row.names = FALSE)
+write.csv(unadj_tidy, file.path(OUT_DIR, "unadjusted_flags_fdr.csv"), row.names = FALSE)
+plot_unadjusted_flags(unadj_results)
 
 # --- 4.2: mixed-effect model ---------------------------------------------------
 mixed_results <- run_mixed_effect_flag_analysis(variants_all5)
