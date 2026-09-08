@@ -1,15 +1,15 @@
 # --- Path resolution layer (auto-inserted) ---------------------------------
 # Locate data files with data_file("filename"); write outputs with out_file("filename")
-# Data location configured via DATA_ROOTS in gene level_v3/lib/paths.R
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../gene level_v3/lib/paths.R", "lib/paths.R")
+# Data location configured via DATA_ROOTS in gene level_v4/lib/paths.R
+.p <- c("gene level_v4/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+        "../../../gene level_v4/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("Could not find paths.R -- run R from the repository root")
 source(.p[1])
 # ------------------------------------------------------------
 
 ###############################################################################
-# Frameshift NMDesc enrichment pipeline  (v3)
+# Frameshift NMDesc enrichment pipeline  (v4)
 #
 # Final version symmetric with snv pipeline (get_pvalue v5):
 #   * Test universe pre-restricted to canonical transcripts of OMIM autosomal dominant genes
@@ -442,8 +442,8 @@ cat(sprintf('  pooled + BH                 : %d\n', sum(comb$fdr_pooled      < A
 cat(sprintf('  pooled binomial + BH        : %d\n', sum(comb$fdr_pooled_binom< ALPHA_MAIN, na.rm = TRUE)))
 cat('==============================================================================\n\n')
 
-saveRDS(comb,   "fs_combined_results20260201_AD_v3.rds")
-write.csv(comb, "fs_combined_results20260201_AD_v3.csv", row.names = FALSE)
+saveRDS(comb,   "fs_combined_results20260201_AD_v4.rds")
+write.csv(comb, "fs_combined_results20260201_AD_v4.csv", row.names = FALSE)
 
 
 ###############################################################################
@@ -495,7 +495,7 @@ for (m in names(gene_sets)) {
   cat(sprintf('%-11s : %4d genes -> %s\n', m, length(gene_sets[[m]]), fn))
 }
 
-saveRDS(c(tier_genes, gene_sets), "AD_gene_sets_v3.rds")
+saveRDS(c(tier_genes, gene_sets), "AD_gene_sets_v4.rds")
 
 
 ###############################################################################
