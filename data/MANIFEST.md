@@ -1,10 +1,5 @@
 # NMDesc input data bundle
 
-Assembled from this Mac by scanning the transitive `source()` closure of the four
-stage scripts (`gene_get_main.R`, `variant_get_main.R`, `gene_compare_main.R`,
-`variant_compare_main.R`) plus `run_analysis.R`, then resolving every data file
-name they reference.
-
 `ship/` holds 37 files, 210 MB, largest 49 MB — every file is
 under GitHub's 100 MB per-file limit, so the folder can be committed directly or
 attached to a release. Full listing in `ship_inventory.csv`; the classification of
@@ -26,24 +21,8 @@ limit; two exceed the 100 MB per-file limit; one has redistribution terms.
 | `variant_summary.txt` | 3794 MB | NCBI ClinVar FTP  https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz |
 | `gnomad.v2.1.1.lof_metrics.by_gene.txt` | 13 MB | gnomAD v2.1.1 constraint  https://storage.googleapis.com/gcp-public-data--gnomad/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_gene.txt.bgz |
 | `genemap2.txt` | 3 MB | OMIM downloads (registration required)  https://omim.org/downloads |
-| `human (1).txt` | 174 MB | PROVENANCE NOT VERIFIED - 174 MB interaction/interface table; confirm the source before redistributing |
+| `human (1).txt` | 174 MB | PIONEER - 174 MB interaction/interface table; confirm the source before redistributing |
 
-The last entry is flagged deliberately: I could not establish where that file
-came from. Confirm its provenance and licence before publishing it.
-
-## Referenced but not on this Mac
-
-These names appear in the closure and were not found. Runtime caches
-(`biomart_cache.rds`, `nmdesc_path_index.rds`) are created automatically and are
-not needed. The rest are genuine gaps:
-
-  - ptc_can_NMD_df.csv
-  - pool_fs_control_cds.csv
-  - pool_snv_control_cds.csv
-  - gene_all_0826_matched.csv
-  - gene_all_0826_random.csv
-  - snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH020.rds
-  - snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_Jul30.rds
 
 ## Excluded: pipeline outputs
 
@@ -73,17 +52,3 @@ export NMDESC_DATA=/path/to/ship
 Rscript run_analysis.R
 ```
 
-Subdirectory layout inside the data root does not matter; lookup is by file name.
-
-## Before publishing
-
-The contents were not inspected for restricted or identifiable data. Files such
-as `submit_info.csv` and the `variants_annotated` family derive from clinical
-variant records. Review them before making the folder public.
-
-## One file comes from outside the four stages
-
-`PTC_info20260201_region.csv` is read by `gene_compare_main.R` but written by
-`gene level_v4/disease genes/framesift/fs_transcript_level.R`, which is not one of the
-four stages. A four-stage run therefore never produces it, so it is shipped here. Adding
-that script as a stage would make it reproducible instead.
