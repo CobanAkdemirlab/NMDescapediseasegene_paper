@@ -27,9 +27,11 @@ library(ggpubr)
 # 4.0.1  Paths and constants
 # ------------------------------------------------------------------------------
 
-.p <- c("gene level_v4/lib/paths.R", "../gene level_v4/lib/paths.R",
+.p <- c("../gene level_v4/lib/paths.R",
+        "gene level_v4/lib/paths.R",
         "../../gene level_v4/lib/paths.R")
 .p <- .p[file.exists(.p)]
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 
 CLINVAR_DIR <- data_root("clinvar")
@@ -122,7 +124,19 @@ all_variants = bind_rows(fs_variants, snv_variants, gnomad_fs_variants, gnomad_s
 variants_all1$ensembl_transcript_id = all_variants$transcript[match(variants_all1$Variant_Key, all_variants$key)]
 
 #4.0.2 merges variant-level info with gene-level info
-#run combine_gene.R get snv_nmdesc_df
+#combine_gene.R builds snv_nmdesc_df and fs_nmdesc_df from the same gene lists
+#this script uses. Sourced here when absent, so the script runs on its own.
+if (!exists("snv_nmdesc_df") || !exists("fs_nmdesc_df")) {
+  .cg <- file.path(SCRIPT_DIR, "..", "gene level_v4", "QC", "combine_gene.R")
+  if (!file.exists(.cg))
+    stop("combine_gene.R not found -- it supplies snv_nmdesc_df and fs_nmdesc_df",
+         call. = FALSE)
+  .wd <- getwd(); setwd(dirname(normalizePath(.cg)))
+  source(basename(.cg))
+  setwd(.wd); rm(.cg, .wd)
+  cat(sprintf("gene-level info: snv %d, fs %d transcripts\n",
+              nrow(snv_nmdesc_df), nrow(fs_nmdesc_df)))
+}
 snv_all <- snv_variants %>%
   left_join(
     snv_dis %>% #snv_dis is the output of create_fasta

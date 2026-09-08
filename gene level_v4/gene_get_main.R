@@ -1,19 +1,25 @@
 
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../gene level_v3/lib/paths.R", "lib/paths.R")
+.p <- c("lib/paths.R",
+        "gene level_v4/lib/paths.R",
+        "../lib/paths.R",
+        "../../lib/paths.R",
+        "../../../gene level_v4/lib/paths.R")
 .p <- .p[file.exists(.p)]
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1])
+# Paths go through paths.R: data_file() locates inputs under the data roots,
+# out_file() sends results to NMDESC_OUT. 
 # ------------------------------------------------------------
 
 # --- load functions-----------------------------------------------
-.fn_dir <- c("gene level_v3/features/functions", "../../features/functions",
+.fn_dir <- c("gene level_v4/features/functions", "../../features/functions",
              "../features/functions", "features/functions")
 .fn_dir <- .fn_dir[dir.exists(.fn_dir)]
 for (.f in list.files(.fn_dir[1], pattern = "\\.R$", full.names = TRUE)) source(.f)
 rm(.f, .fn_dir)
 
 for (.dep in c("get_pvalue.R", "extract_enriched.R", "process_syn.R")) {
-  .cand <- c(file.path("gene level_v3/disease genes/snv", .dep), .dep,
+  .cand <- c(file.path("gene level_v4/disease genes/snv", .dep), .dep,
              file.path("../snv", .dep))
   .cand <- .cand[file.exists(.cand)]
   if (length(.cand)) source(.cand[1]) else message("  can't find ", .dep)
@@ -82,7 +88,7 @@ ind_out =  Biostrings::vcountPattern("N", vcf_rng_fil$alt) > 0
 vcf_rng_fil = vcf_rng_fil[!ind_out]
 #- back to the original workflow
 res = annotate_nmd(vcf_rng_fil, rettype="gr")
-res = readRDS("clinvar_20260201_nmd.rds")
+res = readRDS(data_file("clinvar_20260201_nmd.rds"))
 
 #2. get nmdesc enriched genes
 snv_ind = which(res@elementMetadata@listData[["type"]] == 'snv')
@@ -143,7 +149,7 @@ length(unique(snv_plp_ptc_nmdesc_can@ranges@NAMES))
 length(unique(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]]))
 
 #Quality Control, match by key
-variant_summary <- read_delim("variant_summary.txt", 
+variant_summary <- read_delim(data_file("variant_summary.txt"), 
                               delim = "\t", escape_double = FALSE, 
                               trim_ws = TRUE)
 #ReviewStatus does not contain either of "no assertion" or "no interpretation"
@@ -228,8 +234,8 @@ variant_summary$key = paste0(
 #remove v_cs,v_gr, v_re to save memory
 rm(v_cs, v_gr, v_re)
 #output v_ch
-write.csv(v_ch,'v_ch20260201.csv',row.names = F)
-v_ch = read.csv('v_ch20260201.csv')
+write.csv(v_ch,file = file.path(data_root("clinvar"), "v_ch20260201.csv"),row.names = F)
+v_ch = read.csv(data_file("v_ch20260201.csv"))
 #return this information to res, build res3
 #the problem is, not all tr in res appeared in this variant_summary
 res2 = res[which(res@elementMetadata@listData[["key"]] %in% v_ch$key)]
@@ -245,30 +251,30 @@ table(snv_plp_ptc_nmdesc_can$NumberSubmitters,useNA = "ifany")
 
 tx_n$canonical_by_vs = v_ch$tx_canonical[match(tx_n$gene, v_ch$key)]
 
-saveRDS(snv_plp_ptc_nmdesc_can,'snv_plp_ptc_nmdesc_can20260201.rds')
-saveRDS(snv_benign_ptc_nmdesc_can,'snv_benign_ptc_nmdesc_can20260201.rds')
+saveRDS(snv_plp_ptc_nmdesc_can,file = file.path(data_root("clinvar"), "snv_plp_ptc_nmdesc_can20260201.rds"))
+saveRDS(snv_benign_ptc_nmdesc_can,file = out_file("snv_benign_ptc_nmdesc_can20260201.rds"))
 #filter for the variants in v_ch2
 snv_plp_ptc_nmdesc_can_filtered = snv_plp_ptc_nmdesc_can[which(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 snv_plp_ptc_can_filtered = snv_plp_ptc_can[which(snv_plp_ptc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
-saveRDS(snv_plp_ptc_can_filtered,'snv_plp_ptc_can_filtered20260201.rds')
+saveRDS(snv_plp_ptc_can_filtered,file = out_file("snv_plp_ptc_can_filtered20260201.rds"))
 fs_plp_ptc_nmdesc_can_filtered = fs_plp_ptc_nmdesc_can[which(fs_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 snv_benign_ptc_nmdesc_can_filtered = snv_benign_ptc_nmdesc_can[which(snv_benign_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
-saveRDS(snv_plp_ptc_nmdesc_can_filtered,'snv_plp_ptc_nmdesc_can_filtered20260201_check.rds')
-temp1 = readRDS('snv_plp_ptc_nmdesc_can_filtered20260201.rds')
-temp2 = readRDS('snv_plp_ptc_nmdesc_can20260201.rds')
-saveRDS(snv_benign_ptc_nmdesc_can_filtered,'snv_benign_ptc_nmdesc_can_filtered20260201.rds')
+saveRDS(snv_plp_ptc_nmdesc_can_filtered,file = out_file("snv_plp_ptc_nmdesc_can_filtered20260201_check.rds"))
+temp1 = readRDS(data_file("snv_plp_ptc_nmdesc_can_filtered20260201.rds"))
+temp2 = readRDS(data_file("snv_plp_ptc_nmdesc_can20260201.rds"))
+saveRDS(snv_benign_ptc_nmdesc_can_filtered,file = out_file("snv_benign_ptc_nmdesc_can_filtered20260201.rds"))
 get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
                           'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
                            'snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds',
                             restrict_symbols = omim_AD_symbols)
                   
-txnames.list <- readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds')
+txnames.list <- readRDS(data_file("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds"))
 rest.all <- sapply(txnames.list, function(x) if(is.null(x$rest.PTC)) NA else x$rest.PTC)
 summary(rest.all)
 quantile(rest.all, c(0.1, 0.25, 0.5, 0.75), na.rm = TRUE)
 res3 <- extract_enriched(txnames.list, fdr.method = "dbh")
 res3$genes                  
-write.csv(res3$enriched, "enriched_genes_dbh.csv", row.names = FALSE)
+write.csv(res3$enriched, file = out_file("enriched_genes_dbh.csv"), row.names = FALSE)
 
 # compare source for ppi
 g.dbh <- extract_enriched(txnames.list, "dbh")$genes
@@ -277,36 +283,36 @@ g.bh  <- extract_enriched(txnames.list, "bh")$genes
 length(g.dbh); length(g.dby); length(g.bh)
 length(intersect(g.dbh, g.bh))
 
-re1 = readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30.rds')
+re1 = readRDS(data_file("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30.rds"))
 get_pvalue_wald('snv_plp_ptc_nmdesc_can_filtered20260201_check.rds','snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_Jul30.rds')
-res_wald_p = readRDS('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds')
-res_p1 = readRDS('snv_plp_ptc_nmdesc_can_filtered20260201.rds')
-res_p_syn = readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201.rds')
+res_wald_p = readRDS(data_file("snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds"))
+res_p1 = readRDS(data_file("snv_plp_ptc_nmdesc_can_filtered20260201.rds"))
+res_p_syn = readRDS(data_file("snv_plp_ptc_nmdesc_can_p_f_syn_20260201.rds"))
 p_set = NULL
 for(i in 1:790){
   p_set = rbind(p_set,(res_p_syn[[i]][["can.pvalue"]]))
 }
-write.csv(p_set,'p_less.csv',row.names = F)
+write.csv(p_set,file = out_file("p_less.csv"),row.names = F)
 
 #get enriched genes
 # get_NMD_enrichment_wald('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds',FDR = 0.05,filter_type = 'can')
 
-.e <- c("gene level_v3/disease genes/snv/get_NMD_enrichment_DBH.R",
+.e <- c("gene level_v4/disease genes/snv/get_NMD_enrichment_DBH.R",
         "get_NMD_enrichment_DBH.R", "../snv/get_NMD_enrichment_DBH.R")
 .e <- .e[file.exists(.e)]
 source(.e[1]); rm(.e)
 get_NMD_enrichment_DBH()
-snv_can_gene = read.csv("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can.txt",header=F)
+snv_can_gene = read.csv(data_file("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can.txt"),header=F)
 
 #filter for AD genes
-omim_AD_symbols = read.csv('omim_AD_symbols.csv',header=F)$V1
-dbh_genes = read.csv('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30_NMDesc_dbh_enriched_can.txt',header=F)$V1
-wald_genes = read.csv('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_wald_enriched_can.txt',header=F)$V1
-binom_genes = read.csv('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_binom_enriched_can.txt',header=F)$V1
+omim_AD_symbols = read.csv(data_file("omim_AD_symbols.csv"),header=F)$V1
+dbh_genes = read.csv(data_file("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_Jul30_NMDesc_dbh_enriched_can.txt"),header=F)$V1
+wald_genes = read.csv(data_file("snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_wald_enriched_can.txt"),header=F)$V1
+binom_genes = read.csv(data_file("snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201_NMDesc_binom_enriched_can.txt"),header=F)$V1
 wald_AD_genes = wald_genes[wald_genes %in% omim_AD_symbols[-1]]
 dbh_AD_genes = dbh_genes[dbh_genes %in% omim_AD_symbols[-1]]
-write.csv(wald_AD_genes,'snv_wald_AD.csv',row.names = F)
-write.csv(dbh_AD_genes,'snv_dbh_AD.csv',row.names = F)
+write.csv(wald_AD_genes,file = out_file("snv_wald_AD.csv"),row.names = F)
+write.csv(dbh_AD_genes,file = out_file("snv_dbh_AD.csv"),row.names = F)
 binom_AD_genes = binom_genes[binom_genes %in% omim_AD_symbols$x]
 snv_gene = gene_all$hgnc_symbol[gene_all$group == 'snv']
 fs_gene = gene_all$hgnc_symbol[gene_all$group == 'fs']
@@ -318,12 +324,12 @@ length(intersect(wald_AD_genes, snv_gene))
 length(intersect(binom_AD_genes, snv_gene))
 
 snv_AD_can_gene = snv_can_gene %>% filter(V1 %in% omim_AD_symbols)
-write.csv(snv_AD_can_gene,'snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv',row.names = F)
+write.csv(snv_AD_can_gene,file = out_file("snv_plp_ptc_nmdesc_can_p_f_syn_20260201_NMDesc_enriched_can_AD_p_0.8.csv"),row.names = F)
 
 #get the total number of submitters for each gene
 gene_all$NumberSubmitters = v_ch$NumberSubmitters[match(gene_all$k, v_ch$key)]
 submit_info = v_ch[,c('NumberSubmitters','key','tx_id2','tx_canonical')]
-write.csv(submit_info,'submit_info.csv',row.names = F)
+write.csv(submit_info,file = out_file("submit_info.csv"),row.names = F)
 gene_all %>% group_by(group) %>% summarise(mean_submitters = mean(NumberSubmitters, na.rm = TRUE), median_submitters = median(NumberSubmitters, na.rm = TRUE), low_submitters = sum(NumberSubmitters <= 1, na.rm = TRUE))
 #remove the low submitters, which may be more likely to be false positives
 gene_all %>% filter(NumberSubmitters > 1) %>% group_by(group) %>% summarise(mean_submitters = mean(NumberSubmitters, na.rm = TRUE), median_submitters = median(NumberSubmitters, na.rm = TRUE), low_submitters = sum(NumberSubmitters <= 1, na.rm = TRUE))
@@ -339,7 +345,7 @@ get_gnomad_control.R
 build_gene_all.R #(adapted from combine_gene.R)
 -------------------------
 #3. gene_level comparision
-gene_all = read.csv('gene_all.csv')
+gene_all = read.csv(data_file("gene_all.csv"))
 
 calculate_ppi_degree_centrality(
   gene_all,
@@ -396,15 +402,15 @@ plot_gene_level_features(
 )
 
 #do a prelim regression to see the relationship
-wald_ppi_degree_centrality <- read_csv("wald_ppi_degree_centrality_results.csv")
-gc_content <- read_csv("gc_content.csv")
-repeat_content <- read_csv("repeat_content.csv")
-gene_motif_flags <- read_csv("gene_motif_flags.csv")
-gene_LCS_flags   <- read_csv("gene_LCS_flags.csv")
-pfam_overlap   <- read_csv("pfam_overlap_gene_all.csv")
-ppi_overlap  <- read_csv("ppi_overlap_gene_all.csv")
-tau_results  <- read_csv("tau_gene_matrix.csv")
-gene_level <- read_csv("gene_level_pli_loeuf_category.csv")
+wald_ppi_degree_centrality <- read_csv(data_file("wald_ppi_degree_centrality_results.csv"))
+gc_content <- read_csv(data_file("gc_content.csv"))
+repeat_content <- read_csv(data_file("repeat_content.csv"))
+gene_motif_flags <- read_csv(data_file("gene_motif_flags.csv"))
+gene_LCS_flags   <- read_csv(data_file("gene_LCS_flags.csv"))
+pfam_overlap   <- read_csv(data_file("pfam_overlap_gene_all.csv"))
+ppi_overlap  <- read_csv(data_file("ppi_overlap_gene_all.csv"))
+tau_results  <- read_csv(data_file("tau_gene_matrix.csv"))
+gene_level <- read_csv(data_file("gene_level_pli_loeuf_category.csv"))
 
 #merge them to one dataframe
 gene_all_merged <- gene_all %>%
@@ -434,8 +440,8 @@ gene_all_merged <- gene_all %>%
 model_data <- gene_all_merged %>%
   mutate(is_nmdesc = if_else(group %in%  c("fs_control","snv_control"), 0L, 1L)) 
 
-write.csv(model_data,'gene_model_data.csv',row.names = F)
-model_data <- read_csv('gene_model_data.csv')
+write.csv(model_data,file = file.path(data_root("clinvar"), "gene_model_data.csv"),row.names = F)
+model_data <- read_csv(data_file("gene_model_data.csv"))
 #ppi degree centrality
 model1_snv <- glm(is_nmdesc ~ Degree, data = model_data[which(model_data$group %in% c('snv','snv_control')),], family = binomial)
 model2_snv <- glm(is_nmdesc ~ cds_length + NMDesc_region_length + Degree, data = model_data[which(model_data$group %in% c('snv','snv_control')),], family = binomial)

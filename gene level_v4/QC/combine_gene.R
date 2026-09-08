@@ -4,21 +4,28 @@
 #   data_file("x.csv")  locate by filename, errors clearly if missing
 #   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
 #   data_root("clinvar") use when a directory is needed instead of a file
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../lib/paths.R", "../../../../lib/paths.R")
+.p <- c("../lib/paths.R",
+        "gene level_v4/lib/paths.R",
+        "../../lib/paths.R",
+        "../../../lib/paths.R",
+        "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
 #This Rscript is to combine gene list from disease and control, then add necessary variables including NMDesc_region_length
-snv_gene           = read_csv("snv_can_ADrestricted_bh_FDR0.20_all.txt")
-fs_gene            = read_csv("fs_can_AD_acat_FDR0.20_all.txt")
-snv_control_gene_AD = read_csv("snv_control_genes_AD.csv")
-fs_control_gene_AD  = read_csv("fs_control_genes_AD.csv")
-PTC_info = read.csv('PTC_info20260201_region.csv')
+snv_gene           = read_csv(data_file("snv_can_ADrestricted_bh_FDR0.20_all.txt"))
+fs_gene            = read_csv(data_file("fs_can_AD_acat_FDR0.20_all.txt"))
+snv_control_gene_AD = read_csv(data_file("snv_control_genes_AD.csv"))
+fs_control_gene_AD  = read_csv(data_file("fs_control_genes_AD.csv"))
+PTC_info = read.csv(data_file("PTC_info20260201_region.csv"))
 
-ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+#useEnsembl is the current entry point; useMart is kept as a fallback
+ensembl = tryCatch(useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl"),
+                   error = function(e)
+                     useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",
+                             host = "https://www.ensembl.org"))
 
 fs_control_gene = getBM(
   attributes = c("hgnc_symbol",'ensembl_transcript_id'),
@@ -301,4 +308,4 @@ gene_all <- gene_all %>%
   rename(uniprot = uniprotswissprot)
 
 
-write.csv(gene_all, "gene_all0407.csv", row.names = FALSE)
+write.csv(gene_all, out_file("gene_all0407.csv"), row.names = FALSE)

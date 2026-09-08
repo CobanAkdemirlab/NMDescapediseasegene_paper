@@ -14,21 +14,6 @@ REPO <- if (exists("REPO")) path.expand(REPO) else .find_repo()
 # Absolute, because run_one() moves the working directory.
 REPO <- normalizePath(REPO, mustWork = TRUE)
 
-# The analysis scripts look for paths.R and helpers under "* level_v3" names and
-# under a top-level "lib". These links point both at the v4 directories, so
-# data_file() is available instead of each script's bare-relative-path fallback.
-.link_compat <- function(repo) {
-  pairs <- lapply(c("gene", "variant", "protein"),
-                  function(v) c(paste0(v, " level_v4"), paste0(v, " level_v3")))
-  pairs <- c(pairs, list(c("gene level_v4/lib", "lib")))
-  for (p in pairs) {
-    src <- file.path(repo, p[1]); dst <- file.path(repo, p[2])
-    if (dir.exists(src) && !file.exists(dst))
-      tryCatch(file.symlink(src, dst),
-               warning = function(w) cat("  no link for", p[2], "\n"))
-  }
-}
-.link_compat(REPO)
 
 # paths.R supplies data_file(), data_root() and out_dir() to every script.
 source(file.path(REPO, "gene level_v4/lib/paths.R"))
@@ -79,8 +64,7 @@ cat("\n output loc:", sub(path.expand("~"), "~", OUTDIR), "\n")
 # helpers through paths relative to its own directory, so the working directory
 # moves there for the duration of the call.
 # Stages are given by file name, located inside the repository, so a script that
-# moves between directories still runs. Several names may be supplied; the first
-# one present wins, which covers a rename that has not reached every copy yet.
+# moves between directories still runs.
 .locate <- function(names) {
   for (n in names) {
     if (grepl("/", n) && file.exists(file.path(REPO, n))) return(file.path(REPO, n))
@@ -117,14 +101,16 @@ run_one <- function(script, label, args = NULL) {
 # Acquisition first, then comparison. The second name on each line is the
 # pre-rename file, used when a checkout still carries it.
 STAGES <- list(
-  list(c("gene_get_main.R", "main.R"),
-       "1/4  Disease gene lists: NMDesc enrichment, AD-restricted candidates"),
-  list(c("variant_get_main.R"),
-       "2/4  Variant sets: ClinVar P/LP and gnomAD controls on the same transcripts"),
-  list(c("gene_compare_main.R", "gene_main_dbh.R"),
-       "3/4  Gene level: matched by CDS length, feature comparison within pairs"),
-  list(c("variant_compare_main.R", "variant_main_DBH.R"),
-       "4/4  Variant level: mixed-effect model, Bayesian sensitivity model"))
+  list("gene_get_main.R",
+       "1/5  Disease gene lists: NMDesc enrichment, AD-restricted candidates"),
+  list("fs_transcript_level.R",
+       "2/5  PTC transcript table: NMDesc region per transcript, Ensembl 105"),
+  list("variant_get_main.R",
+       "3/5  Variant sets: ClinVar P/LP and gnomAD controls on the same transcripts"),
+  list("gene_compare_main.R",
+       "4/5  Gene level: matched by CDS length, feature comparison within pairs"),
+  list("variant_compare_main.R",
+       "5/5  Variant level: mixed-effect model, Bayesian sensitivity model"))
 
 for (s in STAGES) run_one(s[[1]], s[[2]])
 
@@ -137,7 +123,7 @@ beside <- beside[basename(beside) == "out" & !grepl("/backup/", beside)]
 beside <- normalizePath(beside, mustWork = FALSE)
 stage_dirs <- unlist(lapply(STAGES, function(s) {
   p <- .locate(s[[1]])
-  # normalized, so a v3 compatibility link and its v4 target count once
+  # normalized, so a directory reached by two spellings is listed once
   if (is.na(p)) NULL else normalizePath(dirname(p), mustWork = FALSE)
 }))
 dirs <- unique(c(OUTDIR, tryCatch(out_dir(), error = function(e) NULL),

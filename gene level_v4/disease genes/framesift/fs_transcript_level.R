@@ -4,6 +4,21 @@ library(biomaRt)
 
 bp=50
 
+.p <- c("../../lib/paths.R",
+        "gene level_v4/lib/paths.R",
+        "../lib/paths.R",
+        "../../../lib/paths.R",
+        "../../../../lib/paths.R")
+.p <- .p[file.exists(.p)]
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
+source(.p[1]); rm(.p)
+
+# res is the aenmd annotation and v_ch the ClinVar table, both produced by
+# gene_get_main.R. When that stage has not run in this session they are read
+# from the files it writes.
+if (!exists("res"))  res  <- readRDS(data_file("clinvar_20260201_nmd.rds"))
+if (!exists("v_ch")) v_ch <- read.csv(data_file("v_ch20260201.csv"))
+
 clnsig_str = sapply(res$CLNSIG, function(x) paste(as.character(x), collapse="|"))
 table(clnsig_str)
 plp_ind = which(grepl("pathogenic", clnsig_str, ignore.case = TRUE))
@@ -209,5 +224,8 @@ for (i in 1:length(transcript_set3)) {
   }
 }
 
-write.csv(PTC_info, file = 'PTC_info20260201_region.csv', row.names = FALSE)
-PTC_info = read.csv('PTC_info20260201_region.csv')
+#written into the data root, where data_file() finds it for the later stages
+write.csv(PTC_info,
+          file = file.path(data_root("clinvar"), "PTC_info20260201_region.csv"),
+          row.names = FALSE)
+PTC_info = read.csv(data_file("PTC_info20260201_region.csv"))

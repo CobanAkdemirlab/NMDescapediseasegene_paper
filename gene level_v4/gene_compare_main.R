@@ -27,9 +27,12 @@ select <- dplyr::select; filter <- dplyr::filter; rename <- dplyr::rename
 mutate <- dplyr::mutate; summarise <- dplyr::summarise
 setdiff <- dplyr::setdiff; union <- dplyr::union; intersect <- dplyr::intersect
 
-.p <- c("gene level_v3/lib/paths.R", "lib/paths.R", "../lib/paths.R",
-        "../../gene level_v3/lib/paths.R")
+.p <- c("lib/paths.R",
+        "gene level_v4/lib/paths.R",
+        "../lib/paths.R",
+        "../../gene level_v4/lib/paths.R")
 .p <- .p[file.exists(.p)]
+if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 

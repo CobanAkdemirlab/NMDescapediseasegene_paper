@@ -77,8 +77,12 @@ CFG <- list(
 
 # Optional repo path helper. Falls back to plain relative paths if absent,
 # so the script still runs standalone.
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../lib/paths.R", "../../../../lib/paths.R")
+.p <- c("../gene level_v4/lib/paths.R",
+        "gene level_v4/lib/paths.R",
+        "../lib/paths.R",
+        "../../lib/paths.R",
+        "../../../lib/paths.R",
+        "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (length(.p)) source(.p[1]) else {
   data_file <- function(x, ...) x
@@ -101,7 +105,6 @@ read_gene_list <- function(path) {
 }
 
 # One biomaRt connection, reused; results memoised to disk so reruns are fast
-# and a flaky Ensembl endpoint doesn't cost you the whole run.
 .mart <- NULL
 get_mart <- function() {
   if (is.null(.mart)) {

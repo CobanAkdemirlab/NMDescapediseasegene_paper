@@ -5,7 +5,7 @@
 #   Edit only this file to change data locations.
 #
 # Usage (at top of script):
-#   source("gene level_v3/lib/paths.R")
+#   source("gene level_v4/lib/paths.R")
 #   d <- data_file("genemap2.txt")        # automatically locates it
 #   x <- read.csv(data_file("BM_info.csv"))
 #
@@ -96,6 +96,12 @@ data_file <- function(name, must = TRUE) {
   idx <- .build_index()
   b <- basename(name)
   hit <- idx[[b]]
+  # A miss can mean the index predates the file, so rescan once before failing.
+  # Only misses pay for this; a hit returns from the cached index.
+  if (is.null(hit) || !file.exists(hit)) {
+    idx <- .build_index(force = TRUE)
+    hit <- idx[[b]]
+  }
   if (!is.null(hit) && file.exists(hit)) return(hit)
   if (must) {
     stop(sprintf(paste0(

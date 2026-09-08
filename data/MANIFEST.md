@@ -1,6 +1,6 @@
 # NMDesc input data bundle
 
-`ship/` holds 37 files, 210 MB, largest 49 MB — every file is
+`ship/` holds 38 files, 206 MB, largest 49 MB — every file is
 under GitHub's 100 MB per-file limit, so the folder can be committed directly or
 attached to a release. Full listing in `ship_inventory.csv`; the classification of
 all 99 referenced names is in `classification.csv`.
@@ -10,8 +10,6 @@ until the originals are removed. Two files were copied from the variant-list
 archive supplied for this project rather than found loose on disk:
   - gnomad_snv_filtered_acat_0831.csv
   - gnomad_fs_filtered_bh_0831.csv
-
-## Fetch these separately, do not commit them
 
 Four referenced files are public downloads. One of them (`variant_summary.txt`, 3794 MB) exceeds even the 2 GB release-asset
 limit; two exceed the 100 MB per-file limit; one has redistribution terms.
@@ -23,6 +21,10 @@ limit; two exceed the 100 MB per-file limit; one has redistribution terms.
 | `genemap2.txt` | 3 MB | OMIM downloads (registration required)  https://omim.org/downloads |
 | `human (1).txt` | 174 MB | PIONEER - 174 MB interaction/interface table; confirm the source before redistributing |
 
+
+## Minimum entry point: stage 1
+
+`run_analysis.R` drives five stages, starts at stage 1.
 
 ## Excluded: pipeline outputs
 
