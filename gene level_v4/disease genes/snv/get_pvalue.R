@@ -58,7 +58,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
   res_p2 = readRDS(rds_name2)
   txnames <- unique(res_p2@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]]) #only circle the variants with NMDesc PTC
   
-  # ---- restrict txnames to canonical transcripts of restrict_symbols ----
+  #keep only omim AD genes
   if (!is.null(restrict_symbols)) {
     restrict_symbols <- unique(trimws(as.character(restrict_symbols)))
     restrict_symbols <- restrict_symbols[!is.na(restrict_symbols) &
@@ -71,7 +71,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
     ]
     
     n.before <- length(txnames)
-    txnames  <- txnames[txnames %in% keep.tx]
+    #txnames  <- txnames[txnames %in% keep.tx]
     message(sprintf("Restriction: %d NMDesc transcripts -> %d canonical transcripts of %d supplied symbols",
                     n.before, length(txnames), length(restrict_symbols)))
     if (length(txnames) == 0)
@@ -316,14 +316,15 @@ export_tiers <- function(txnames.list, prefix = "snv_can_ADrestricted_bh") {
   }))
   tab <- tab[order(tab$fdr.bh, tab$fisher_p), ]
   tab$rank <- seq_len(nrow(tab))
-  write.csv(tab, paste0(prefix, "_full_annotated.csv"), row.names = FALSE)
+  write.csv(tab, paste0(prefix, "_full_annotated_0909.csv"), row.names = FALSE)
   for (tr in c("significant", "suggestive")) {
     g <- unique(tab$hgnc_symbol[tab$tier == tr])
     writeLines(c("hgnc_symbol", g), sprintf("%s_%s.txt", prefix, tr))
     cat(sprintf("%-11s: %3d genes\n", tr, length(g)))
   }
   g.all <- unique(tab$hgnc_symbol[tab$tier %in% c("significant","suggestive")])
-  writeLines(c("hgnc_symbol", g.all), sprintf("%s_FDR0.20_all.txt", prefix))
+  writeLines(c("hgnc_symbol", g.all), sprintf("%s_FDR0.20_all_0909.txt", prefix))
   cat(sprintf("%-11s: %3d genes\n", "combined", length(g.all)))
   invisible(tab)
 }
+

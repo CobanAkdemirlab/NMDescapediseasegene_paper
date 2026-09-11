@@ -263,8 +263,8 @@ saveRDS(snv_plp_ptc_nmdesc_can_filtered,file = out_file("snv_plp_ptc_nmdesc_can_
 temp1 = readRDS(data_file("snv_plp_ptc_nmdesc_can_filtered20260201.rds"))
 temp2 = readRDS(data_file("snv_plp_ptc_nmdesc_can20260201.rds"))
 saveRDS(snv_benign_ptc_nmdesc_can_filtered,file = out_file("snv_benign_ptc_nmdesc_can_filtered20260201.rds"))
-get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
-                          'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
+get_pvalue(rds_name = 'snv_plp_ptc_can_filtered20260201.rds',
+                          rds_name2 = 'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
                            'snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds',
                             restrict_symbols = omim_AD_symbols)
                   
