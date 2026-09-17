@@ -1,4 +1,5 @@
-##exclude any gene genes with any frameshift NMD_can_esc mutation
+##exclude any genes with any plp snv NMD_can_esc mutation
+snv_res_can = readRDS("snv_plp_ptc_can_filtered20260201.rds")
 snv_gene2remove.ind = which(snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["is_last"]] == T |snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["is_penultimate"]]==T)
 snv_gene2remove = unique(snv_res_can@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]][snv_gene2remove.ind])
 #get hgnc_symbol of gene2remove using getBM
@@ -8,6 +9,8 @@ snv_gene2remove = getBM(
   values = snv_gene2remove,
   mart = mart
 )
+
+res_snv_plp_ptc = readRDS("snv_plp_ptc_filtered20260201.rds")
 #remove genes2remove from snv genes with plp ptc variants in clinvar
 snv_gene_list = unique(res_snv_plp_ptc@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]])
 snv_genes_remain_in_clinvar = snv_gene_list[-which(snv_gene_list %in% snv_gene2remove$ensembl_transcript_id)]
