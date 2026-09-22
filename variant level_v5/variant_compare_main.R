@@ -943,32 +943,16 @@ variants_all4 <- annotate_motifs(variants_all3, ensembl)
 variants_all5 <- prepare_final_variant_table(variants_all4)
 #remove cds_mutation_loc.x and cds_mutation_loc.y columns
 variants_all5 <- variants_all5 %>% dplyr::select(-cds_mutation_loc.x, -cds_mutation_loc.y)
-write.csv(variants_all5, out_file("variants_all0805.csv"), row.names = FALSE)
+write.csv(variants_all5, out_file("variants_all0901.csv"), row.names = FALSE)
 
-# The published variant-level results were produced from variants_all0901.csv,
-# so that table takes precedence over the one assembled above when it is on a
-# data root. It differs in composition, not only in size: 5,225 rows against
-# 5,583, and 77 SNV transcripts against 190, which changes the random-effect
-# grouping and with it several odds ratios. Reproducing the published numbers
-# therefore requires this file. It ships outside the data roots -- either move
-# it into the data root or point NMDESC_DATA at the directory holding it.
-VARIANT_TABLE <- "variants_all0901.csv"
-.vt <- data_file(VARIANT_TABLE, must = FALSE)
-if (!is.na(.vt)) {
-  message("  variant table: ", basename(.vt))
-  variants_all5 <- read.csv(.vt)
-} else {
-  message("  ", VARIANT_TABLE, " not on a data root; using the table assembled above.",
-          "\n  Odds ratios will not match the published ones.")
-}
-rm(.vt)
-
-# transcript.x / transcript.y are carried by variants_all0901.csv; the table
-# assembled above already has a plain `transcript` column.
-if (all(c("transcript.x", "transcript.y") %in% names(variants_all5)))
-  variants_all5 <- variants_all5 %>%
-    mutate(transcript = transcript.x) %>%
-    dplyr::select(-transcript.x, -transcript.y)
+# Step 7 reads no external variant table: the table assembled above is what the
+# models are fitted on, and it is written out under this name. The published
+# results came from a hand-prepared variants_all0901.csv with no script behind
+# it (5,225 rows, 77 SNV transcripts, against 5,583 and 190 here); six flag
+# conclusions differ between the two, three of them in sign -- the comparison is
+# in PIPELINE_CHECK.md. If a copy of that older file sits in the data root, it is
+# neither read nor overwritten; out_file() writes into <data root>/output.
+message("  variant table: assembled in section 4.0, ", nrow(variants_all5), " rows")
 
 # --- 4.1: unmatched analysis ---------------------------------------------------
 unadj_results <- run_unadjusted_flag_analysis(variants_all5)

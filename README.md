@@ -516,7 +516,6 @@ File names are referenced by basename throughout — `data_file()` in `paths.R` 
 | `omim_AD_symbols.csv` | 1,908 rows | 1, 2, 3, 6 | OMIM autosomal dominant gene symbols, the AD restriction used throughout the pipeline |
 | `ptc_can_NMD_df.csv` | 7 MB | 4, 5 | gnomAD PTC table, source of control variants (produced separately by scripts under `QC/` and `gnomad/`, not part of these seven steps) |
 | `human (1).txt` | 166 MB | 6, 7 | Protein interaction interface table, PPI overlap feature |
-| `variants_all0901.csv` | 53 MB | 7 | Master variant feature table, the authoritative input for the published results. On this machine it is at `~/Downloads/`, **not on any data root** — move it into the data root (`data level_v5/`) or point `NMDESC_DATA` at the directory containing it, otherwise step 7 will fall back to the table assembled on-the-fly in section 4.0, giving inconsistent ORs |
 | `gnomad.v2.1.1.lof_metrics.by_gene.txt` | 13 MB | 6 | pLI / LOEUF constraint metrics |
 | `GTEx_Analysis_v10_..._gene_median_tpm.gct` | — | 6 | Tissue expression, tau feature; `must = FALSE`, the column is NA if missing |
 | `NIHMS1818854-supplement-2(A).csv` | — | 6, 7 | transcript → UniProt mapping |
