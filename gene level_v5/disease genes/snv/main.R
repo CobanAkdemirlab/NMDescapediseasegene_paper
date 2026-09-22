@@ -1,19 +1,19 @@
 
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../gene level_v3/lib/paths.R", "lib/paths.R")
+.p <- c("gene level_v5/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+        "../../../gene level_v5/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
 source(.p[1])
 # ------------------------------------------------------------
 
 # --- load functions-----------------------------------------------
-.fn_dir <- c("gene level_v3/features/functions", "../../features/functions",
+.fn_dir <- c("gene level_v5/features/functions", "../../features/functions",
              "../features/functions", "features/functions")
 .fn_dir <- .fn_dir[dir.exists(.fn_dir)]
 for (.f in list.files(.fn_dir[1], pattern = "\\.R$", full.names = TRUE)) source(.f)
 rm(.f, .fn_dir)
 
 for (.dep in c("get_pvalue.R", "extract_enriched.R", "process_syn.R")) {
-  .cand <- c(file.path("gene level_v3/disease genes/snv", .dep), .dep,
+  .cand <- c(file.path("gene level_v5/disease genes/snv", .dep), .dep,
              file.path("../snv", .dep))
   .cand <- .cand[file.exists(.cand)]
   if (length(.cand)) source(.cand[1]) else message("  can't find ", .dep)
@@ -276,7 +276,7 @@ for(i in 1:790){
 write.csv(p_set,'p_less.csv',row.names = F)
 
 #get enriched genes
-.e <- c("gene level_v3/disease genes/snv/get_NMD_enrichment_DBH.R",
+.e <- c("gene level_v5/disease genes/snv/get_NMD_enrichment_DBH.R",
         "get_NMD_enrichment_DBH.R", "../snv/get_NMD_enrichment_DBH.R")
 .e <- .e[file.exists(.e)]
 source(.e[1]); rm(.e)

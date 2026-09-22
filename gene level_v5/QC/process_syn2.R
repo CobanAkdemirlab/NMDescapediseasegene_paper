@@ -5,7 +5,7 @@ library(biomaRt)
 #   data_file("x.csv")  locates by filename, errors clearly if not found
 #   out_file("y.csv")   outputs to NMDESC_OUT (default ~/Desktop/NMDesc_out)
 #   data_root("clinvar") use when a directory is needed instead of a file
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+.p <- c("gene level_v5/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("Cannot find paths.R -- run R from the repository root")

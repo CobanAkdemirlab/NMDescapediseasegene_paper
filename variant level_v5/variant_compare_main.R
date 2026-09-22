@@ -27,16 +27,15 @@ library(ggpubr)
 # 4.0.1  Paths and constants
 # ------------------------------------------------------------------------------
 
-.p <- c("../gene level_v4/lib/paths.R",
-        "gene level_v4/lib/paths.R",
-        "../../gene level_v4/lib/paths.R")
+.p <- c("../gene level_v5/lib/paths.R",
+        "gene level_v5/lib/paths.R",
+        "../../gene level_v5/lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
 
 CLINVAR_DIR <- data_root("clinvar")
-OTHERS_DIR  <- file.path(CLINVAR_DIR, "others")
-DATA_DIR    <- dirname(CLINVAR_DIR)
+
 OUT_DIR     <- out_dir("plots/pfam_ppi_analysis")
 # -----------------------------------------------------------------------------
 
@@ -95,21 +94,21 @@ ensembl = tryCatch(useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensemb
                      useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",
                              host = "https://www.ensembl.org"))
 snv_variants = read.csv(data_file('snv_variants20260201_plp_dbh_clinvar.csv'))
-snv_dis <- create_fasta(snv_variants, output_dir = "snv_disease_fasta_output")
+snv_dis <- create_fasta(snv_variants, output_dir = out_dir("snv_disease_fasta_output"))
 
 snv_control_variants = read.csv(data_file('gnomad_snv_filtered_acat_0831.csv'))
 gnomad_snv_filtered <- snv_control_variants
 gnomad_snv_filtered$key <- gnomad_snv_filtered$id
 gnomad_snv_variants <- gnomad_snv_filtered[,  c("transcript", "key")]
-gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = "snv_control_fasta_output")
+gnomad_snv_dis <- create_fasta(gnomad_snv_variants, output_dir = out_dir("snv_control_fasta_output"))
 
 fs_variants = read.csv(data_file('fs_variants20260201_plp_acat_clinvar.csv'))
-fs_dis <- create_fasta(fs_variants, output_dir = "fs_disease_fasta_output")
+fs_dis <- create_fasta(fs_variants, output_dir = out_dir("fs_disease_fasta_output"))
 
 fs_control_variants = read.csv(data_file('gnomad_fs_filtered_bh_0831.csv'))
 gnomad_fs_filtered  <- fs_control_variants
 gnomad_fs_variants  <- gnomad_fs_filtered[,  c("transcript", "key")]
-gnomad_fs_dis <- create_fasta(gnomad_fs_variants, output_dir = "fs_control_fasta_output")
+gnomad_fs_dis <- create_fasta(gnomad_fs_variants, output_dir = out_dir("fs_control_fasta_output"))
 
 variants_all1 <- bind_rows(
   fs_dis %>% mutate(group = "fs_disease"),
@@ -127,7 +126,7 @@ variants_all1$ensembl_transcript_id = all_variants$transcript[match(variants_all
 #combine_gene.R builds snv_nmdesc_df and fs_nmdesc_df from the same gene lists
 #this script uses. Sourced here when absent, so the script runs on its own.
 if (!exists("snv_nmdesc_df") || !exists("fs_nmdesc_df")) {
-  .cg <- file.path(SCRIPT_DIR, "..", "gene level_v4", "QC", "combine_gene.R")
+  .cg <- file.path(SCRIPT_DIR, "..", "gene level_v5", "QC", "combine_gene.R")
   if (!file.exists(.cg))
     stop("combine_gene.R not found -- it supplies snv_nmdesc_df and fs_nmdesc_df",
          call. = FALSE)
@@ -306,7 +305,7 @@ variant_pfam_ppi <- function(variants_all2,
                              human_1_,
                              pfam_fin,
                              ensembl,
-                             out_dir = ".") {
+                             out_dir = results_dir()) {
   
   .convert_to_c <- function(x) {
     if (is.na(x) || x == "") return(numeric(0))
@@ -512,9 +511,9 @@ annotate_motifs <- function(variants_annotated, ensembl) {
   variants_motif(
     variants_all2 = variants_annotated,
     mart          = ensembl,
-    touni_path = file.path(OTHERS_DIR, "NIHMS1818854-supplement-2(A).csv"),
-    motif_path = file.path(OTHERS_DIR, "NIHMS1818854-supplement-2(B).csv"),
-    lcs_path   = file.path(OTHERS_DIR, "Copy of NIHMS1818854-supplement-2.xls")
+    touni_path = data_file("NIHMS1818854-supplement-2(A).csv"),
+    motif_path = data_file("NIHMS1818854-supplement-2(B).csv"),
+    lcs_path   = data_file("Copy of NIHMS1818854-supplement-2.xls")
   )
 }
 
@@ -795,35 +794,79 @@ tidy_mixed_results <- function(mixed_results, labels = FLAG_LABELS) {
 }
 
 # 4.2.4  Plot
-plot_mixed_effect_flags <- function(mixed_results, or_limits = c(0.01, 1000)) {
+## The variant-level result figure: one odds ratio per flag per branch, on a log
+## axis, with the confidence interval, the BH star, and the number of variants
+## each model saw. A flag whose model did not converge keeps its row and is
+## marked, so a reader does not read the gap as a null result.
+plot_mixed_effect_flags <- function(mixed_results, or_limits = c(0.004, 320)) {
   d <- tidy_mixed_results(mixed_results) %>%
-    filter(!is.na(OR)) %>%
-    mutate(
-      trustworthy = (method == "GLMM") & !singular,
-      OR_low      = pmax(OR_low,  or_limits[1]),
-      OR_high     = pmin(OR_high, or_limits[2])
-    )
-  
-  ggplot(d, aes(x = OR, y = reorder(flag_lab, OR), color = sig, shape = gene_set)) +
-    geom_vline(xintercept = 1, linetype = "dashed", color = "grey50") +
-    geom_errorbarh(aes(xmin = OR_low, xmax = OR_high), height = 0.2,
-                   position = position_dodge(width = 0.6)) +
-    geom_point(aes(alpha = trustworthy), size = 3,
-               position = position_dodge(width = 0.6)) +
-    scale_color_manual(values = c("***" = "red", "**" = "orange", "*" = "gold",
-                                  "ns" = "grey60", "not estimable" = "grey85")) +
-    scale_shape_manual(values = c("SNV" = 16, "FS" = 17)) +
+    mutate(gene_set = factor(gene_set, levels = c("SNV", "FS")),
+           lo = pmax(OR_low,  or_limits[1] * 1.25),
+           hi = pmin(OR_high, or_limits[2] * 0.80),
+           clip_lo = OR_low  < or_limits[1] * 1.25,
+           clip_hi = OR_high > or_limits[2] * 0.80,
+           trustworthy = (method == "GLMM") & !singular)
+
+  # Row order: by the SNV odds ratio, with the non-converging flags at the foot.
+  ord <- d %>% filter(gene_set == "SNV") %>% arrange(is.na(OR), OR) %>% pull(flag_lab)
+  ord <- c(setdiff(unique(d$flag_lab[is.na(d$OR)]), NA),
+           setdiff(ord, d$flag_lab[is.na(d$OR)]))
+  # Strongest odds ratio at the top; a flag whose model did not converge keeps
+  # its row, marked, so the gap is not read as a null result.
+  d <- d %>% mutate(flag_lab = factor(flag_lab, levels = ord))
+  est <- filter(d, !is.na(OR)); nes <- filter(d, is.na(OR))
+
+  dodge <- position_dodge(width = 0.6)
+  p <- ggplot(est, aes(OR, flag_lab, colour = sig, shape = gene_set)) +
+    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey50") +
+    geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0.2, position = dodge) +
+    geom_point(aes(alpha = trustworthy), size = 3, position = dodge) +
+    geom_text(aes(x = or_limits[2] * 0.9, label = format(n_variants, big.mark = ",")),
+              colour = "grey45", size = 2.6, hjust = 1, position = dodge,
+              show.legend = FALSE) +
+    scale_colour_manual(values = c("***" = "red", "**" = "orange", "*" = "gold",
+                                   "ns" = "grey60", "not estimable" = "grey85"),
+                        name = "Adj. p") +
+    scale_shape_manual(values = c(SNV = 16, FS = 17), name = "Gene set") +
     scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = 0.35),
                        labels = c(`TRUE` = "GLMM", `FALSE` = "singular"),
                        name = "Fit") +
-    scale_x_log10(limits = or_limits) +
-    labs(
-      title    = "Mixed-effect model: disease association per feature",
-      subtitle = "Logistic GLMM by gene set, random intercept per transcript (BH-adjusted within gene set)",
-      x = "Odds ratio (log scale)", y = NULL, color = "Adj. p", shape = "Gene set"
-    ) +
+    scale_x_log10(limits = or_limits, breaks = c(0.01, 0.1, 1, 10, 100),
+                  labels = c("0.01", "0.1", "1", "10", "100")) +
+    labs(x = "Odds ratio (log scale)", y = NULL,
+         title = "Mixed-effect model: disease association per feature",
+         subtitle = paste0("Logistic GLMM by gene set, random intercept per transcript ",
+                           "(BH-adjusted within gene set).\n",
+                           "OR > 1: the feature is more frequent among NMD-escape variants ",
+                           "than among controls."),
+         caption = paste("Grey number is the variants the model saw.",
+                         "An arrowhead marks a confidence bound past the axis.")) +
     theme_minimal(base_size = 12) +
-    theme(plot.title = element_text(face = "bold"))
+    theme(plot.title = element_text(face = "bold"),
+          plot.subtitle = element_text(size = 10, colour = "grey25"),
+          plot.caption = element_text(size = 9, hjust = 0, colour = "grey30"),
+          panel.grid.minor = element_blank())
+
+  # arrowheads where a bound runs off the axis
+  if (any(est$clip_hi))
+    p <- p + geom_segment(data = filter(est, clip_hi),
+                          aes(x = hi, xend = or_limits[2] * 0.72, yend = flag_lab),
+                          arrow = arrow(length = unit(2, "mm"), type = "closed"),
+                          position = dodge, show.legend = FALSE)
+  if (any(est$clip_lo))
+    p <- p + geom_segment(data = filter(est, clip_lo),
+                          aes(x = lo, xend = or_limits[1] * 1.02, yend = flag_lab),
+                          arrow = arrow(length = unit(2, "mm"), type = "closed"),
+                          position = dodge, show.legend = FALSE)
+  if (nrow(nes))
+    p <- p + geom_text(data = nes, aes(x = 1, y = flag_lab), label = "not estimable",
+                       colour = "grey55", size = 2.8, fontface = "italic",
+                       inherit.aes = FALSE)
+
+  ggsave(out_file("result_variant_mixed_effect.pdf"), p,
+         width = 4.2 * 2.6, height = 3.6 * 1.7, limitsize = FALSE)
+  message("Saved: result_variant_mixed_effect.pdf")
+  invisible(p)
 }
 
 # 4.3  HIERARCHICAL BAYESIAN MODEL
@@ -900,11 +943,32 @@ variants_all4 <- annotate_motifs(variants_all3, ensembl)
 variants_all5 <- prepare_final_variant_table(variants_all4)
 #remove cds_mutation_loc.x and cds_mutation_loc.y columns
 variants_all5 <- variants_all5 %>% dplyr::select(-cds_mutation_loc.x, -cds_mutation_loc.y)
-write.csv(variants_all5, "variants_all0805.csv", row.names = FALSE)
-variants_all5 = read.csv("variants_all0901.csv")
-variants_all5 = variants_all5 %>% 
-  mutate(transcript = transcript.x) %>%
-  dplyr::select(-transcript.x, -transcript.y)
+write.csv(variants_all5, out_file("variants_all0805.csv"), row.names = FALSE)
+
+# The published variant-level results were produced from variants_all0901.csv,
+# so that table takes precedence over the one assembled above when it is on a
+# data root. It differs in composition, not only in size: 5,225 rows against
+# 5,583, and 77 SNV transcripts against 190, which changes the random-effect
+# grouping and with it several odds ratios. Reproducing the published numbers
+# therefore requires this file. It ships outside the data roots -- either move
+# it into the data root or point NMDESC_DATA at the directory holding it.
+VARIANT_TABLE <- "variants_all0901.csv"
+.vt <- data_file(VARIANT_TABLE, must = FALSE)
+if (!is.na(.vt)) {
+  message("  variant table: ", basename(.vt))
+  variants_all5 <- read.csv(.vt)
+} else {
+  message("  ", VARIANT_TABLE, " not on a data root; using the table assembled above.",
+          "\n  Odds ratios will not match the published ones.")
+}
+rm(.vt)
+
+# transcript.x / transcript.y are carried by variants_all0901.csv; the table
+# assembled above already has a plain `transcript` column.
+if (all(c("transcript.x", "transcript.y") %in% names(variants_all5)))
+  variants_all5 <- variants_all5 %>%
+    mutate(transcript = transcript.x) %>%
+    dplyr::select(-transcript.x, -transcript.y)
 
 # --- 4.1: unmatched analysis ---------------------------------------------------
 unadj_results <- run_unadjusted_flag_analysis(variants_all5)
@@ -918,6 +982,10 @@ mixed_results <- run_mixed_effect_flag_analysis(variants_all5)
 mixed_tidy    <- tidy_mixed_results(mixed_results)     # adjusted table
 write.csv(mixed_tidy, file.path(OUT_DIR, "mixed_effect_fdr.csv"), row.names = FALSE)
 plot_mixed_effect_flags(mixed_results)
+
+# Drift check against a previous run's table, when one is on a data root.
+compare_to_stored(mixed_tidy, "variant_glmm_results.csv",
+                  keys = c("flag", "gene_set"))
 
 # --- 4.3: hierarchical Bayesian model -------------------------------------------
 bayes_by_gs <- run_bayesian_by_geneset(variants_all5, GENE_MATCHED_FLAGS)

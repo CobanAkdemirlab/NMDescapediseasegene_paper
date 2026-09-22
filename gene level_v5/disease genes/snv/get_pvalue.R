@@ -1,8 +1,8 @@
 # --- Path resolution layer (auto-inserted) ---------------------------------
 # Locate data files with data_file("filename"); outputs use out_file("filename")
-# Data location is configured via DATA_ROOTS in gene level_v3/lib/paths.R
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../gene level_v3/lib/paths.R", "lib/paths.R")
+# Data location is configured via DATA_ROOTS in gene level_v5/lib/paths.R
+.p <- c("gene level_v5/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+        "../../../gene level_v5/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1])
@@ -58,7 +58,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
   res_p2 = readRDS(rds_name2)
   txnames <- unique(res_p2@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]]) #only circle the variants with NMDesc PTC
   
-  #keep only omim AD genes
+  # ---- restrict txnames to canonical transcripts of restrict_symbols ----
   if (!is.null(restrict_symbols)) {
     restrict_symbols <- unique(trimws(as.character(restrict_symbols)))
     restrict_symbols <- restrict_symbols[!is.na(restrict_symbols) &
@@ -71,7 +71,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
     ]
     
     n.before <- length(txnames)
-    #txnames  <- txnames[txnames %in% keep.tx]
+    txnames  <- txnames[txnames %in% keep.tx]
     message(sprintf("Restriction: %d NMDesc transcripts -> %d canonical transcripts of %d supplied symbols",
                     n.before, length(txnames), length(restrict_symbols)))
     if (length(txnames) == 0)
@@ -113,7 +113,7 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
       txnames.list[[i]]$txcor <- tx.cor
       txnames.list[[i]]$can.PTC <- can.PTC
       
-      # FIX 1: exon length is a closed interval, add 1
+      # exon length is a closed interval, hence the +1
       ex.length <- tx.cor$CDSEND - tx.cor$CDSSTART + 1
       if(ex.length[length(ex.length)-1] < 50) {
         NMD.lastexon <- ex.length[length(ex.length)] + ex.length[length(ex.length)-1]
@@ -316,15 +316,14 @@ export_tiers <- function(txnames.list, prefix = "snv_can_ADrestricted_bh") {
   }))
   tab <- tab[order(tab$fdr.bh, tab$fisher_p), ]
   tab$rank <- seq_len(nrow(tab))
-  write.csv(tab, paste0(prefix, "_full_annotated_0909.csv"), row.names = FALSE)
+  write.csv(tab, paste0(prefix, "_full_annotated.csv"), row.names = FALSE)
   for (tr in c("significant", "suggestive")) {
     g <- unique(tab$hgnc_symbol[tab$tier == tr])
     writeLines(c("hgnc_symbol", g), sprintf("%s_%s.txt", prefix, tr))
     cat(sprintf("%-11s: %3d genes\n", tr, length(g)))
   }
   g.all <- unique(tab$hgnc_symbol[tab$tier %in% c("significant","suggestive")])
-  writeLines(c("hgnc_symbol", g.all), sprintf("%s_FDR0.20_all_0909.txt", prefix))
+  writeLines(c("hgnc_symbol", g.all), sprintf("%s_FDR0.20_all.txt", prefix))
   cat(sprintf("%-11s: %3d genes\n", "combined", length(g.all)))
   invisible(tab)
 }
-

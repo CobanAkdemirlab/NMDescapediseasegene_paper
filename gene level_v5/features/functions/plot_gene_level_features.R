@@ -20,7 +20,7 @@ plot_gene_level_features <- function(
     gene_all,
     lof_metrics_path,
     ensembl     = NULL,
-    out_dir     = ".",
+    out_dir     = results_dir(),
     prefix      = "gene_level",
     comparisons = CONFIG$comparisons
 ) {

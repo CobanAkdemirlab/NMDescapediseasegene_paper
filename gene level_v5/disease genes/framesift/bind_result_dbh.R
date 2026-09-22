@@ -1,15 +1,15 @@
 # --- Path resolution layer (auto-inserted) ---------------------------------
 # Locate data files with data_file("filename"); write outputs with out_file("filename")
-# Data location configured via DATA_ROOTS in gene level_v4/lib/paths.R
-.p <- c("gene level_v4/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
-        "../../../gene level_v4/lib/paths.R", "lib/paths.R")
+# Data location configured via DATA_ROOTS in gene level_v5/lib/paths.R
+.p <- c("gene level_v5/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+        "../../../gene level_v5/lib/paths.R", "lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("Could not find paths.R -- run R from the repository root")
 source(.p[1])
 # ------------------------------------------------------------
 
 ###############################################################################
-# Frameshift NMDesc enrichment pipeline  (v4)
+# Frameshift NMDesc enrichment pipeline  (v3)
 #
 # Final version symmetric with snv pipeline (get_pvalue v5):
 #   * Test universe pre-restricted to canonical transcripts of OMIM autosomal dominant genes
@@ -52,14 +52,14 @@ HAS_DFDR   <- requireNamespace("DiscreteFDR", quietly = TRUE)
 # 0. Input
 ###############################################################################
 
-PTC_info      <- read.csv('PTC_info20260201_region.csv')
-fs_NMD_result <- read.csv('fs_NMD_result20260201.csv')
+PTC_info      <- read.csv(data_file("PTC_info20260201_region.csv"))
+fs_NMD_result <- read.csv(data_file("fs_NMD_result20260201.csv"))
 
 # ---- 0b. OMIM-AD gene universe (shared file with snv pipeline for consistency) ----
 if (!file.exists("omim_AD_symbols.csv"))
   stop("omim_AD_symbols.csv not found — run the OMIM step (snv pipeline section 9) first, ",
        "so both pipelines use the identical AD gene universe.")
-omim_AD_symbols <- read.csv("omim_AD_symbols.csv", header = TRUE)$hgnc_symbol
+omim_AD_symbols <- read.csv(data_file("omim_AD_symbols.csv"), header = TRUE)$hgnc_symbol
 omim_AD_symbols <- unique(trimws(omim_AD_symbols))
 omim_AD_symbols <- omim_AD_symbols[!is.na(omim_AD_symbols) & nchar(omim_AD_symbols) > 0]
 
@@ -264,8 +264,8 @@ cds.info2 <- get_cds_info(names(plus2_NMD_result))
 plus1_results_df <- run_fs_pvalue(plus1_NMD_result, PTC_info, "plus1", cds.info1)
 plus2_results_df <- run_fs_pvalue(plus2_NMD_result, PTC_info, "plus2", cds.info2)
 
-saveRDS(plus1_results_df, "plus1_fs_results20260201_AD.rds")
-saveRDS(plus2_results_df, "plus2_fs_results20260201_AD.rds")
+saveRDS(plus1_results_df, out_file("plus1_fs_results20260201_AD.rds"))
+saveRDS(plus2_results_df, out_file("plus2_fs_results20260201_AD.rds"))
 
 
 ###############################################################################
@@ -442,8 +442,8 @@ cat(sprintf('  pooled + BH                 : %d\n', sum(comb$fdr_pooled      < A
 cat(sprintf('  pooled binomial + BH        : %d\n', sum(comb$fdr_pooled_binom< ALPHA_MAIN, na.rm = TRUE)))
 cat('==============================================================================\n\n')
 
-saveRDS(comb,   "fs_combined_results20260201_AD_v4.rds")
-write.csv(comb, "fs_combined_results20260201_AD_v4.csv", row.names = FALSE)
+saveRDS(comb,   out_file("fs_combined_results20260201_AD_v3.rds"))
+write.csv(comb, out_file("fs_combined_results20260201_AD_v3.csv"), row.names = FALSE)
 
 
 ###############################################################################
@@ -495,7 +495,7 @@ for (m in names(gene_sets)) {
   cat(sprintf('%-11s : %4d genes -> %s\n', m, length(gene_sets[[m]]), fn))
 }
 
-saveRDS(c(tier_genes, gene_sets), "AD_gene_sets_v4.rds")
+saveRDS(c(tier_genes, gene_sets), out_file("AD_gene_sets_v3.rds"))
 
 
 ###############################################################################
@@ -514,7 +514,7 @@ ann <- ann[order(ann$fdr_acat_filt, ann$acat_p),
              "simes_p","fdr_simes_filt","pooled_fisher_p","sig.dbh","sig.dby",
              "min_acat","unreachable.at.005","tier")]
 ann$rank <- seq_len(nrow(ann))
-write.csv(ann, "fs_AD_acat_full_annotated.csv", row.names = FALSE)
+write.csv(ann, out_file("fs_AD_acat_full_annotated.csv"), row.names = FALSE)
 
 
 ###############################################################################

@@ -4,7 +4,7 @@ library(data.table)
 #   data_file("x.csv") locates file by name, errors clearly if not found
 #   out_file("y.csv") outputs to NMDESC_OUT (default ~/Desktop/NMDesc_out)
 #   data_root("clinvar") for directory instead of file
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+.p <- c("gene level_v5/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from repository root")

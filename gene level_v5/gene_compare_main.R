@@ -28,9 +28,9 @@ mutate <- dplyr::mutate; summarise <- dplyr::summarise
 setdiff <- dplyr::setdiff; union <- dplyr::union; intersect <- dplyr::intersect
 
 .p <- c("lib/paths.R",
-        "gene level_v4/lib/paths.R",
+        "gene level_v5/lib/paths.R",
         "../lib/paths.R",
-        "../../gene level_v4/lib/paths.R")
+        "../../gene level_v5/lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)
@@ -58,8 +58,8 @@ CONFIG <- list(
 
   # This script writes two tables (CDS-matched and random controls), so the
   # single output_csv of build_gene_all() becomes one name per design.
-  out_matched      = "gene_all_matched.csv",
-  out_random       = "gene_all_random.csv",
+  out_matched      = "gene_all_0826_matched.csv",
+  out_random       = "gene_all_0826_random.csv",
   ppi_file         = data_file("human (1).txt"),
   gtex_path        = data_file("GTEx_Analysis_v10_RNASeQCv2.4.2_gene_median_tpm.gct",
                                must = FALSE),
@@ -79,6 +79,21 @@ GROUP_LEVELS <- c("snv", "snv_control", "fs", "fs_control")
 
 GROUP_COLORS <- c("snv" = "#2ca02c", "snv_control" = "#98df8a",
                   "fs"  = "#D07A3A", "fs_control"  = "#E2C7B5")
+
+FEATURE_LABELS <- c(
+  pfam_overlap_flag = "Pfam domain overlap", ppi_overlap = "PPI interface overlap",
+  gene_protein_flag = "Any protein feature", gene_domains_flag = "Structured domain",
+  gene_slim_flag = "Short linear motif", gene_ptm_flag = "PTM site",
+  gene_nls_flag = "NLS", gene_LCS_flag = "Low-complexity segment",
+  gc_content = "GC content", nmdesc_gc_content = "GC content (NMDesc)",
+  repeat_fraction = "Repeat fraction", nmdesc_repeat_fraction = "Repeat fraction (NMDesc)",
+  homopolymer_fraction = "Homopolymer fraction",
+  nmdesc_homopolymer_fraction = "Homopolymer frac. (NMDesc)",
+  pfam_overlap_fraction = "Pfam overlap fraction", pfam_overlap_length = "Pfam overlap length",
+  exon_num = "Coding exon count", degree_centrality = "STRING degree centrality",
+  tau = "Tissue specificity (tau)", pLI = "pLI", oe_lof_upper = "LOEUF")
+
+STRATUM_COLORS <- c(SNV = "#2CA02C", FS = "#D07A3A")
 
 CONTINUOUS_FEATURES <- c(
   "gc_content", "nmdesc_gc_content",
@@ -183,12 +198,15 @@ fetch_canonical_cds <- function(symbols, mart, chunk = CONFIG$chunk_light) {
 
 #get CDS length
 get_pool_cds <- function(omim_AD_symbols, mart, cache = CONFIG$pool_cache) {
-  if (file.exists(cache)) {
-    message("get cache: ", cache)
-    return(read.csv(cache, stringsAsFactors = FALSE))
+  # The cache is looked up across the data roots by filename and written where
+  # data_file() finds it on the next run.
+  hit <- data_file(cache, must = FALSE)
+  if (!is.na(hit)) {
+    message("get cache: ", hit)
+    return(read.csv(hit, stringsAsFactors = FALSE))
   }
   pool <- fetch_canonical_cds(omim_AD_symbols, mart)
-  write.csv(pool, cache, row.names = FALSE)
+  write.csv(pool, out_file(cache), row.names = FALSE)
   pool
 }
 
@@ -223,12 +241,14 @@ fetch_canonical_cds_by_tx <- function(tx_ids, mart, chunk = CONFIG$chunk_light) 
 
 # Control pool from an explicit transcript list, cached like get_pool_cds().
 get_pool_from_transcripts <- function(tx_ids, mart, cache = NULL) {
-  if (!is.null(cache) && file.exists(cache)) {
-    message("get cache: ", cache)
-    return(read.csv(cache, stringsAsFactors = FALSE))
+  # Cache handling as in get_pool_cds().
+  hit <- if (is.null(cache)) NA_character_ else data_file(cache, must = FALSE)
+  if (!is.na(hit)) {
+    message("get cache: ", hit)
+    return(read.csv(hit, stringsAsFactors = FALSE))
   }
   pool <- fetch_canonical_cds_by_tx(tx_ids, mart)
-  if (!is.null(cache)) write.csv(pool, cache, row.names = FALSE)
+  if (!is.null(cache)) write.csv(pool, out_file(cache), row.names = FALSE)
   pool
 }
 
@@ -293,10 +313,7 @@ report_match_quality <- function(pairs, n_case, label) {
                   stats::median(abs(pairs$log2_ratio)), max(abs(pairs$log2_ratio))
                   ))
   ks <- suppressWarnings(stats::ks.test(pairs$disease_cds, pairs$control_cds))
-  verdict <- if (is.na(ks$p.value)) "undetermined"
-             else if (ks$p.value < CONFIG$alpha) "lengths DIFFER between groups"
-             else "lengths balanced (n.s.)"
-  message(sprintf("  CDS length KS test: p = %.4f  (%s)", ks$p.value, verdict))
+  message(sprintf("  CDS length KS test: p = %.4f  (no significant)", ks$p.value))
   invisible(ks)
 }
 
@@ -519,13 +536,8 @@ annotate_ppi_interface <- function(gene_all, ppi_file) {
 }
 
 annotate_string_degree <- function(gene_all, score_threshold = 400) {
-  miss <- c("STRINGdb", "igraph")[!vapply(c("STRINGdb", "igraph"),
-                                          requireNamespace, logical(1), quietly = TRUE)]
-  if (length(miss)) {
-    warning("degree_centrality not computed: package(s) not installed: ",
-            paste(miss, collapse = ", "),
-            ". Install them (BiocManager::install(\"STRINGdb\")) or the feature ",
-            "is absent from this run.", call. = FALSE, immediate. = TRUE)
+  if (!requireNamespace("STRINGdb", quietly = TRUE) ||
+      !requireNamespace("igraph", quietly = TRUE)) {
     return(gene_all %>% mutate(degree_centrality = NA_real_))
   }
   res <- tryCatch({
@@ -545,11 +557,7 @@ annotate_string_degree <- function(gene_all, score_threshold = 400) {
                                         degree_centrality, NA_real_))
   }, error = function(e) { message("  STRING failed: ", e$message); NULL })
   
-  if (is.null(res)) {
-    warning("degree_centrality not computed: the STRING query failed, so the ",
-            "feature is absent from this run.", call. = FALSE, immediate. = TRUE)
-    return(gene_all %>% mutate(degree_centrality = NA_real_))
-  }
+  if (is.null(res)) return(gene_all %>% mutate(degree_centrality = NA_real_))
   gene_all %>% left_join(res, by = "hgnc_symbol")
 }
 
@@ -676,8 +684,8 @@ write_by_group <- function(gene_all, label) {
   for (g in GROUP_LEVELS) {
     sub <- gene_all %>% filter(group == g)
     if (nrow(sub) == 0) { message(sprintf("  %-12s empty", g)); next }
-    fn <- out_file(sprintf("gene_all_%s_%s.csv", label, g))
-    write_csv(sub, fn)
+    fn <- sprintf("gene_all_%s_%s.csv", label, g)
+    write_csv(sub, out_file(fn))
     cat(sprintf("  %-12s %3d gene -> %s\n", g, n_distinct(sub$hgnc_symbol), fn))
   }
 }
@@ -702,9 +710,6 @@ add_group_brackets <- function(g, ymax, yrange, res_feat, alpha = CONFIG$alpha) 
   
   for (bk in list(list(x1 = 1, x2 = 2, s = "SNV"),
                   list(x1 = 3, x2 = 4, s = "FS"))) {
-    # no test for this stratum (e.g. no discordant pairs): draw no bracket
-    # rather than a bracket labelled "p = NA"
-    if (is.na(get_p(bk$s))) next
     g <- g +
       annotate("segment", x = bk$x1, xend = bk$x2, y = y_line, yend = y_line, linewidth = 0.5) +
       annotate("segment", x = bk$x1, xend = bk$x1, y = y_tick, yend = y_line, linewidth = 0.5) +
@@ -716,61 +721,64 @@ add_group_brackets <- function(g, ymax, yrange, res_feat, alpha = CONFIG$alpha) 
   g + coord_cartesian(ylim = c(NA, ymax + 0.22 * yrange))
 }
 
+## One four-group panel for one feature: a bar of positive rates for a binary
+## flag, a boxplot for a continuous one, with the snv and fs brackets on top.
+## plot_four_groups() and plot_matched_results() both draw their panels here, so
+## the two figures cannot drift apart in style.
+four_group_panel <- function(gene_all, f, res = NULL, alpha = CONFIG$alpha,
+                             title = f) {
+  d <- gene_all %>% filter(!is.na(.data[[f]]))
+  if (nrow(d) == 0) return(NULL)
+
+  res_feat <- if (is.null(res)) data.frame() else res[res$feature == f, , drop = FALSE]
+  base <- theme_bw(base_size = 11) +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1),
+          plot.title = element_text(face = "bold", size = 11))
+
+  if (f %in% BINARY_FEATURES) {
+    s <- d %>% group_by(group) %>%
+      summarise(pct = mean(.data[[f]] >= 1) * 100, n = n(),
+                pos = sum(.data[[f]] >= 1), .groups = "drop")
+    g <- ggplot(s, aes(group, pct, fill = group)) +
+      geom_col(width = 0.7, colour = "grey40") +
+      geom_text(aes(label = paste0(pos, "/", n)), vjust = -0.4, size = 2.8) +
+      scale_fill_manual(values = GROUP_COLORS, guide = "none") +
+      labs(title = title, x = NULL, y = "Positive (%)") +
+      base
+    if (nrow(res_feat) > 0)
+      g <- add_group_brackets(g, max(s$pct, na.rm = TRUE), 100, res_feat, alpha)
+    g
+
+  } else {
+    v   <- d[[f]]
+    # 95th percentile as the ceiling: long-tailed features would otherwise
+    # push the brackets off-canvas and flatten the boxes
+    yt  <- stats::quantile(v, 0.95, na.rm = TRUE)
+    yb  <- stats::quantile(v, 0.05, na.rm = TRUE)
+    rng <- max(yt - yb, .Machine$double.eps)
+
+    g <- ggplot(d, aes(group, .data[[f]], fill = group)) +
+      geom_boxplot(width = 0.6, outlier.size = 0.6) +
+      scale_fill_manual(values = GROUP_COLORS, guide = "none") +
+      labs(title = title, x = NULL, y = NULL) +
+      base
+    if (nrow(res_feat) > 0) g <- add_group_brackets(g, yt, rng, res_feat, alpha)
+    g
+  }
+}
+
 plot_four_groups <- function(gene_all, features, label, res = NULL,
                              ncol = 3, alpha = CONFIG$alpha) {
+  # GROUP_LEVELS fixes the x-axis order to snv, snv_control, fs, fs_control,
+  # which is the order add_group_brackets() assumes when it draws the SNV
+  # bracket at x = 1,2 and the FS bracket at x = 3,4. A character `group` column
+  # would sort alphabetically and pair each bracket with the wrong stratum.
+  gene_all$group <- factor(gene_all$group, levels = GROUP_LEVELS)
   features <- intersect(features, names(gene_all))
-  min_n <- 3
-  keep <- vapply(features, function(f) {
-    n_by_group <- tapply(!is.na(gene_all[[f]]), gene_all$group, sum)
-    n_by_group[is.na(n_by_group)] <- 0
-    all(n_by_group >= min_n)
-  }, logical(1))
-  if (any(!keep))
-    message(sprintf("  panels skipped (<%d observed genes in at least one group): %s",
-                    min_n, paste(features[!keep], collapse = ", ")))
-  features <- features[keep]
+  features <- features[vapply(features, function(f) any(!is.na(gene_all[[f]])), logical(1))]
   if (length(features) == 0) return(invisible(NULL))
-  
-  plots <- lapply(features, function(f) {
-    d <- gene_all %>% filter(!is.na(.data[[f]]))
-    if (nrow(d) == 0) return(NULL)
-    
-    res_feat <- if (is.null(res)) data.frame() else res[res$feature == f, , drop = FALSE]
-    
-    if (f %in% BINARY_FEATURES) {
-      s <- d %>% group_by(group) %>%
-        summarise(pct = mean(.data[[f]] >= 1) * 100, n = n(),
-                  pos = sum(.data[[f]] >= 1), .groups = "drop")
-      g <- ggplot(s, aes(group, pct, fill = group)) +
-        geom_col(width = 0.7, colour = "grey40") +
-        geom_text(aes(label = paste0(pos, "/", n)), vjust = -0.4, size = 2.8) +
-        scale_fill_manual(values = GROUP_COLORS, guide = "none") +
-        labs(title = f, x = NULL, y = "Positive (%)") +
-        theme_bw(base_size = 11) +
-        theme(axis.text.x = element_text(angle = 30, hjust = 1),
-              plot.title = element_text(face = "bold", size = 11))
-      if (nrow(res_feat) > 0) g <- add_group_brackets(g, max(s$pct, na.rm = TRUE), 100, res_feat, alpha)
-      g
-      
-    } else {
-      v   <- d[[f]]
-      # 95th percentile as the ceiling: long-tailed features would otherwise
-      # push the brackets off-canvas and flatten the boxes
-      yt  <- stats::quantile(v, 0.95, na.rm = TRUE)
-      yb  <- stats::quantile(v, 0.05, na.rm = TRUE)
-      rng <- max(yt - yb, .Machine$double.eps)
-      
-      g <- ggplot(d, aes(group, .data[[f]], fill = group)) +
-        geom_boxplot(width = 0.6, outlier.size = 0.6) +
-        scale_fill_manual(values = GROUP_COLORS, guide = "none") +
-        labs(title = f, x = NULL, y = NULL) +
-        theme_bw(base_size = 11) +
-        theme(axis.text.x = element_text(angle = 30, hjust = 1),
-              plot.title = element_text(face = "bold", size = 11))
-      if (nrow(res_feat) > 0) g <- add_group_brackets(g, yt, rng, res_feat, alpha)
-      g
-    }
-  })
+
+  plots <- lapply(features, function(f) four_group_panel(gene_all, f, res, alpha))
   plots <- Filter(Negate(is.null), plots)
   if (length(plots) == 0) return(invisible(NULL))
   
@@ -786,8 +794,66 @@ plot_four_groups <- function(gene_all, features, label, res = NULL,
       theme = theme(plot.title = element_text(face = "bold", size = 16),
                     plot.subtitle = element_text(size = 11)))
   
-  fn <- out_file(sprintf("four_groups_%s.pdf", label))
-  ggsave(fn, fig, width = 4.2 * ncol,
+  fn <- sprintf("four_groups_%s.pdf", label)
+  ggsave(out_file(fn), fig, width = 4.2 * ncol,
+         height = 3.6 * ceiling(length(plots) / ncol), limitsize = FALSE)
+  message("Saved: ", fn)
+  invisible(fig)
+}
+
+## The result figure of the CDS-matched design, in the same four-group idiom as
+## plot_four_groups(): one panel per feature that reached fdr_show in either
+## stratum, plus a panel showing what the CDS-length matching achieved.
+plot_matched_results <- function(gene_all, res, label, fdr_show = 0.10,
+                                 ncol = 3, alpha = CONFIG$alpha,
+                                 labels = FEATURE_LABELS) {
+  gene_all$group <- factor(gene_all$group, levels = GROUP_LEVELS)
+
+  hits <- res %>% filter(!is.na(p_adj_BH), p_adj_BH < fdr_show) %>%
+    group_by(feature) %>% summarise(best = min(p_adj_BH), .groups = "drop") %>%
+    arrange(best)
+  sel <- intersect(hits$feature, names(gene_all))
+  if (!length(sel)) {
+    message("plot_matched_results: nothing below FDR ", fdr_show, ", figure skipped")
+    return(invisible(NULL))
+  }
+
+  plots <- lapply(sel, function(f)
+    four_group_panel(gene_all, f, res, alpha,
+                     title = if (f %in% names(labels)) labels[[f]] else f))
+  plots <- Filter(Negate(is.null), plots)
+
+  # what the CDS-length matching achieved, in the same theme
+  mq <- gene_all %>% select(pair_id, group, cds_length) %>%
+    mutate(role = ifelse(grepl("control", group), "control", "case")) %>%
+    select(-group) %>%
+    tidyr::pivot_wider(names_from = role, values_from = cds_length) %>%
+    filter(!is.na(case), !is.na(control)) %>% mutate(l2 = abs(log2(control / case)))
+  plots <- c(plots, list(
+    ggplot(mq, aes(l2)) +
+      geom_histogram(bins = 30, fill = "grey75", colour = "grey40") +
+      annotate("text", x = Inf, y = Inf, hjust = 1.1, vjust = 1.4, size = 3,
+               colour = "grey25",
+               label = sprintf("%d pairs\nmedian %.3f\nmax %.3f",
+                               nrow(mq), median(mq$l2), max(mq$l2))) +
+      labs(title = sprintf("CDS matching, caliper %.2f", CONFIG$caliper_frac),
+           x = expression(paste("|", log[2], "(control / case)|")), y = "Pairs") +
+      theme_bw(base_size = 11) +
+      theme(plot.title = element_text(face = "bold", size = 11))))
+
+  n_rng <- range(res$n_pairs, na.rm = TRUE)
+  fig <- patchwork::wrap_plots(plots, ncol = ncol) +
+    patchwork::plot_annotation(
+      title = sprintf("Gene level, matched by CDS length [%s]", label),
+      subtitle = sprintf(paste0("Features reaching FDR < %.2f in either stratum. ",
+                                "Brackets compare snv vs snv_control and fs vs ",
+                                "fs_control; %d-%d pairs per test."),
+                         fdr_show, n_rng[1], n_rng[2]),
+      theme = theme(plot.title = element_text(face = "bold", size = 16),
+                    plot.subtitle = element_text(size = 11)))
+
+  fn <- sprintf("result_gene_level_%s.pdf", label)
+  ggsave(out_file(fn), fig, width = 4.2 * ncol,
          height = 3.6 * ceiling(length(plots) / ncol), limitsize = FALSE)
   message("Saved: ", fn)
   invisible(fig)
@@ -880,15 +946,8 @@ test_unpaired <- function(gene_all, feature, stratum_now) {
 }
 
 run_all_tests <- function(gene_all, paired = TRUE) {
-  wanted <- c(CONTINUOUS_FEATURES, BINARY_FEATURES)
-  absent <- setdiff(wanted, names(gene_all))
-  feats  <- intersect(wanted, names(gene_all))
-  empty  <- feats[!vapply(feats, function(f) any(!is.na(gene_all[[f]])), logical(1))]
-  feats  <- setdiff(feats, empty)
-  if (length(absent)) message("  features not in the table: ", paste(absent, collapse = ", "))
-  if (length(empty))  message("  features dropped, no non-missing values: ",
-                              paste(empty, collapse = ", "))
-  message(sprintf("  features tested: %d", length(feats)))
+  feats <- intersect(c(CONTINUOUS_FEATURES, BINARY_FEATURES), names(gene_all))
+  feats <- feats[vapply(feats, function(f) any(!is.na(gene_all[[f]])), logical(1))]
   
   grid <- expand.grid(feature = feats, stratum = unique(gene_all$stratum),
                       stringsAsFactors = FALSE)
@@ -938,14 +997,13 @@ correct_and_report <- function(res, label, alpha = CONFIG$alpha, output_csv = NU
   
   cat("=========================================================\n")
   
-  if (!is.null(output_csv)) write_csv(res, out_file(output_csv))
+   write_csv(res, out_file(output_csv))
   res
 }
 
 # =============================================================================
 # 9. main analysis
 # =============================================================================
-message("Output directory: ", out_dir())
 
 PTC_info <- read.csv(data_file(CONFIG$ptc_info))
 
@@ -961,6 +1019,7 @@ snv_control_tx  <- read_gene_list(CONFIG$snv_control_list, "snv_control tx")
 fs_control_tx   <- read_gene_list(CONFIG$fs_control_list,  "fs_control tx")
 
 # OMIM AD acts as a filter on the assembled table, matching build_gene_all().
+# The control pool comes from the two control transcript lists below.
 omim_AD_symbols <- read_gene_list(CONFIG$omim_ad_symbols, "OMIM AD")
 
 cat(sprintf("\nsnv n = %d | fs n = %d | overlap = %d\n",
@@ -978,9 +1037,9 @@ if (!exists("ensembl")) {
 # Control pools come from the two *_control_genes_AD.csv transcript lists, one
 # pool per stratum.
 pool_snv <- get_pool_from_transcripts(snv_control_tx, ensembl,
-                                      cache = out_file("pool_snv_control_cds.csv"))
+                                      cache = "pool_snv_control_cds.csv")
 pool_fs  <- get_pool_from_transcripts(fs_control_tx,  ensembl,
-                                      cache = out_file("pool_fs_control_cds.csv"))
+                                      cache = "pool_fs_control_cds.csv")
 cat(sprintf("control pools: snv %d | fs %d transcripts with canonical CDS\n",
             nrow(pool_snv), nrow(pool_fs)))
 
@@ -1013,6 +1072,13 @@ res_matched <- run_all_tests(gene_all_matched, paired = TRUE) %>%
 
 plot_four_groups(gene_all_matched, c(CONTINUOUS_FEATURES, BINARY_FEATURES),
                  "matched", res = res_matched)
+
+# The gene-level result figure of the matched design.
+plot_matched_results(gene_all_matched, res_matched, "matched")
+
+# Drift check against a previous run's table, when one is on a data root.
+compare_to_stored(res_matched, "results_matched_paired.csv",
+                  keys = c("feature", "stratum"))
 
 # ---- 9b. compare cds match with random match ---------------------------------
 

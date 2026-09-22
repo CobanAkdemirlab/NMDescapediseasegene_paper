@@ -1,25 +1,27 @@
 
 .p <- c("lib/paths.R",
-        "gene level_v4/lib/paths.R",
+        "gene level_v5/lib/paths.R",
         "../lib/paths.R",
         "../../lib/paths.R",
-        "../../../gene level_v4/lib/paths.R")
+        "../../../gene level_v5/lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1])
 # Paths go through paths.R: data_file() locates inputs under the data roots,
-# out_file() sends results to NMDESC_OUT. 
+# out_file() sends results to NMDESC_OUT. The three files this script both
+# writes and reads back go into the data root, so data_file() finds the copy
+# this run produced rather than an older one.
 # ------------------------------------------------------------
 
 # --- load functions-----------------------------------------------
-.fn_dir <- c("gene level_v4/features/functions", "../../features/functions",
+.fn_dir <- c("gene level_v5/features/functions", "../../features/functions",
              "../features/functions", "features/functions")
 .fn_dir <- .fn_dir[dir.exists(.fn_dir)]
 for (.f in list.files(.fn_dir[1], pattern = "\\.R$", full.names = TRUE)) source(.f)
 rm(.f, .fn_dir)
 
 for (.dep in c("get_pvalue.R", "extract_enriched.R", "process_syn.R")) {
-  .cand <- c(file.path("gene level_v4/disease genes/snv", .dep), .dep,
+  .cand <- c(file.path("gene level_v5/disease genes/snv", .dep), .dep,
              file.path("../snv", .dep))
   .cand <- .cand[file.exists(.cand)]
   if (length(.cand)) source(.cand[1]) else message("  can't find ", .dep)
@@ -48,7 +50,6 @@ library(data.table)
 library(ggplot2)
 
 #1. NMDesc annotation
-# setwd("/Users/jxu14/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/clinvar")
 mart = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 ensembl = mart
 genome <- BSgenome.Hsapiens.UCSC.hg38
@@ -88,7 +89,9 @@ ind_out =  Biostrings::vcountPattern("N", vcf_rng_fil$alt) > 0
 vcf_rng_fil = vcf_rng_fil[!ind_out]
 #- back to the original workflow
 res = annotate_nmd(vcf_rng_fil, rettype="gr")
-res = readRDS(data_file("clinvar_20260201_nmd.rds"))
+# Cache the annotation in the data root. fs_transcript_level.R (step 2) reads
+# it from there when it runs outside this session.
+saveRDS(res, file.path(data_root("clinvar"), "clinvar_20260201_nmd.rds"))
 
 #2. get nmdesc enriched genes
 snv_ind = which(res@elementMetadata@listData[["type"]] == 'snv')
@@ -131,6 +134,11 @@ plp_ptc_nmdesc_can_ind = intersect(plp_ptc_can_ind,nmdesc_ind)
 benign_ptc_ind = intersect(benign_ind,ptc_ind)
 snv_plp_ptc_ind = intersect(snv_ind,plp_ptc_ind)
 snv_plp_ptc = res[snv_plp_ptc_ind]
+# snv_plp_ptc holds every transcript carrying a P/LP PTC SNV, before any
+# canonical restriction. It is the control pool that get_snv_control_gene.R
+# (step 3) subtracts the NMD-escaping transcripts from, and the SNV counterpart
+# of fs.rds on the frameshift side.
+saveRDS(snv_plp_ptc, file.path(data_root("clinvar"), "snv_plp_ptc20260201.rds"))
 snv_plp_ptc_can_ind = intersect(snv_plp_ptc_ind,can_ind)
 snv_plp_ptc_can = res[snv_plp_ptc_can_ind]
 snv_benign_ptc_ind = intersect(snv_ind,benign_ptc_ind)
@@ -263,8 +271,8 @@ saveRDS(snv_plp_ptc_nmdesc_can_filtered,file = out_file("snv_plp_ptc_nmdesc_can_
 temp1 = readRDS(data_file("snv_plp_ptc_nmdesc_can_filtered20260201.rds"))
 temp2 = readRDS(data_file("snv_plp_ptc_nmdesc_can20260201.rds"))
 saveRDS(snv_benign_ptc_nmdesc_can_filtered,file = out_file("snv_benign_ptc_nmdesc_can_filtered20260201.rds"))
-get_pvalue(rds_name = 'snv_plp_ptc_can_filtered20260201.rds',
-                          rds_name2 = 'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
+get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
+                          'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
                            'snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds',
                             restrict_symbols = omim_AD_symbols)
                   
@@ -297,7 +305,7 @@ write.csv(p_set,file = out_file("p_less.csv"),row.names = F)
 #get enriched genes
 # get_NMD_enrichment_wald('snv_plp_ptc_nmdesc_can_wald_p_f_syn_20260201.rds',FDR = 0.05,filter_type = 'can')
 
-.e <- c("gene level_v4/disease genes/snv/get_NMD_enrichment_DBH.R",
+.e <- c("gene level_v5/disease genes/snv/get_NMD_enrichment_DBH.R",
         "get_NMD_enrichment_DBH.R", "../snv/get_NMD_enrichment_DBH.R")
 .e <- .e[file.exists(.e)]
 source(.e[1]); rm(.e)
@@ -349,19 +357,19 @@ gene_all = read.csv(data_file("gene_all.csv"))
 
 calculate_ppi_degree_centrality(
   gene_all,
-  output_csv = "wald_ppi_degree_centrality_results.csv"
+  output_csv = out_file("wald_ppi_degree_centrality_results.csv")
 )
 
 plot_gc_content(
   gene_all    = gene_all,
-  output_csv  = "gc_content.csv",
-  output_fig  = "gc_content.png"
+  output_csv  = out_file("gc_content.csv"),
+  output_fig  = out_file("gc_content.png")
 )
 
 plot_repeat_content(
   gene_all   = gene_all,
-  output_csv = "repeat_content.csv",
-  output_fig = "repeat_content.png"
+  output_csv = out_file("repeat_content.csv"),
+  output_fig = out_file("repeat_content.png")
 )
 
 annotate_motif_flags(
@@ -370,34 +378,34 @@ annotate_motif_flags(
   path_motif       = data_file("NIHMS1818854-supplement-2(B).csv"),
   path_LCS         = data_file("Copy of NIHMS1818854-supplement-2.xls"),
   mart             = ensembl,
-  output_motif_csv = "gene_motif_flags.csv",
-  output_lcs_csv   = "gene_LCS_flags.csv"
+  output_motif_csv = out_file("gene_motif_flags.csv"),
+  output_lcs_csv   = out_file("gene_LCS_flags.csv")
 )
 
 run_pfam_overlap_analysis(
   gene_all      = gene_all,
   ensembl       = ensembl,
-  output_prefix = "pfam_overlap"   
+  output_prefix = out_file("pfam_overlap")
 )
 
 run_ppi_overlap_analysis(
   gene_all      = gene_all,
   ppi_file_path = data_file("human (1).txt"),
-  output_prefix = "ppi_overlap"
+  output_prefix = out_file("ppi_overlap")
 )
 
 run_tau_analysis(
   gene_all      = gene_all,
   gtex_path     = data_file("GTEx_Analysis_v10_RNASeQCv2.4.2_gene_median_tpm.gct",
                                 must = FALSE),   
-  output_prefix = "tau"
+  output_prefix = out_file("tau")
 )
 
 plot_gene_level_features(
   gene_all = gene_all,
   lof_metrics_path = data_file("gnomad.v2.1.1.lof_metrics.by_gene.txt"),
   ensembl = NULL,
-  out_dir = ".",
+  out_dir = out_dir(),
   prefix = "gene_level"
 )
 

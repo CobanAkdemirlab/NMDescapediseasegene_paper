@@ -5,7 +5,7 @@
 #   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
 #   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("../lib/paths.R",
-        "gene level_v4/lib/paths.R",
+        "gene level_v5/lib/paths.R",
         "../../lib/paths.R",
         "../../../lib/paths.R",
         "../../../../lib/paths.R")

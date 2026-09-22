@@ -1,9 +1,9 @@
 # --- Path resolution layer (auto-inserted) ---------------------------------
 # Data location: data_file("filename"); output: out_dir()/out_file().
-# To change data location, edit DATA_ROOTS in gene level_v3/lib/paths.R
-.p <- c("gene level_v3/lib/paths.R", "../gene level_v3/lib/paths.R",
-        "../../gene level_v3/lib/paths.R", "../../../gene level_v3/lib/paths.R",
-        "../../../../gene level_v3/lib/paths.R")
+# To change data location, edit DATA_ROOTS in gene level_v5/lib/paths.R
+.p <- c("gene level_v5/lib/paths.R", "../gene level_v5/lib/paths.R",
+        "../../gene level_v5/lib/paths.R", "../../../gene level_v5/lib/paths.R",
+        "../../../../gene level_v5/lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
 source(.p[1]); rm(.p)

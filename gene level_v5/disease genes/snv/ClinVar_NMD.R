@@ -29,7 +29,7 @@ length(which(clinvar_pat_ptc@elementMetadata@listData[["res_aenmd"]]@listData[["
 txnames <- unique(names(clinvar_pat_ptc))
 
 txnames.list <- list()
-source(here::here("gene level_v3/lib/get_statistics.R"))
+source(here::here("gene level_v5/lib/get_statistics.R"))
 txnames.list = get_statistics(txnames, clinvar_pat_ptc)
 
 outfilename <- paste('~/Downloads/ClinVar_NMD.rds',sep='')

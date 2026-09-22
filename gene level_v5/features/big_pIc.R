@@ -14,7 +14,7 @@ library(genekitr)
 #   data_file("x.csv")  locate by file name, error if not found
 #   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
 #   data_root("clinvar") use when a directory is needed, not a file
-.p <- c("gene level_v3/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
+.p <- c("gene level_v5/lib/paths.R", "../lib/paths.R", "../../lib/paths.R",
         "../../../lib/paths.R", "../../../../lib/paths.R")
 .p <- .p[file.exists(.p)]
 if (!length(.p)) stop("paths.R not found -- run R from the repository root")
@@ -75,7 +75,7 @@ for(path in path_list2){
 Lof_metrics <- read.delim(data_file("gnomad.v2.1.1.lof_metrics.by_gene.txt"))
 OMIM <- read.csv('/Users/jxu14/Desktop/autism/data/genemap2.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE,skip=3)
 mim2gene <- read.csv('/Users/jxu14/Desktop/autism/data//mim2gene.txt',sep='\t',stringsAsFactors=FALSE,header=TRUE,skip=4)
-source(here::here("gene level_v3/features/inheritance.R"))
+source(here::here("gene level_v5/features/inheritance.R"))
 i=1
 for(path in path_list){
    g[[i]] = omim_check(path)
@@ -85,7 +85,7 @@ grid.arrange(g[[1]],g[[2]],g[[3]],g[[4]],
              g[[5]],g[[6]],g[[7]],g[[8]],
              ncol = 4, nrow = 2)
 #3. GO
-source(here::here("gene level_v3/features/GO_enrich.R"))
+source(here::here("gene level_v5/features/GO_enrich.R"))
 g[[9]] = enrich2(path_list[1])
 g[[10]] = enrich2(path_list[2])
 g[[11]] = enrich2(path_list[3])

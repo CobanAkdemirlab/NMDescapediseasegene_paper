@@ -5,7 +5,7 @@ library(biomaRt)
 bp=50
 
 .p <- c("../../lib/paths.R",
-        "gene level_v4/lib/paths.R",
+        "gene level_v5/lib/paths.R",
         "../lib/paths.R",
         "../../../lib/paths.R",
         "../../../../lib/paths.R")
@@ -35,11 +35,11 @@ fs_benign = res_benign_ptc[union(benign_del_ind,benign_ins_ind)]
 #add variant_summary QR using v_ch
 fs_filtered = fs[which(fs@elementMetadata@listData[["key"]] %in% v_ch$key),]
 fs_benign_filtered = fs_benign[which(fs_benign@elementMetadata@listData[["key"]] %in% v_ch$key),]
-write_rds(fs_benign_filtered, file = 'fs_benign.rds')
+write_rds(fs_benign_filtered, file = out_file("fs_benign.rds"))
 fs = fs_filtered
-write_rds(fs, file = 'fs.rds')
+write_rds(fs, file = out_file("fs.rds"))
 ensembl = useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", version = 105)
-fs = read_rds('fs.rds')
+fs = read_rds(data_file("fs.rds"))
 transcript_set = unique(fs@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]])
 can.info = getBM(
   attributes = c("ensembl_transcript_id","transcript_is_canonical"), # Attributes to retrieve
