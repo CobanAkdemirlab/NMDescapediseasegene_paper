@@ -1,0 +1,32 @@
+script,produces_figure,inputs,sources_scripts,notes
+R/fig1_combined.R,Figure3.png,"matched_pairs_full.csv, gene_all_AD.csv, Tau_gene_V8.csv|ppi_tau_4groups.csv, pli_loeuf_genes.csv|gnomad.v4.1.constraint_metrics.tsv",fig_matching_combined_fixed.R; updated_builder_ppitau.R; fig_pli_loeuf.R,composite A-K; panel A schematic in Figure3 drawn elsewhere
+R/fig_matching_combined_fixed.R,Figure3 panels B-F,"matched_pairs_full.csv, gene_all_AD.csv",,
+R/updated_builder_ppitau.R,Figure3 panels G-H,"matched_pairs_full.csv|matching_log_v2.csv, ppi_tau_4groups.csv (cache) else Tau_gene_V8.csv + STRING via Bioconductor",,
+R/fig_pli_loeuf.R,Figure3 panels I-L,pli_loeuf_genes.csv (cache) else gnomad.v4.1.constraint_metrics.tsv + matched_pairs_full.csv|matching_log_v2.csv,,
+R/match_and_plot_fromlists.R,(builds matched_pairs_full.csv; nmd_4group_plot.png),"gene_all_AD.csv, snv_can_ADrestricted_bh_FDR0_20_all.txt, fs_can_AD_acat_FDR0_20_all.txt, control_gene_list.csv (optional)",,upstream of every paired figure
+R/merge_paralog_isoform_complex.R,merged_paralog_isoform_complex.png,"matched_pairs_full.csv, paralog_counts.csv|paralog_pairs.tsv, isoform_counts.csv|ensembl_transcripts.tsv, CORUM coreComplexes",paralog_comparison.R; isoform_comparison.R; complex_comparison.R (NOT in upload),complex_comparison.R missing from upload
+R/paralog_comparison.R,merged_paralog panel A,"matched_pairs_full.csv|gene_flags_per_gene.csv, paralog_counts.csv (biomaRt cache)",,
+R/isoform_comparison.R,merged_paralog panel B,"matched_pairs_full.csv|gene_flags_per_gene.csv, isoform_counts.csv (biomaRt cache)",,
+R/picnic_paired.R,picnic_paired.png (not in upload),"PICNIC-9606-data.csv, matching_log_v2.csv|matched_pairs_full.csv",,
+R/updated_repeat_homopolymer.R,merged_S9 panels A-F,"gene_flags_per_gene.csv (IN), matching_log_v2.csv, repeat_content.xlsx",,panels G-I (GC) come from a script not in upload
+R/nmd_ndd_enrichment_figure.R,Figure8.png,"matching_log_v2.csv|matched_pairs_full.csv|gene_flags_per_gene.csv, NDDriskgenes.txt",,"hardcodes ndd_ad_total=350, universe_N=1907"
+R/frameshift_AD_background_terms.R,frameshift_AD_background_GO.png (not in upload),"GO:BP .gmt, AD_gene_universe.txt, gene_flags_per_gene.csv",,
+R/stopgain_AD_background_terms.R,stopgain_AD_background_GO.png (not in upload),"GO:BP .gmt, AD_gene_universe.txt, gene_flags_per_gene.csv",,
+R/go_robustness_permutation.R,go_robustness_permutation.png (not in upload),"GO:BP .gmt, AD_gene_universe.txt, gene_flags_per_gene.csv",,
+python/fig4_gene_flags_v9.py,Figure4.png,"gene_flags_per_gene.csv, gene_all_withflags_0826.csv (coords for panel A), optional IDR file",,argv: SRC OUT IDR COORD
+python/Figure5_flag_lme.py,"Figure5.png, Figure5_statistics_random_intercept_and_slope.csv","variant_all5_0918_1.csv (= variant_all5_0918.csv?), optional IDR intervals",,argv: SRC OUT IDR
+python/composition_lmm.py,(builds comp_*.csv),master_table_all_1.csv (= master_table_all.csv?),,argv: SRC MIN_TAIL
+python/plot_composition.py,"Figure6.png panels A-D (fig6_ABCD.png), fig7_new.png","comp_fs_A_aa.csv, comp_fs_B_class.csv, comp_fs_C_feat.csv, comp_fs_D_ps.csv, comp_snv_*",composition_lmm.py output,argv: dir
+python/fig6E_regen.py,escape_tail_LMM_metapredict.png; Figure6 panel E,"variants_all0901.csv, gene_all_withflags_0826.csv, per_variant_disorder.csv, NMD_region_DivergentPos_CIDER.csv, nmd_length_DivergentPos_PARSE_v2.csv",,
+python/plot_rank.py,"FigureS7_frameshift_gene_ranking.png, FigureS8_stopgain_gene_ranking.png",CSV CLS PSF (argv) — per-gene delta table,analyze_master_table.py output?,argv: CSV CLS PSF OUT
+python/fig_schematic.py,schematic.svg/png,none,,needs cairosvg or rsvg for png
+python/variant_master_table/analyze_master_table.py,"fs_aa20_ALL.png, aa20_stats.csv",master_table_all.csv,,
+python/variant_master_table/build_input.py,(pipeline_input_all.csv),variants_all0901.csv / variants_for_master.csv,,
+python/variant_master_table/recompute_idr_columns.py,(master table IDR cols),"master_table_all.csv, uniprot_idrs.csv",fetch_uniprot_idrs_nodeps.py,
+python/variant_master_table/fetch_uniprot_idrs_nodeps.py,(uniprot_idrs.csv),variant_all5_0918_1.csv,,UniProt REST
+python/variant_master_table/aa20_features.py,(helper),,,
+python/variant_master_table/drop_rows_for_rebuild.py,(helper),"master_table_all.csv, rows_to_rebuild.csv",,
+R/complex_comparison.R,merged_paralog panel C (complex_comparison.png),"matched_pairs_full.csv, corum_humanComplexes.txt",,CORUM table not obtainable from this machine (certificate verification failed)
+python/hc_variants/disorder_analysis.py,"truncation_summary_comparison.png, per-gene disorder profiles (not among the 12 reference figures)","high_confidence_variants.xlsx (22 variants; NOT in upload), UniProt REST, metapredict (optional)",,Step 1 of the Jacob Schmidt HC-variant series
+python/hc_variants/charge_analysis.py,"das_pappu_diagram.png, pI_shift_comparison.png","high_confidence_variants.xlsx, disorder_analysis_results.csv (optional)",disorder_analysis.py,Step 2
+python/hc_variants/phase_sep_propensity.py,delta_propensity_summary.png,"high_confidence_variants.xlsx, disorder/charge results (optional)",disorder_analysis.py; charge_analysis.py,Step 4 (step 3 not in upload)
