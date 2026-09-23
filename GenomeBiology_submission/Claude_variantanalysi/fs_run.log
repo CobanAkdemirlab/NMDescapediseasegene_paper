@@ -1,0 +1,10 @@
+/Users/zcoban/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+11:14:38 [INFO] Loading variants from fs_only20.csv
+11:14:38 [INFO]   20 variants, 2 unique transcripts
+11:14:38 [INFO] Limited to first 20 variants for this run
+11:14:38 [INFO] Cache dir: ./vep_cache
+11:14:38 [WARNING] No IDR coordinates loaded; falling back to 'C-terminal third' heuristic. Pass --idr-coords HG38_CanonicalPEP_IDRs_coord.csv to use the catalog's predicted IDR boundaries.
+11:16:36 [INFO]   flushed 20 rows -> test_fs20.csv
+11:16:36 [INFO] Adding DELTA columns...
+11:16:36 [INFO] Done. Wrote 20 rows, 50 DELTA columns. Skipped 0 variants this run.
