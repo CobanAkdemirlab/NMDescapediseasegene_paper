@@ -49,11 +49,28 @@ can.info = getBM(
 )
 #exclude not canonical transcripts
 transcript_set2 = can.info[which(can.info$transcript_is_canonical==1),"ensembl_transcript_id"]
-BM.infoo <- getBM(
-  attributes = c("ensembl_transcript_id","rank",'cds_start','cds_end','exon_chrom_start','exon_chrom_end'), # Attributes to retrieve
-  filters = "ensembl_transcript_id",                    # Filter to query
-  values =  transcript_set2,                          # Transcript ID
-  mart = ensembl                                         # Database connection
+ex <- exons(edb,
+            columns     = c("tx_id", "exon_idx", "exon_seq_start", "exon_seq_end",
+                            "tx_cds_seq_start", "tx_cds_seq_end"),
+            filter      = TxIdFilter(sub("\\.\\d+$", "", transcript_set2)),
+            return.type = "data.frame")
+ex <- ex[order(ex$tx_id, ex$exon_idx), ]
+
+gs     <- pmax(ex$exon_seq_start, ex$tx_cds_seq_start)   # coding part of each exon (genomic)
+ge     <- pmin(ex$exon_seq_end,   ex$tx_cds_seq_end)
+coding <- !is.na(gs) & gs <= ge
+len    <- ifelse(coding, ge - gs + 1, 0)
+cumlen <- ave(len, ex$tx_id, FUN = cumsum)                # CDS position, 5'->3' along transcript
+
+BM.infoo <- data.frame(
+  ensembl_transcript_id = ex$tx_id,
+  rank                  = ex$exon_idx,
+  cds_start             = ifelse(coding, cumlen - len + 1, NA),
+  cds_end               = ifelse(coding, cumlen, NA),
+  exon_chrom_start      = ex$exon_seq_start,
+  exon_chrom_end        = ex$exon_seq_end,
+  genomic_coding_start  = ifelse(coding, gs, NA),
+  genomic_coding_end    = ifelse(coding, ge, NA)
 )
 #exclude single (coding) exon genes
 exon.num = BM.infoo %>% group_by(ensembl_transcript_id) %>% summarise(max_rank = sum(!is.na(cds_start)))

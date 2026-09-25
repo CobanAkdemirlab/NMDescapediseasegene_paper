@@ -252,14 +252,37 @@ snv_benign_variants = snv_benign_variants@elementMetadata@listData[["key"]]
 snv_plp_ptc_nmdesc_can_filtered = snv_plp_ptc_nmdesc_can[which(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 snv_plp_ptc_can_filtered = snv_plp_ptc_can[which(snv_plp_ptc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 saveRDS(snv_plp_ptc_can_filtered,'snv_plp_ptc_can_filtered20260201.rds')
+snv_plp_ptc_can_filtered = readRDS('snv_plp_ptc_can_filtered20260201.rds')
+ptc_gene      <- unique(snv_plp_ptc_can_filtered@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]])
+ptc_gene_hgnc <- BM.info$hgnc_symbol[match(sub("\\.\\d+$", "", ptc_gene), BM.info$ensembl_transcript_id)]
+AD_ptc_gene   <- ptc_gene_hgnc[which(ptc_gene_hgnc %in% omim_AD_symbols)]
 fs_plp_ptc_nmdesc_can_filtered = fs_plp_ptc_nmdesc_can[which(fs_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 snv_benign_ptc_nmdesc_can_filtered = snv_benign_ptc_nmdesc_can[which(snv_benign_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 saveRDS(snv_plp_ptc_nmdesc_can_filtered,'snv_plp_ptc_nmdesc_can_filtered20260201_check.rds')
 saveRDS(snv_benign_ptc_nmdesc_can_filtered,'snv_benign_ptc_nmdesc_can_filtered20260201.rds')
-get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
+snv_p_output = get_pvalue('snv_plp_ptc_can_filtered20260201.rds',
                           'snv_plp_ptc_nmdesc_can_filtered20260201.rds',
                            'snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_BH_FDR020.rds',
                             restrict_symbols = omim_AD_symbols)
+getv <- function(x, f, na = NA) if (is.null(x[[f]]) || !length(x[[f]])) na else x[[f]][1]
+snv_df <- data.frame(
+  transcript  = sapply(snv_p_output, getv, "txname",            NA_character_),
+  hgnc_symbol = sapply(snv_p_output, getv, "hgnc_symbol",       NA_character_),
+  archetype   = sapply(snv_p_output, getv, "archetype",         NA_character_),
+  fisher_p    = sapply(snv_p_output, getv, "can.fisher.pvalue", NA_real_),
+  fdr_bh      = sapply(snv_p_output, getv, "fdr.bh",            NA_real_),
+  tier        = sapply(snv_p_output, getv, "tier",              NA_character_)
+)
+
+snv_df <- snv_df[!is.na(snv_df$fisher_p), ]
+snv_df <- snv_df[order(snv_df$fisher_p), ]
+snv_df <- snv_df[!duplicated(snv_df$hgnc_symbol), ]   # one row per gene, keeping its best transcript
+
+top42 <- head(snv_df, 42)
+print(top42, row.names = FALSE)
+top42$hgnc_symbol
+write.csv(top42, "top42_genes_AD.csv", row.names = FALSE)
+
                   
 txnames.list <- readRDS('snv_plp_ptc_nmdesc_can_p_f_syn_20260201_AD_FDR020.rds')
 rest.all <- sapply(txnames.list, function(x) if(is.null(x$rest.PTC)) NA else x$rest.PTC)

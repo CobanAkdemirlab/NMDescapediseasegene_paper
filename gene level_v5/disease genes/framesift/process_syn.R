@@ -51,12 +51,21 @@ rm(syn_all_tx_set)
 syn_all = read.csv("syn_all_can_only.csv")
 #get syn variants in certain region
 ##input: chrom, region.start region.end, output: syn.count
-get_syn_count = function(chrom, region.start, region.end) {
-  syn.sub = syn_all[
-    syn_all$CHROM == chrom &
-      syn_all$cds_pos >= region.start &
-      syn_all$cds_pos < region.end,
-  ]
-  syn.count = nrow(syn.sub)
-  return(syn.count)
+.syn_index <- new.env(parent = emptyenv())
+get_syn_count = function(chrom, region.start, region.end, transcript) {
+  if (missing(transcript) || is.null(transcript) || is.na(transcript))
+    stop("get_syn_count() needs the transcript ID so it counts only that transcript's variants")
+  if (!exists("syn_all")) stop("syn_all is not loaded -- run process_syn.R first")
+  # Split positions by transcript once per syn_all, then reuse
+  key <- nrow(syn_all)
+  if (!identical(.syn_index$key, key)) {
+    ids <- sub("\\.[0-9]+$", "", as.character(syn_all$transcript_id))
+    pos <- suppressWarnings(as.integer(syn_all$cds_pos))
+    ok  <- !is.na(ids) & !is.na(pos)
+    .syn_index$by_tx <- split(pos[ok], ids[ok])
+    .syn_index$key   <- key
+  }
+  p <- .syn_index$by_tx[[sub("\\.[0-9]+$", "", transcript)]]
+  if (is.null(p)) return(0L)
+  sum(p >= region.start & p <= region.end)
 }

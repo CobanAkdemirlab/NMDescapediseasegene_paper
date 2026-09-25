@@ -85,10 +85,12 @@ if ("plus2" %in% names(count_fs)) count_fs <- dplyr::rename(count_fs, plus2_coun
 transcript_set3 <- unique(PTC_info$transcript)
 
 # ---- Restrict to canonical transcripts of OMIM-AD genes (same logic as snv v5) ----
-tx_map <- getBM(attributes = c("ensembl_transcript_id", "hgnc_symbol",
-                               "transcript_is_canonical"),
-                filters = "ensembl_transcript_id",
-                values  = transcript_set3, mart = ensembl)
+tx_map <- transcripts(edb,
+                      columns     = c("tx_id", "gene_name", "tx_is_canonical"),
+                      filter      = TxIdFilter(sub("\\.\\d+$", "", transcript_set3)),
+                      return.type = "data.frame")[, c("tx_id", "gene_name", "tx_is_canonical")]
+colnames(tx_map) <- c("ensembl_transcript_id", "hgnc_symbol", "transcript_is_canonical")
+tx_map$transcript_is_canonical[tx_map$transcript_is_canonical == 0] <- NA
 
 keep.tx <- tx_map$ensembl_transcript_id[
   tx_map$hgnc_symbol %in% omim_AD_symbols &
@@ -158,8 +160,10 @@ nmd_test_one <- function(can.PTC, rest.PTC, n_can, n_rest) {
   
   out$binom_p <- binom.test(can.PTC, n_can, p0, alternative = "greater")$p.value
   
-  ft <- fisher.test(matrix(c(can.PTC,  n_can  - can.PTC,
-                             rest.PTC, n_rest - rest.PTC), nrow = 2),
+  #ft <- fisher.test(matrix(c(can.PTC,  n_can  - can.PTC,
+  #                           rest.PTC, n_rest - rest.PTC), nrow = 2),
+  ft <- fisher.test(matrix(c(can.PTC, n_can,
+                             rest.PTC, n_rest), nrow = 2),
                     alternative = "greater")
   out$fisher_p   <- ft$p.value
   out$odds_ratio <- unname(ft$estimate)
@@ -214,8 +218,8 @@ run_fs_pvalue <- function(NMD_result, PTC_info, type_label, cds.info, verbose = 
     NMDesc.end   <- suppressWarnings(max(PTC_info$can_region_end[ptc.rows],   na.rm = TRUE))
     if (!is.finite(NMDesc.start) || !is.finite(NMDesc.end)) next
     
-    n_can  <- get_syn_count(chrom, NMDesc.start, NMDesc.end)
-    n_all  <- get_syn_count(chrom, cds.start,    cds.end)
+    n_can  <- get_syn_count(chrom, NMDesc.start, NMDesc.end, transcript)
+    n_all  <- get_syn_count(chrom, cds.start,    cds.end,    transcript)
     n_rest <- n_all - n_can
     
     df$can.PTC[i]  <- NMDesc_can_count
@@ -264,8 +268,8 @@ cds.info2 <- get_cds_info(names(plus2_NMD_result))
 plus1_results_df <- run_fs_pvalue(plus1_NMD_result, PTC_info, "plus1", cds.info1)
 plus2_results_df <- run_fs_pvalue(plus2_NMD_result, PTC_info, "plus2", cds.info2)
 
-saveRDS(plus1_results_df, out_file("plus1_fs_results20260201_AD.rds"))
-saveRDS(plus2_results_df, out_file("plus2_fs_results20260201_AD.rds"))
+saveRDS(plus1_results_df, out_file("plus1_fs_results20260201_AD_v2.rds"))
+saveRDS(plus2_results_df, out_file("plus2_fs_results20260201_AD_v2.rds"))
 
 
 ###############################################################################
@@ -442,8 +446,10 @@ cat(sprintf('  pooled + BH                 : %d\n', sum(comb$fdr_pooled      < A
 cat(sprintf('  pooled binomial + BH        : %d\n', sum(comb$fdr_pooled_binom< ALPHA_MAIN, na.rm = TRUE)))
 cat('==============================================================================\n\n')
 
-saveRDS(comb,   out_file("fs_combined_results20260201_AD_v3.rds"))
-write.csv(comb, out_file("fs_combined_results20260201_AD_v3.csv"), row.names = FALSE)
+saveRDS(comb,   out_file("fs_combined_results20260201_AD_v4.rds"))
+write.csv(comb, out_file("fs_combined_results20260201_AD_v4.csv"), row.names = FALSE)
+
+comb$hgnc_symbol <- tx_map$hgnc_symbol[match(comb$transcript, tx_map$ensembl_transcript_id)]
 
 
 ###############################################################################
@@ -458,6 +464,31 @@ tx2gene <- function(tx_ids) {
   g <- unique(bm$hgnc_symbol)
   g[!is.na(g) & nchar(g) > 0]
 }
+
+
+tested <- comb[!is.na(comb$acat_p), ]
+cutoff <- quantile(tested$acat_p, 0.1, type = 1)
+top10   <- tested[tested$acat_p <= cutoff, ]
+top10   <- top10[order(top10$acat_p), ]
+top10$hgnc_symbol <- tx_map$hgnc_symbol[match(top10$transcript, tx_map$ensembl_transcript_id)]
+
+write.csv(top10$hgnc_symbol,'top10_fs_AD.csv')
+
+fs_df <- comb[!is.na(comb$acat_p), ]
+fs_df$hgnc_symbol <- tx_map$hgnc_symbol[match(fs_df$transcript, tx_map$ensembl_transcript_id)]
+fs_df <- fs_df[order(fs_df$acat_p), ]
+fs_df <- fs_df[!duplicated(fs_df$hgnc_symbol), ]   # one row per gene
+
+top41 <- head(fs_df, 41)
+print(top41[, c("hgnc_symbol", "transcript", "archetype", "acat_p", "fdr_acat_filt", "tier")], row.names = FALSE)
+top41$hgnc_symbol
+
+write.csv(top41, "fs_can_AD_acat_top41.csv", row.names = FALSE)
+
+top5_genes <- unique(top5$hgnc_symbol[!is.na(top5$hgnc_symbol) & top5$hgnc_symbol != ""])
+cat(sprintf("Top 5%%: %d of %d tested transcripts (ACAT p <= %.3g) -> %d genes\n",
+            nrow(top5), nrow(tested), cutoff, length(top5_genes)))
+writeLines(c("hgnc_symbol", top5_genes), out_file("fs_can_AD_acat_top5pct.txt"))
 
 # ---- Main method: two-tier ----
 tier_sets <- list(

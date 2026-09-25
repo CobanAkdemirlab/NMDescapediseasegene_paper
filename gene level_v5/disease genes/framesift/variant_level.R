@@ -1,24 +1,17 @@
 get_re_loc <- function(location, transcript_match){
   df <- BM.info4[BM.info4$ensembl_transcript_id == transcript_match, ]
-  
-  # determine strand from coordinates: rank1 > rank2 means minus strand
-  is_minus <- nrow(df) >= 2 && df$exon_chrom_start[1] > df$exon_chrom_start[2]
-  
+  df <- df[!is.na(df$genomic_coding_start), ]
+  if (!nrow(df)) return(NA_real_)
+  is_minus <- as.character(strand(transcripts(edb, filter = TxIdFilter(transcript_match)))) == "-"
   for (i in seq_len(nrow(df))) {
-    start <- df$exon_chrom_start[i]
-    end   <- df$exon_chrom_end[i]
-    # check whether location falls within exon interval
-    if (location >= min(start, end) && location <= max(start, end)) {
-      if (is_minus) {
-        offset <- max(start, end) - location
-      } else {
-        offset <- location - min(start, end)
-      }
-        return(df$cds_start[i] + offset)
+    gs <- df$genomic_coding_start[i]
+    ge <- df$genomic_coding_end[i]
+    if (location >= gs && location <= ge) {
+      offset <- if (is_minus) ge - location else location - gs
+      return(df$cds_start[i] + offset)
     }
   }
-  
-  return(NA)
+  NA_real_
 }
 get_frameshift_type = function(res,x)
 {
@@ -41,7 +34,7 @@ get_frameshift_type = function(res,x)
   }
   return(plus_type)
 }
-get_NMDesc_variant = function(variant_loc_rel,PTC_loc,PTC_staus)
+get_NMDesc_variant = function(variant_loc_rel,PTC_loc,PTC_status)
 {
   #match variant to the closest PTC
   PTC_loc2 = as.numeric(unlist(strsplit(PTC_loc, ",")))
@@ -95,8 +88,8 @@ for(i in 1:length(fs2)){
   fs_NMD_result[i,'variant_loc'] = variant_loc
   fs_NMD_result[i,'variant_re_loc'] = variant_re_loc
 }
-write.csv(fs_NMD_result,'fs_NMD_result20260201.csv',row.names=FALSE)
-fs_NMD_result = read.csv('fs_NMD_result20260201.csv')
+write.csv(fs_NMD_result,'fs_NMD_result20260201_v2.csv',row.names=FALSE)
+fs_NMD_result = read.csv('fs_NMD_result20260201_v2.csv')
 ----------------------------
 ##+1 and -1 ptc density: no large effect
 #. # of variants per transcript? or # of variants/NMDesc length?

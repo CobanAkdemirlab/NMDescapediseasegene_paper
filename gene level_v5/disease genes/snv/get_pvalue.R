@@ -126,16 +126,16 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
       NMDesc.start = cds.end - NMD.lastexon
       NMDesc.end = cds.end
       chrom = as.numeric(tx.cor$CDSCHROM[1])
-      can.PTC.density <- can.PTC / get_syn_count(chrom, NMDesc.start, NMDesc.end)
+      can.PTC.density <- can.PTC / get_syn_count(chrom, NMDesc.start, NMDesc.end, txname)
       all.gr <- GRanges(seqnames = c(tx.cor$CDSCHROM),
                         ranges = IRanges(tx.cor$CDSSTART, tx.cor$CDSEND),
                         strand = tx.cor$CDSSTRAND[1])
       
       all.PTC <- length(unique(as.character(res_p.ind$key)))
-      all.PTC.density <- all.PTC / get_syn_count(chrom, cds.start, cds.end)
+      all.PTC.density <- all.PTC / get_syn_count(chrom, cds.start, cds.end,txname)
       
-      n_can <- get_syn_count(chrom, NMDesc.start, NMDesc.end)
-      n_all <- get_syn_count(chrom, cds.start, cds.end)
+      n_can  <- get_syn_count(chrom, NMDesc.start, NMDesc.end, txname)
+      n_all  <- get_syn_count(chrom, cds.start,    cds.end,    txname)
       
       # Baseline must EXCLUDE the region being tested, otherwise
       # can.PTC inflates its own null (conservative, and length-dependent)
@@ -154,8 +154,10 @@ get_pvalue = function(rds_name, rds_name2, outfilename,
         # Fisher's exact test — valid with zero cells and small counts,
         # and treats both counts as random rather than fixing p0
         can.fisher.pvalue <- fisher.test(
-          matrix(c(can.PTC, n_can - can.PTC,
-                   rest.PTC, n_rest - rest.PTC), nrow = 2),
+          #matrix(c(can.PTC, n_can - can.PTC,
+          #         rest.PTC, n_rest - rest.PTC), nrow = 2),
+          matrix(c(can.PTC, n_can,
+                              rest.PTC, n_rest), nrow = 2),
           alternative = "greater")$p.value
       }
       
