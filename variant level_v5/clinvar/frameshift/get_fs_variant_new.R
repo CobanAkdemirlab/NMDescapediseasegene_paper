@@ -15,7 +15,9 @@ source(.p[1]); rm(.p)
 #input gene list
 #fs_gene = read.csv('fs_can_syn_AD_gene_filtered_greater_20260201.txt', header = TRUE, stringsAsFactors = FALSE)
 #fs_gene = read_csv(data_file("fs_can_AD_FDR0.05_gene.csv", must = FALSE))
-fs_gene = read.csv('fs_can_AD_acat_FDR0.20_all.txt')$hgnc_symbol
+#fs_gene = read.csv('fs_can_AD_acat_FDR0.20_all.txt')$hgnc_symbol
+fs_gene = top41$hgnc_symbol
+fs_can_tr = top41$transcript
 #get canonical transcript of fs_gene$hgnc
 fs_tr = getBM(attributes=c('ensembl_transcript_id','hgnc_symbol'),
                filters = 'hgnc_symbol', values = fs_gene, mart = ensembl)
@@ -70,7 +72,7 @@ fs_benign_variants<- merge(
 )
 
 
-write.csv(fs_variants, 'fs_variants20260201_plp_acat_clinvar.csv', row.names = FALSE)
+write.csv(fs_variants, 'fs_variants20260201_plp_top41_clinvar.csv', row.names = FALSE)
 write.csv(fs_benign_variants, 'fs_variants20260201_benign_acat_clinvar.csv', row.names = FALSE)
 
 remove_inframe <- function(df) {

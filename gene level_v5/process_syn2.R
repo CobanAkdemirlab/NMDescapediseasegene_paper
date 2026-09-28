@@ -13,7 +13,7 @@ source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
 ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-for(i in 16:22){
+for(i in 1:22){
   chr.name = paste0(data_file("gnomad.exomes.v4.1.sites.chr", must = FALSE),i,".cut.syn.vcf")
   chr.syn <- fread(
          cmd = paste("grep -v '^#'", shQuote(chr.name)),

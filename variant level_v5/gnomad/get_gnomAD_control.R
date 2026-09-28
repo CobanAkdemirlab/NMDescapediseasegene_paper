@@ -33,7 +33,7 @@ snv_can_tr <- getBM(
 
 gnomad_snv = ptc_can_NMD_df2[which(ptc_can_NMD_df2$transcript %in% snv_can_tr$ensembl_transcript_id & ptc_can_NMD_df2$type == 'snv'),]
 #remove plp variants in clinvar
-snv_lp_variants = read.csv
+snv_plp_variants = read.csv('snv_variants20260201_plp_top42_clinvar.csv')
 gnomad_snv_filtered = gnomad_snv[!gnomad_snv$id %in% snv_plp_variants,]
 
 ###2. get frameshift variants in gnomAD using ptc_can_df
@@ -56,6 +56,7 @@ fs_can_tr <- fs_can_tr %>%
   filter(transcript_is_canonical == 1)
 
 gnomad_fs = ptc_can_NMD_df2[which(ptc_can_NMD_df2$transcript %in% fs_can_tr$ensembl_transcript_id & ptc_can_NMD_df2$type != 'snv'),]
+fs_plp_variants = read.csv('fs_variants20260201_plp_top41_clinvar.csv')
 gnomad_fs_filtered = gnomad_fs[!gnomad_fs$id %in% fs_plp_variants,]
 length(unique(gnomad_fs$transcript))
 #remove inframe frameshift variants based on the key
@@ -102,8 +103,8 @@ gnomad_snv_filtered2 = merge(
   all.x = TRUE
 )
 
-write.csv(gnomad_snv_filtered, 'gnomad_snv_filtered_acat_0831.csv', row.names = FALSE)
-write.csv(gnomad_fs_filtered, 'gnomad_fs_filtered_bh_0831.csv', row.names = FALSE)
+write.csv(gnomad_snv_filtered, 'gnomad_snv_filtered_acat_0926.csv', row.names = FALSE)
+write.csv(gnomad_fs_filtered, 'gnomad_fs_filtered_bh_0926.csv', row.names = FALSE)
 length(unique(gnomad_fs_filtered_wald$transcript))
 
 #for each tr, do a table to show how many clinvar plp and gnomad benign variants

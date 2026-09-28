@@ -5,7 +5,7 @@
 #   out_file("y.csv")   output to NMDESC_OUT (default ~/Desktop/NMDesc_out)
 #   data_root("clinvar") use when a directory is needed instead of a file
 .p <- c("../lib/paths.R",
-        "gene level_v5/lib/paths.R",
+        "gene level_v4/lib/paths.R",
         "../../lib/paths.R",
         "../../../lib/paths.R",
         "../../../../lib/paths.R")
@@ -15,10 +15,12 @@ source(.p[1]); rm(.p)
 # --------------------------------------------------------------------------
 
 #This Rscript is to combine gene list from disease and control, then add necessary variables including NMDesc_region_length
-snv_gene           = read_csv(data_file("snv_can_ADrestricted_bh_FDR0.20_all.txt"))
-fs_gene            = read_csv(data_file("fs_can_AD_acat_FDR0.20_all.txt"))
-snv_control_gene_AD = read_csv(data_file("snv_control_genes_AD.csv"))
-fs_control_gene_AD  = read_csv(data_file("fs_control_genes_AD.csv"))
+snv_gene           = read_csv("snv_top42_genes_AD.csv")
+snv_gene = snv_gene$hgnc_symbol
+fs_gene            = read_csv("fs_can_AD_acat_top41.csv")
+fs_gene = fs_gene$hgnc_symbol
+snv_control_gene_AD = read_csv("snv_control_genes_AD.csv")
+fs_control_gene_AD  = read_csv("fs_control_genes_AD.csv")
 PTC_info = read.csv(data_file("PTC_info20260201_region.csv"))
 
 #useEnsembl is the current entry point; useMart is kept as a fallback
@@ -87,22 +89,22 @@ snv_control_gene_cds = getBM(
 )
 #keep canonical transcript only
 snv_gene_cds_can <- snv_gene_cds %>%
-  filter(transcript_is_canonical == 1)
+  dplyr::filter(transcript_is_canonical == 1)
 fs_gene_cds_can <- fs_gene_cds %>%
-  filter(transcript_is_canonical == 1)
+  dplyr::filter(transcript_is_canonical == 1)
 fs_control_gene_cds_can <- fs_control_gene_cds %>%
-  filter(transcript_is_canonical == 1)
+  dplyr::filter(transcript_is_canonical == 1)
 snv_control_gene_cds_can <- snv_control_gene_cds %>%
-  filter(transcript_is_canonical == 1)
+  dplyr::filter(transcript_is_canonical == 1)
 #remove empty CDS
 snv_gene_cds_can <- snv_gene_cds_can %>%
-  filter(!is.na(coding), coding != "")
+  dplyr::filter(!is.na(coding), coding != "")
 fs_gene_cds_can <- fs_gene_cds_can %>%
-  filter(!is.na(coding), coding != "")
+  dplyr::filter(!is.na(coding), coding != "")
 fs_control_gene_cds_can <- fs_control_gene_cds_can %>%
-  filter(!is.na(coding), coding != "")
+  dplyr::filter(!is.na(coding), coding != "")
 snv_control_gene_cds_can <- snv_control_gene_cds_can %>%
-  filter(!is.na(coding), coding != "")
+  dplyr::filter(!is.na(coding), coding != "")
 
 
 ##get snv NMDesc region: last exon + 50bp upstream of penutimate exon boundary
@@ -151,17 +153,17 @@ snv_control_tx_info = getBM(
   mart = ensembl
 )
 snv_tx_info = snv_tx_info %>%
-  filter(transcript_is_canonical == 1) %>%
+  dplyr::filter(transcript_is_canonical == 1) %>%
   distinct(hgnc_symbol, ensembl_transcript_id, .keep_all = TRUE)
 snv_control_tx_info = snv_control_tx_info %>%
-  filter(transcript_is_canonical == 1) %>%
+  dplyr::filter(transcript_is_canonical == 1) %>%
   distinct(hgnc_symbol, ensembl_transcript_id, .keep_all = TRUE)
 snv_exon_info = snv_exon_info %>%
   inner_join(snv_tx_info, by = "ensembl_transcript_id") %>%
-  filter(!is.na(rank), !is.na(cds_start), !is.na(cds_end))
+  dplyr::filter(!is.na(rank), !is.na(cds_start), !is.na(cds_end))
 snv_control_exon_info = snv_control_exon_info %>%
   inner_join(snv_control_tx_info, by = "ensembl_transcript_id") %>%
-  filter(!is.na(rank), !is.na(cds_start), !is.na(cds_end))
+  dplyr::filter(!is.na(rank), !is.na(cds_start), !is.na(cds_end))
 
 snv_nmdesc_info = 
   snv_exon_info %>% 
@@ -236,23 +238,23 @@ fs_control_nmdesc_df$fs_control_nmdesc_gc_content <- sapply(fs_control_nmdesc_df
 
 
 fs_nmdesc_df2 = fs_nmdesc_df %>%
-  rename(NMD_region_start = median_can_region_start,
+  dplyr::rename(NMD_region_start = median_can_region_start,
          NMD_region_end = median_can_region_end,
          nmdesc_cds = fs_nmdesc_cds,
          nmdesc_gc_content = fs_nmdesc_gc_content) 
 fs_control_nmdesc_df2 = fs_control_nmdesc_df %>%
-  rename(NMD_region_start = median_can_region_start,
+  dplyr::rename(NMD_region_start = median_can_region_start,
          NMD_region_end = median_can_region_end,
          nmdesc_cds = fs_control_nmdesc_cds,
          nmdesc_gc_content = fs_control_nmdesc_gc_content) 
 snv_nmdesc_df2 = snv_nmdesc_df %>%
-  rename(NMD_region_start = can_region_start,
+  dplyr::rename(NMD_region_start = can_region_start,
          NMD_region_end = can_region_end,
          nmdesc_cds = snv_nmdesc_cds,
          nmdesc_gc_content = snv_nmdesc_gc_content) %>%
   dplyr::select(-any_of(c("last_exon_length", "nmdesc_start",'nmdesc_end')))
 snv_control_nmdesc_df2 = snv_control_nmdesc_df %>%
-  rename(NMD_region_start = can_region_start,
+  dplyr::rename(NMD_region_start = can_region_start,
          NMD_region_end = can_region_end,
          nmdesc_cds = snv_control_nmdesc_cds,
          nmdesc_gc_content = snv_control_nmdesc_gc_content) %>%
@@ -305,7 +307,7 @@ gene_all <- gene_all %>%
 
 #rename uniprotswissprot to uniprot for easier use
 gene_all <- gene_all %>%
-  rename(uniprot = uniprotswissprot)
+  dplyr::rename(uniprot = uniprotswissprot)
 
 
-write.csv(gene_all, out_file("gene_all0407.csv"), row.names = FALSE)
+write.csv(gene_all, "gene_all0925.csv", row.names = FALSE)

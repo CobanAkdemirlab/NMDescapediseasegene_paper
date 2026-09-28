@@ -231,27 +231,14 @@ create_fasta <- function(variants, output_dir = "fasta_output") {
   
   transcript_ids <- variants$transcript
   
-  #get CDS sequences
-  cds_seq_df <- getBM(
-    attributes = c("ensembl_transcript_id", "coding"),
-    filters    = "ensembl_transcript_id",
-    values     = transcript_ids,
-    mart       = ensembl
-  )
-  cds_seq_df  <- cds_seq_df[!is.na(cds_seq_df$coding) & cds_seq_df$coding != "", ]
-  cds_seq_map <- setNames(cds_seq_df$coding, cds_seq_df$ensembl_transcript_id)
+  variants$transcript <- sub("\\.\\d+$", "", variants$transcript)
+  transcript_ids <- unique(variants$transcript)
   
-  #get exon data
-  exon_data_df <- getBM(
-    attributes = c("ensembl_transcript_id", "chromosome_name", "exon_chrom_start",
-                   "cds_start", "cds_end", "exon_chrom_end", "rank", "strand"),
-    filters    = "ensembl_transcript_id",
-    values     = transcript_ids,
-    mart       = ensembl
-  )
-  exon_data_df <- exon_data_df[complete.cases(exon_data_df[, c("ensembl_transcript_id",
-                                                               "exon_chrom_start","exon_chrom_end",
-                                                               "cds_start","cds_end","strand")]), ]
+  cds_seqs    <- extractTranscriptSeqs(dna, cdsBy(edb, by = "tx", filter = TxIdFilter(transcript_ids)))
+  cds_seq_map <- setNames(as.character(cds_seqs), names(cds_seqs))
+  
+  exon_data_df  <- ensdb_exon_table(transcript_ids)
+  exon_data_df  <- exon_data_df[!is.na(exon_data_df$cds_start), ]
   exon_data_map <- split(exon_data_df, exon_data_df$ensembl_transcript_id)
   
   for (i in 1:nrow(variants)) {

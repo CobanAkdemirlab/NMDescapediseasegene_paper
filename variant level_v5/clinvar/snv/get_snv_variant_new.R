@@ -10,6 +10,7 @@ snv_can_tr = getBM(attributes=c('ensembl_transcript_id','transcript_is_canonical
                    filters = 'ensembl_transcript_id', values = snv_tr$ensembl_transcript_id, mart = ensembl)
 snv_can_tr = snv_can_tr[which(snv_can_tr$transcript_is_canonical == 1),1]
 
+snv_can_tr = top42$transcript
 #in clinvar snv ptc, nmdesc variants, select those corresponding to the canonical transcript of gene list
 snv_res_can = readRDS('snv_plp_ptc_nmdesc_can_filtered20260201.rds')
 snv_vus_res_can = readRDS('snv_vus_ptc_nmdesc_can_filtered20260201.rds')
@@ -56,4 +57,5 @@ snv_benign_variants<- merge(
 
 
 write.csv(snv_variants, 'snv_variants20260201_plp_bh0.2_clinvar.csv', row.names = FALSE)
+write.csv(snv_variants, 'snv_variants20260201_plp_top42_clinvar.csv', row.names = FALSE)
 write.csv(snv_benign_variants, 'snv_variants20260201_benign_bh0.2_clinvar.csv', row.names = FALSE)

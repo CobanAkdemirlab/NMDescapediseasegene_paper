@@ -40,6 +40,8 @@ fs = fs_filtered
 write_rds(fs, file = out_file("fs.rds"))
 ensembl = useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", version = 105)
 fs = read_rds(data_file("fs.rds"))
+fs_plp_ptc_nmdesc_can = readRDS("fs_plp_ptc_nmdesc_can.rds")
+fs_plp_ptc_nmdesc_can_filtered = fs_plp_ptc_nmdesc_can[which(fs_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]] %in% v_ch$key),]
 transcript_set = unique(fs@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]])
 can.info = getBM(
   attributes = c("ensembl_transcript_id","transcript_is_canonical"), # Attributes to retrieve

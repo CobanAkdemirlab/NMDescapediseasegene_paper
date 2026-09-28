@@ -79,7 +79,7 @@ vcf_rng_fil = vcf_rng_fil[!ind_out]
 #- back to the original workflow
 res = annotate_nmd(vcf_rng_fil, rettype="gr")
 saveRDS(res, file = "clinvar_20260201_nmd.rds")
-
+res = readRDS("clinvar_20260201_nmd.rds")
 #2. get nmdesc enriched genes
 snv_ind = which(res@elementMetadata@listData[["type"]] == 'snv')
 fs_ind = which(res@elementMetadata@listData[["type"]] %in% c('del','ins'))
@@ -130,6 +130,7 @@ snv_plp_ptc_nmdesc_ind = intersect(snv_plp_ptc_ind,nmdesc_ind)
 snv_benign_ptc_nmdesc_ind = intersect(snv_benign_ptc_ind,nmdesc_ind)
 snv_plp_ptc_nmdesc_can_ind = intersect(snv_plp_ptc_nmdesc_ind,can_ind)
 fs_plp_ptc_nmdesc_can_ind = intersect(fs_ind,plp_ptc_nmdesc_can_ind)
+saveRDS(res[fs_plp_ptc_nmdesc_can_ind], file = "fs_plp_ptc_nmdesc_can.rds")
 snv_benign_ptc_nmdesc_can_ind = intersect(snv_benign_ptc_nmdesc_ind,can_ind)
 
 snv_plp_ptc_nmdesc_can = res[snv_plp_ptc_nmdesc_can_ind]
@@ -139,6 +140,9 @@ plp_ptc_nmdesc_can = res[plp_ptc_nmdesc_can_ind]
 length(unique(plp_ptc_nmdesc_can@elementMetadata@listData[["key"]]))
 length(unique(snv_plp_ptc_nmdesc_can@ranges@NAMES))
 length(unique(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]]))
+length(unique(snv_plp_ptc_nmdesc_can@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]]))
+length(unique(fs_plp_ptc_nmdesc_can@elementMetadata@listData[["key"]]))
+length(unique(fs_plp_ptc_nmdesc_can@elementMetadata@listData[["res_aenmd"]]@listData[["transcript"]]))
 
 #Quality Control, match by key
 variant_summary <- read_delim("variant_summary.txt", 
