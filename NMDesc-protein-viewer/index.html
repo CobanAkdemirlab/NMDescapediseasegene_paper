@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NMDesc protein viewer — gene set 4 case genes</title>
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<style>
+:root{
+  --ink:#1A1A1A; --muted:#6B7280; --hair:#E3E7EC; --bg:#F4F6F8; --card:#FFFFFF;
+  --variant:#D6267F; --domain:#4A6E96; --escape:#1B9E8A;
+  --p90:#0053D6; --p70:#65CBF3; --p50:#FFDB13; --p00:#FF7D45;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+#app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+/* ---------- gene list ---------- */
+#side{background:var(--card);border-right:1px solid var(--hair);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+#side h1{font-size:14px;margin:16px 16px 2px;letter-spacing:.01em}
+#side .sub{font-size:11px;color:var(--muted);margin:0 16px 10px}
+#q{margin:0 12px 8px;padding:7px 9px;border:1px solid var(--hair);border-radius:7px;font-size:12px;outline:none}
+#q:focus{border-color:var(--domain)}
+#filters{display:flex;gap:6px;margin:0 12px 8px;font-size:11px}
+#filters button{flex:1;padding:4px 0;border:1px solid var(--hair);background:#fff;border-radius:6px;cursor:pointer;color:var(--muted)}
+#filters button.on{background:var(--domain);border-color:var(--domain);color:#fff}
+#list{overflow-y:auto;flex:1;padding-bottom:12px}
+.row{padding:7px 16px;cursor:pointer;border-left:3px solid transparent;display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.row:hover{background:#F7F9FB}
+.row.sel{background:#EEF3F9;border-left-color:var(--domain)}
+.row b{font-size:12.5px;font-weight:600}
+.row .tag{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row .nv{font-size:10.5px;color:var(--variant);font-variant-numeric:tabular-nums}
+
+/* ---------- main ---------- */
+#main{padding:18px 22px 40px;max-width:1180px}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.title h2{margin:0;font-size:26px;letter-spacing:-.01em}
+.title .meta{color:var(--muted);font-size:12px;margin-top:3px}
+.title .meta i{font-style:italic}
+.title .esc{color:var(--escape);font-size:11.5px;font-weight:600;margin-top:4px}
+.kpis{display:flex;gap:8px}
+.kpi{background:var(--card);border:1px solid var(--hair);border-radius:10px;padding:9px 14px;min-width:92px;text-align:center}
+.kpi .v{font-size:19px;font-weight:700;line-height:1.15}
+.kpi .l{font-size:10px;color:var(--muted);margin-top:1px}
+.grid{display:grid;grid-template-columns:1.9fr 1fr;gap:14px}
+.card{background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:14px 16px}
+.card h3{margin:0 0 2px;font-size:13.5px;font-weight:650}
+.card p.hint{margin:0 0 10px;font-size:11px;color:var(--muted)}
+.full{grid-column:1 / -1}
+#mol{width:100%;height:330px;position:relative;border-radius:8px;overflow:hidden;background:#fff}
+#molmsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--muted);text-align:center;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:10.5px;color:var(--muted);margin-top:9px;align-items:center}
+.legend span.sw{width:12px;height:9px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:-1px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+   font-weight:600;padding:0 0 5px;border-bottom:1px solid var(--hair)}
+td{padding:5px 0;border-bottom:1px solid #F2F4F7;font-variant-numeric:tabular-nums}
+td.res{font-weight:650}
+td.n{text-align:right;color:var(--variant);font-weight:650}
+tr.inesc td.res::after{content:" ●";color:var(--escape);font-size:9px}
+tr.vrow{cursor:pointer}
+tr.vrow:hover{background:#FCF2F7}
+.toggles{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:6px;align-items:center}
+.toggles label{display:flex;gap:5px;align-items:center;cursor:pointer}
+.note{font-size:10.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+.flagstrip{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
+.flagstrip .f{font-size:11px;padding:3px 10px;border-radius:999px;border:1px solid var(--hair);
+  white-space:nowrap;cursor:default}
+.flagstrip .f.on{background:var(--domain);border-color:var(--domain);color:#fff;font-weight:600}
+.flagstrip .f.off{background:#fff;color:var(--muted)}
+.flagstrip .f.na{color:#9AA2AE;border-style:dashed;
+  background:repeating-linear-gradient(45deg,#FAFBFC,#FAFBFC 4px,#F1F3F6 4px,#F1F3F6 8px)}
+.flagstrip .fnone{font-size:11px;color:var(--muted)}
+.empty{padding:60px 20px;color:var(--muted);font-size:13px;text-align:center}
+a{color:var(--domain)}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h1>NMDesc protein viewer</h1>
+    <p class="sub">Gene set 4 case genes · <span id="count">…</span></p>
+    <input id="q" placeholder="Filter by gene or UniProt…" autocomplete="off">
+    <div id="filters">
+      <button data-g="all" class="on">All</button>
+      <button data-g="fs">Frameshift</button>
+      <button data-g="snv">Stopgain</button>
+    </div>
+    <div id="list"></div>
+  </aside>
+  <main id="main"><div class="empty">Loading gene index…</div></main>
+</div>
+
+<script>
+const BANDS = [
+  {k:'ge90',   lo:90,  col:'var(--p90)', hex:'#0053D6', lab:'very high (≥90)'},
+  {k:'b70_90', lo:70,  col:'var(--p70)', hex:'#65CBF3', lab:'high (70–90)'},
+  {k:'b50_70', lo:50,  col:'var(--p50)', hex:'#FFDB13', lab:'low (50–70)'},
+  {k:'lt50',   lo:0,   col:'var(--p00)', hex:'#FF7D45', lab:'very low (<50)'}
+];
+const bandHex = p => p>=90?'#0053D6' : p>=70?'#65CBF3' : p>=50?'#FFDB13' : '#FF7D45';
+const GROUP = {fs:'frameshift', snv:'stopgain'};
+/* Feature lanes from Banani et al. Supplemental Table S4 — the same source the
+   project's gene-level flags are computed from. */
+const LANES = [
+  {key:'domains_s4', short:'Domains',  name:'Domain (S4)',      col:'#7FA0C4'},
+  {key:'features',   short:'Features', name:'Protein feature',  col:'#8A94A6'},
+  {key:'slims',      short:'SLiMs',    name:'SLiM',             col:'#E07B39'},
+  {key:'morfs',      short:'MoRFs',    name:'MoRF',             col:'#7B5EA7'},
+  {key:'ptms',       short:'PTMs',     name:'PTM',              col:'#B58900'},
+  {key:'nls',        short:'NLS/NES',  name:'NLS/NES',          col:'#2E7D32'},
+  {key:'lcs',        short:'LCS',      name:'Low-complexity',   col:'#5D4037'}
+];
+const el = (t,a={},...c)=>{const n=document.createElementNS(
+    t==='svg'||['g','rect','circle','line','text','path'].includes(t)
+      ? 'http://www.w3.org/2000/svg' : 'http://www.w3.org/1999/xhtml', t);
+  for(const [k,v] of Object.entries(a)) n.setAttribute(k,v);
+  c.forEach(x=>n.appendChild(typeof x==='string'?document.createTextNode(x):x)); return n;};
+/* <title> must be built in the SVG namespace or it is not a tooltip */
+const svgTip = txt => {const t=document.createElementNS('http://www.w3.org/2000/svg','title');
+  t.textContent=txt; return t;};
+
+let INDEX=[], CUR=null, viewer=null, group='all';
+
+/* ---------------- gene list ---------------- */
+function renderList(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const rows = INDEX.filter(r =>
+      (group==='all' || r.group===group) &&
+      (!q || r.gene.toLowerCase().includes(q) || r.uniprot.toLowerCase().includes(q)));
+  const list = document.getElementById('list');
+  list.textContent='';
+  document.getElementById('count').textContent = `${rows.length} shown`;
+  rows.forEach(r=>{
+    const d = el('div',{class:'row'+(CUR&&CUR.key===r.key?' sel':''), 'data-key':r.key});
+    d.appendChild(el('b',{},r.gene));
+    d.appendChild(el('span',{class:'tag'},GROUP[r.group]||r.group));
+    const nv=el('span',{class:'nv', title:'disease / control PTC variants'});
+    nv.appendChild(el('span',{},String(r.n_disease ?? 0)));
+    nv.appendChild(el('span',{style:'color:#9AA2AE'},' / '));
+    nv.appendChild(el('span',{style:'color:#1F7A8C'},String(r.n_control ?? 0)));
+    d.appendChild(nv);
+    d.onclick = ()=>select(r.key);
+    list.appendChild(d);
+  });
+}
+
+/* ---------------- panels ---------------- */
+function kpis(d){
+  const box=(v,l)=>{const k=el('div',{class:'kpi'});k.appendChild(el('div',{class:'v'},v));
+                    k.appendChild(el('div',{class:'l'},l));return k;};
+  const w=el('div',{class:'kpis'});
+  w.appendChild(box(d.length+' aa','length'));
+  w.appendChild(box(d.mean_plddt==null?'—':String(d.mean_plddt),'mean pLDDT'));
+  w.appendChild(box(String(d.domains.length), 'Pfam domain'+(d.domains.length===1?'':'s')));
+  const nv = d.nmdesc_variants || {n_disease:0, n_control:0};
+  w.appendChild(box(String(nv.n_disease),'disease variants'));
+  w.appendChild(box(String(nv.n_control),'control variants'));
+  return w;
+}
+
+function plddtHistogram(d){
+  const W=330,H=150,ML=34,MB=26,MT=6,MR=6;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%'});
+  if(!d.plddt.length){svg.appendChild(el('text',{x:W/2,y:H/2,'text-anchor':'middle',
+      'font-size':11,fill:'#6B7280'},'no AlphaFold model'));return svg;}
+  const nb=20, counts=new Array(nb).fill(0);
+  d.plddt.forEach(p=>counts[Math.min(nb-1,Math.floor(p/5))]++);
+  const mx=Math.max(...counts), pw=(W-ML-MR)/nb;
+  counts.forEach((c,i)=>{
+    const h=(H-MT-MB)*c/mx;
+    svg.appendChild(el('rect',{x:ML+i*pw+0.6,y:H-MB-h,width:pw-1.2,height:h,
+      fill:bandHex(i*5+2.5)}));
+  });
+  svg.appendChild(el('line',{x1:ML,y1:H-MB,x2:W-MR,y2:H-MB,stroke:'#D9DDE3'}));
+  [0,25,50,75,100].forEach(t=>svg.appendChild(el('text',
+    {x:ML+(W-ML-MR)*t/100,y:H-MB+12,'text-anchor':'middle','font-size':9,fill:'#6B7280'},String(t))));
+  svg.appendChild(el('text',{x:(ML+W-MR)/2,y:H-3,'text-anchor':'middle','font-size':9.5,
+    fill:'#6B7280'},'per-residue pLDDT'));
+  [0,mx].forEach(v=>svg.appendChild(el('text',{x:ML-5,y:v?MT+8:H-MB,'text-anchor':'end',
+    'font-size':9,fill:'#6B7280'},String(v))));
+  svg.appendChild(el('text',{x:10,y:H/2,'text-anchor':'middle','font-size':9.5,fill:'#6B7280',
+    transform:`rotate(-90 10 ${H/2})`},'residues'));
+  return svg;
+}
+
+/* Collapse per-variant rows onto the chosen anchor. `pos` is the anchor residue,
+   `other` the distinct residues of the OTHER anchor behind that stack, `inEsc`
+   whether the chosen anchor falls in the escape region (decided in CDS nt when
+   the payload was built). Variants with no PTC are dropped from the PTC view and
+   counted in `no_ptc` on the mutation view. */
+function groupByAnchor(list, anchor){
+  const useP = anchor === 'ptc';
+  const by = new Map();
+  list.forEach(v=>{
+    const pos = useP ? v.p : v.m;
+    if(pos === null || pos === undefined) return;
+    const flag = useP ? v.ep : v.em;
+    /* frame is part of the key: two variants at one residue in different frames
+       stop at different places and must not be merged into one marker */
+    const k = pos + '|' + (v.f || '');
+    let s = by.get(k);
+    if(!s){ s = {pos:pos, f:v.f || null, n:0, other:[], inEsc:false, no_ptc:0}; by.set(k, s); }
+    s.n++;
+    if(flag) s.inEsc = true;
+    const o = useP ? v.m : v.p;
+    if(o === null || o === undefined) s.no_ptc++;
+    else if(!s.other.includes(o)) s.other.push(o);
+  });
+  return [...by.values()].map(s=>({...s, other:s.other.sort((a,b)=>a-b)}))
+                         .sort((a,b)=>a.pos-b.pos);
+}
+
+function track(d, opts){
+  /* ML must clear the widest lane label ("NLS/NES" at 8.5px); the labels are
+     right-anchored at ML-6, so a narrow margin pushes them to negative x and
+     the viewBox clips them. */
+  const W=820, ML=58, MR=18, BASE=120, BH=15;
+  /* height is unknown until the lanes are laid out; the viewBox is set at the end */
+  const svg=el('svg',{viewBox:`0 0 ${W} 176`,width:'100%'});
+  const x = p => ML + (W-ML-MR)*(p-1)/Math.max(1,(d.length-1));
+  /* the control arm hangs below the backbone; everything under it shifts down by
+     its depth so the escape band and the lanes are never drawn through it */
+  const hasCtrl = opts.variants && d.nmdesc_variants && d.nmdesc_variants.control.length;
+  const CTRL = hasCtrl ? 50 : 0;
+  /* For the frameshift design the gene-level region is the median of the two
+     reading frames, so both frames are drawn under it rather than hidden in it.
+     Stopgain records have one region and keep a single band. */
+  let escBottom = BASE + BH + CTRL;
+  if(opts.escape && d.escape){
+    const EB = 7, GAP = 2;
+    let yb = BASE + BH + CTRL + 8;
+    const band = (reg, col, lab) => {
+      svg.appendChild(el('rect',{x:x(reg.start),y:yb,
+        width:Math.max(1.5,x(reg.end)-x(reg.start)),height:EB,
+        fill:col,'fill-opacity':.9,rx:1.5}));
+      svg.lastChild.appendChild(svgTip(`${lab}: residues ${reg.start}–${reg.end}`));
+      svg.appendChild(el('text',{x:ML-6,y:yb+6,'text-anchor':'end','font-size':8,
+        fill:col,'font-weight':600}, lab));
+      yb += EB + GAP;
+    };
+    if(d.escape_frames){
+      band(d.escape_frames['+1'], '#2A9D8F', '+1');
+      band(d.escape_frames['-1'], '#7B4B94', '\u22121');
+      band(d.escape, '#1B9E8A', 'median');
+      svg.appendChild(el('text',{x:(x(d.escape.start)+x(d.escape.end))/2,y:yb+10,
+        'text-anchor':'middle','font-size':9,fill:'#6B7280'},
+        `NMD-escape region, median of the two frames  ${d.escape.start}\u2013${d.escape.end}`));
+      yb += 14;
+    } else {
+      band(d.escape, '#1B9E8A', 'escape');
+      svg.appendChild(el('text',{x:(x(d.escape.start)+x(d.escape.end))/2,y:yb+10,
+        'text-anchor':'middle','font-size':9,fill:'#1B9E8A','font-weight':600},
+        `NMD-escape region ${d.escape.start}\u2013${d.escape.end}`));
+      yb += 14;
+    }
+    escBottom = yb;
+  }
+  svg.appendChild(el('rect',{x:ML,y:BASE+5,width:W-ML-MR,height:5,fill:'#E3E7EC',rx:2.5}));
+  d.domains.forEach(dm=>{
+    const w=Math.max(2,x(dm.end)-x(dm.start));
+    svg.appendChild(el('rect',{x:x(dm.start),y:BASE,width:w,height:BH,fill:'#4A6E96',rx:3}));
+    svg.lastChild.appendChild(svgTip(`${dm.name} (${dm.acc}) ${dm.start}–${dm.end}`));
+    if(w>70) svg.appendChild(el('text',{x:x(dm.start)+w/2,y:BASE+11,'text-anchor':'middle',
+      'font-size':9,fill:'#fff','font-weight':600},
+      dm.acc + (w>190 ? ' · '+dm.name.slice(0,34) : '')));
+  });
+  /* Gene set 4's own lists: disease above the backbone, control mirrored below.
+     Both arms are PTC variants in the SAME gene, so the contrast is within-gene
+     and the two must share one scale - mxv is taken over both arms together. */
+  const NV = d.nmdesc_variants;
+  if(opts.variants && NV){
+    const dis = groupByAnchor(NV.disease, opts.anchor);
+    const con = groupByAnchor(NV.control, opts.anchor);
+    const mxv = Math.max(1, ...dis.map(v=>v.n), ...con.map(v=>v.n));
+    const drawArm = (list, up) => list.forEach(v=>{
+      /* decided in CDS nt when the payload was built, not from the rounded residue */
+      const inEsc = v.inEsc;
+      const root = up ? BASE-2 : BASE+BH+2;
+      const tip  = up ? root-10-(BASE-34)*v.n/mxv : root+10+34*v.n/mxv;
+      const col  = up ? '#D6267F' : '#1F7A8C';
+      const g = el('g',{style:'cursor:pointer'});
+      g.appendChild(el('line',{x1:x(v.pos),y1:root,x2:x(v.pos),y2:tip,
+        stroke:col,'stroke-width':.9,'stroke-opacity':inEsc?1:.5}));
+      /* shape carries the reading frame so colour stays free for the arm:
+         circle = +1, diamond = -1, square = in-frame indel (no frameshift) */
+      const rr = 2+1.1*v.n, op = inEsc?1:.7;
+      const isFs = d.group === 'fs';
+      if(v.f === '-1'){
+        g.appendChild(el('path',{d:`M ${x(v.pos)} ${tip-rr} L ${x(v.pos)+rr} ${tip} `+
+          `L ${x(v.pos)} ${tip+rr} L ${x(v.pos)-rr} ${tip} Z`, fill:col,'fill-opacity':op}));
+      } else if(isFs && !v.f){
+        /* frameshift design but net length change is a multiple of 3: an in-frame
+           indel, not a frameshift at all */
+        g.appendChild(el('rect',{x:x(v.pos)-rr,y:tip-rr,width:2*rr,height:2*rr,
+          fill:col,'fill-opacity':op}));
+      } else {
+        g.appendChild(el('circle',{cx:x(v.pos),cy:tip,r:rr,fill:col,'fill-opacity':op}));
+      }
+      const other = v.other.length ? (opts.anchor==='ptc' ? 'mutation at residue ' : 'PTC at residue ')
+                                     + v.other.join(', ')
+                                   : (opts.anchor==='ptc' ? '' : 'no PTC found in the shifted frame');
+      const fr = v.f ? ` · ${v.f} frame` : (isFs ? ' · in-frame indel' : '');
+      g.appendChild(svgTip(
+        `${up?'disease':'control'}${fr} · ${opts.anchor==='ptc'?'PTC':'mutation'} at residue ${v.pos} · `+
+        `${v.n} variant${v.n>1?'s':''}` + (other ? '\n'+other : '') +
+        (v.no_ptc ? `\n${v.no_ptc} without a PTC` : '') +
+        (inEsc ? '\ninside the NMD-escape region' : '')));
+      g.onclick=()=>focusResidue(v.pos);
+      svg.appendChild(g);
+    });
+    drawArm(dis, true);
+    drawArm(con, false);
+  }
+  let y = escBottom + (opts.escape && d.escape ? 8 : 12);
+  const LANE = 13;
+
+  /* Exon structure, in residues. Withheld when the Ensembl transcript and the
+     UniProt entry are different isoforms - the boundaries would land on the
+     wrong residues and silently mislead. */
+  if (opts.exons && d.exons) {
+    svg.appendChild(el('text',{x:ML-6,y:y+7.5,'text-anchor':'end','font-size':8.5,
+      fill:'#4B5563'},'Exons'));
+    if (d.exons.length_agrees) {
+      const coding = d.exons.exons.filter(e=>e.coding_nt>0);
+      coding.forEach((e,i)=>{
+        const w=Math.max(1,x(e.end)-x(e.start));
+        const g=el('g',{});
+        g.appendChild(el('rect',{x:x(e.start),y:y,width:w,height:10,
+          fill: i%2 ? '#9FB3C8' : '#5C7A99', rx:1.2}));
+        const lj=d.exons.last_junction;
+        const isLastJunctionExon = lj && e.rank === lj.after_exon_rank;
+        g.appendChild(svgTip(
+          `exon ${e.rank} · residues ${e.start}–${e.end} · CDS ${e.cds_start}–${e.cds_end} nt` +
+          (isLastJunctionExon ? `\nlast exon-exon junction at its 3' end: residue ${lj.residue}, `+
+                                `CDS ${lj.cds_nt} nt` : '')));
+        svg.appendChild(g);
+        if(w>16) svg.appendChild(el('text',{x:x(e.start)+w/2,y:y+7.5,'text-anchor':'middle',
+          'font-size':7.5,fill:'#fff'},String(e.rank)));
+      });
+    } else {
+      svg.appendChild(el('text',{x:ML+4,y:y+8,'font-size':8.5,fill:'#B45309'},
+        'not drawn — ' + d.exons.mismatch +
+        ' (transcript and UniProt entry are different isoforms)'));
+    }
+    y += LANE + 6;
+  }
+
+  /* Banani Table S4 feature lanes, one row each, sharing the residue axis above */
+  (opts.lanes||[]).forEach(t=>{
+    const items = (d.tracks && d.tracks[t.key]) || [];
+    svg.appendChild(el('text',{x:ML-6,y:y+7.5,'text-anchor':'end','font-size':8.5,
+      fill: items.length?'#4B5563':'#C3C9D2'}, t.short));
+    svg.appendChild(el('line',{x1:ML,y1:y+5,x2:W-MR,y2:y+5,stroke:'#EFF2F5','stroke-width':5}));
+    items.forEach(f=>{
+      const w=Math.max(1.4, x(f.end)-x(f.start));
+      const g=el('g',{});
+      g.appendChild(el('rect',{x:x(f.start),y:y,width:w,height:10,fill:t.col,
+        'fill-opacity':.85,rx:1.6}));
+      g.appendChild(svgTip(`${t.name}${f.label?' · '+f.label:''}  ${f.start}–${f.end}`));
+      svg.appendChild(g);
+    });
+    y += LANE;
+  });
+  const AX = y + 2;
+  svg.appendChild(el('line',{x1:ML,y1:AX,x2:W-MR,y2:AX,stroke:'#D9DDE3'}));
+  const step=Math.max(50,Math.round(d.length/6/50)*50);
+  const ticks=[1]; for(let t=step;t<d.length;t+=step) ticks.push(t);
+  ticks.push(d.length);
+  ticks.forEach((t,i)=>{
+    if(i>0 && i<ticks.length-1 && Math.abs(x(t)-x(d.length))<22) return;
+    svg.appendChild(el('text',{x:x(t),y:AX+12,'text-anchor':'middle','font-size':9,
+      fill:'#6B7280'},String(t)));
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${AX+20}`);
+  return svg;
+}
+
+/* Gene-level flags as used in the Figure 4 / Figure 5 models. The rule is NOT
+   "feature overlaps the escape region": annotate_motif_flags.R takes the most
+   C-terminal position of the class and asks whether max(position)*3 reaches
+   NMD_region_start. NA means the class has no annotation for this protein. */
+const FLAG_LABEL = {Pfam_flag:'Pfam', PPI_flag:'PPI', Protein_feature_flag:'Protein feature',
+  Structured_domain_flag:'Structured domain', SLiM_flag:'SLiM', MoRF_flag:'MoRF',
+  PTM_flag:'PTM', NLS_flag:'NLS/NES', LCS_flag:'LCS', IDR_flag:'IDR'};
+
+function flagStrip(d){
+  const wrap=el('div',{class:'flagstrip'});
+  if(!d.flags){wrap.appendChild(el('span',{class:'fnone'},'no flag record'));return wrap;}
+  Object.keys(FLAG_LABEL).forEach(k=>{
+    const v=d.flags[k];
+    const cls = v===true ? 'f on' : v===false ? 'f off' : 'f na';
+    const chip=el('span',{class:cls, title:
+      v===null||v===undefined ? FLAG_LABEL[k]+': NA — no annotation of this class for this protein'
+      : FLAG_LABEL[k]+': '+(v?'TRUE':'FALSE')+' — most C-terminal feature of this class '+
+        (v?'reaches':'does not reach')+' the escape-region start'});
+    chip.appendChild(document.createTextNode(FLAG_LABEL[k]));
+    wrap.appendChild(chip);
+  });
+  return wrap;
+}
+
+function variantHint(d, anchor){
+  const NV = d.nmdesc_variants;
+  if(!NV) return 'no variant record for this gene';
+  const suf = anchor === 'ptc' ? '_in_escape_ptc' : '_in_escape_mutation';
+  const dpos = groupByAnchor(NV.disease, anchor).length;
+  const cpos = groupByAnchor(NV.control, anchor).length;
+  const noptc = (NV.n_disease_no_ptc||0) + (NV.n_control_no_ptc||0);
+  return `Gene set 4 PTC variants along the ${d.length}-residue sequence, plotted at the `+
+    `${anchor==='ptc'?'PTC':'mutation'} location · disease ${NV.n_disease} at ${dpos} positions `+
+    `(${NV['n_disease'+suf]} inside the escape region) · control ${NV.n_control} at ${cpos} `+
+    `positions (${NV['n_control'+suf]} inside)` +
+    (anchor==='ptc' && noptc ? ` · ${noptc} without a PTC are not shown` : '');
+}
+
+function variantTable(d, anchor){
+  const NV = d.nmdesc_variants || {disease:[], control:[]};
+  const rows = [...groupByAnchor(NV.disease, anchor).map(v=>({...v, arm:'disease'})),
+                ...groupByAnchor(NV.control, anchor).map(v=>({...v, arm:'control'}))]
+               .sort((a,b)=>b.n-a.n||a.pos-b.pos).slice(0,14);
+  const useP = anchor === 'ptc';
+  const t=el('table'); const hr=el('tr');
+  [[useP?'PTC':'Mutation',''],['Arm',''],[useP?'Mutation':'PTC',''],['#','text-align:right']]
+    .forEach(([h,st])=>hr.appendChild(el('th', st?{style:st}:{}, h)));
+  t.appendChild(el('thead',{},hr));
+  const tb=el('tbody');
+  rows.forEach(v=>{
+    const r=el('tr',{class:'vrow'+(v.inEsc?' inesc':'')});
+    r.appendChild(el('td',{class:'res'},String(v.pos)));
+    r.appendChild(el('td',{style:'color:'+(v.arm==='disease'?'#D6267F':'#1F7A8C')}, v.arm));
+    r.appendChild(el('td',{style:'color:#6B7280'}, v.other.length ? v.other.join(', ') : '\u2014'));
+    r.appendChild(el('td',{class:'n'},String(v.n)));
+    r.onclick=()=>focusResidue(v.pos);
+    tb.appendChild(r);
+  });
+  t.appendChild(tb);
+  return t;
+}
+
+/* ---------------- 3D ---------------- */
+function focusResidue(pos){
+  if(!viewer) return;
+  viewer.removeAllLabels();
+  viewer.setStyle({}, {cartoon:{colorfunc: a=>bandHex(a.b)}});
+  viewer.addStyle({resi:pos}, {stick:{radius:.28,color:'#D6267F'},
+                               sphere:{radius:.9,color:'#D6267F'}});
+  /* addResLabels places the label from a selection; addLabel needs xyz coordinates */
+  viewer.addResLabels({resi:pos}, {backgroundColor:'#D6267F', backgroundOpacity:.9,
+    fontColor:'white', fontSize:11, borderThickness:0, showBackground:true});
+  viewer.zoomTo({resi:pos}); viewer.render();
+  setTimeout(()=>{viewer.zoomTo();viewer.render();}, 1400);
+}
+
+function mount3D(d){
+  const host=document.getElementById('mol');
+  const msg=document.getElementById('molmsg');
+  viewer=null;
+  if(!d.af){msg.textContent='No AlphaFold model for '+d.uniprot;return;}
+  if(typeof $3Dmol==='undefined'){
+    msg.innerHTML='3D viewer library did not load (needs internet access to 3Dmol.org).<br>'+
+      'Everything else on this page works offline.';
+    return;
+  }
+  msg.textContent='Loading '+d.af.entry+' …';
+  const url=d.af.cif.replace(/\.cif$/,'.pdb');
+  fetch(url).then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();})
+   .then(txt=>{
+      msg.style.display='none';
+      viewer=$3Dmol.createViewer(host,{backgroundColor:'white'});
+      viewer.addModel(txt,'pdb');
+      viewer.setStyle({},{cartoon:{colorfunc:a=>bandHex(a.b)}});
+      if(d.escape) viewer.addStyle({resi:`${d.escape.start}-${d.escape.end}`},
+        {cartoon:{colorfunc:a=>bandHex(a.b), thickness:.55}});
+      viewer.zoomTo(); viewer.render();
+   })
+   .catch(e=>{msg.style.display='flex';
+      msg.textContent='Could not load '+d.af.entry+' from AlphaFold DB ('+e.message+')';});
+}
+
+/* ---------------- page ---------------- */
+function render(d){
+  CUR=d;
+  const m=document.getElementById('main'); m.textContent='';
+  const head=el('div',{class:'head'});
+  const ti=el('div',{class:'title'});
+  ti.appendChild(el('h2',{},d.gene));
+  const meta=el('div',{class:'meta'});
+  meta.appendChild(document.createTextNode(`${d.uniprot} · ${d.name} · `));
+  meta.appendChild(el('i',{},'Homo sapiens'));
+  ti.appendChild(meta);
+  ti.appendChild(el('div',{class:'esc'},
+    `gene set 4 ${GROUP[d.group]||d.group} case gene · ${d.transcript} · ` +
+    `NMD-escape CDS ${d.escape.cds_start}–${d.escape.cds_end} nt → residues ${d.escape.start}–${d.escape.end}`));
+  head.appendChild(ti); head.appendChild(kpis(d)); m.appendChild(head);
+
+  const grid=el('div',{class:'grid'});
+
+  const c1=el('div',{class:'card'});
+  c1.appendChild(el('h3',{},'AlphaFold model'));
+  c1.appendChild(el('p',{class:'hint'},
+    d.af ? `${d.af.entry} v${d.af.version}, coloured by per-residue pLDDT. Click a variant to highlight it.`
+         : 'No predicted model available.'));
+  const molWrap=el('div',{id:'mol'});
+  molWrap.appendChild(el('div',{id:'molmsg'},'…'));
+  c1.appendChild(molWrap);
+  const lg=el('div',{class:'legend'});
+  BANDS.forEach(b=>{const s=el('span',{});
+    s.appendChild(el('span',{class:'sw',style:`background:${b.hex}`}));
+    s.appendChild(document.createTextNode(b.lab)); lg.appendChild(s);});
+  c1.appendChild(lg);
+  grid.appendChild(c1);
+
+  const c2=el('div',{class:'card'});
+  c2.appendChild(el('h3',{},'Model confidence'));
+  const pc = d.plddt.length ? Math.round(100*d.bands.ge90/d.plddt.length) : 0;
+  c2.appendChild(el('p',{class:'hint'},
+    d.plddt.length ? `${pc}% of residues are very-high confidence` : 'no pLDDT available'));
+  c2.appendChild(plddtHistogram(d));
+  if(d.band_note) c2.appendChild(el('div',{class:'note'}, d.band_note));
+  grid.appendChild(c2);
+
+  const c3=el('div',{class:'card full'});
+  c3.appendChild(el('h3',{},'Domain architecture & pathogenic variants'));
+  const NV0 = d.nmdesc_variants || {n_disease:0,n_control:0};
+  const hintEl = el('p',{class:'hint'}, variantHint(d,'mutation'));
+  c3.appendChild(hintEl);
+  const tg=el('div',{class:'toggles'});
+  const mk=(id,lab,on)=>{const l=el('label'); const i=el('input',{type:'checkbox',id:id});
+    if(on)i.setAttribute('checked','checked'); l.appendChild(i);
+    l.appendChild(document.createTextNode(lab)); return l;};
+  tg.appendChild(mk('tv','show variants',true));
+  tg.appendChild(mk('te','show NMD-escape region',true));
+  tg.appendChild(mk('tf','show Table S4 feature lanes',true));
+  tg.appendChild(mk('tx','show exon structure',true));
+  const anc=el('label',{style:'margin-left:auto'});
+  anc.appendChild(document.createTextNode('plot at  '));
+  const sel=el('select',{id:'tanc',style:'font-size:11px;padding:2px 4px;border-radius:5px;'+
+    'border:1px solid #E3E7EC;background:#fff;color:#1A1A1A'});
+  sel.appendChild(el('option',{value:'mutation'},'mutation location'));
+  sel.appendChild(el('option',{value:'ptc'},'PTC location'));
+  anc.appendChild(sel);
+  tg.appendChild(anc);
+  c3.appendChild(tg);
+  const holder=el('div',{id:'trackholder'});
+  c3.appendChild(holder);
+  const lg2=el('div',{class:'legend'});
+  [['#D6267F','disease PTC variant, above the backbone (size = # variants)'],
+   ['#1F7A8C','control PTC variant, below the backbone'],
+   ['#4A6E96','Pfam domain (InterPro)'],['#1B9E8A','NMD-escape region (median)']]
+   .concat(d.escape_frames ? [['#2A9D8F','+1 frame region'],['#7B4B94','\u22121 frame region']] : [])
+   .concat(LANES.map(l=>[l.col,l.name])).forEach(([c,t])=>{
+     const s=el('span',{}); s.appendChild(el('span',{class:'sw',style:`background:${c}`}));
+     s.appendChild(document.createTextNode(t)); lg2.appendChild(s);});
+  c3.appendChild(lg2);
+  c3.appendChild(el('div',{class:'note'},
+    'Exons are the coding part of each exon of ' + d.transcript + ', converted to residues as '+
+    'ceil(CDS nt / 3); a boundary inside a codon makes two exons share that residue. Hover the '+
+    'second-to-last coding exon for the last exon-exon junction \u2014 the 50-nucleotide rule that '+
+    'defines NMD escape is stated relative to it. ' +
+    (!(d.exons && d.exons.last_junction) ? 'This transcript has a single coding exon, so there is no junction.'
+      : d.exons.rule_delta === 0
+        ? 'Here the escape region starts exactly 50 nt before that junction — the rule, reproduced.'
+        : 'Here it starts ' + Math.abs(d.exons.rule_delta) + ' nt ' +
+          (d.exons.rule_delta > 0 ? 'after' : 'before') + ' that point, which is expected for this design.')));
+  c3.appendChild(el('div',{class:'note'}, d.group === 'snv'
+    ? 'Escape region, stopgain design: the last coding exon plus 50 nt upstream of it, running to the '+
+      'end of the CDS. It is a property of the transcript, so it always reaches the last exon\u2019s end.'
+    : 'Escape region, frameshift design: NOT a transcript interval. Each reading frame has its own '+
+      'PTC-to-new-stop region \u2014 the +1 and \u22121 bands \u2014 and the gene-level region used by the analysis '+
+      'is the median of the two, drawn below them. Its right edge is therefore the median position of '+
+      'the frame-shifted stop codon, upstream of the wild-type stop, so the band ends before the last '+
+      'exon does, by design; being a median it need not fall on a codon boundary. Marker shape is the '+
+      'frame: circle = +1 (net +1 nt, an insertion), diamond = \u22121 (net \u22121 nt, a deletion), square = '+
+      'in-frame indel (net change a multiple of 3 \u2014 not a frameshift; 11 such rows across the set).'));
+  c3.appendChild(el('div',{class:'note'},
+    'Feature lanes come from Banani et al. Supplemental Table S4 (Dev Cell 2022;57(14):1776-1788.e8, doi:10.1016/j.devcel.2022.06.010, PMID 35809564, PMC9339523), '+
+    'the same source the project\u2019s gene-level flags are computed from. Hover a block for its class and range. '+
+    (d.s4_protein ? 'Table S4 entry: '+d.s4_protein+'.'
+                  : 'No Table S4 entry for this accession, so the lanes are empty.')));
+  grid.appendChild(c3);
+
+  const c5=el('div',{class:'card full'});
+  c5.appendChild(el('h3',{},'Gene-level flags'));
+  c5.appendChild(el('p',{class:'hint'},
+    'The variables entering the Figure 4 / Figure 5 models, for this gene in this design.'));
+  c5.appendChild(flagStrip(d));
+  c5.appendChild(el('div',{class:'note'},
+    'Filled = TRUE, outlined = FALSE, hatched = NA (no annotation of that class for this protein). '+
+    'A flag is TRUE when the most C-terminal feature of the class reaches the escape-region start '+
+    '(max position \u00d7 3 \u2265 NMD_region_start) \u2014 it is not a test of overlap with the region, '+
+    'so a flag can be TRUE while no block above sits inside the teal band.'));
+  grid.appendChild(c5);
+
+  const c4=el('div',{class:'card full'});
+  c4.appendChild(el('h3',{},'Positions carrying the most variants'));
+  c4.appendChild(el('p',{class:'hint'},
+    'Top 14 positions, both arms pooled, at whichever anchor is selected above. '+
+    'Click a row to highlight the residue in the model. \u25cf marks the escape region.'));
+  const tblHolder=el('div',{id:'tblholder'});
+  c4.appendChild(tblHolder);
+  c4.appendChild(el('div',{class:'note'},
+    'Variants are gene set 4\u2019s own lists, the table Figure 5 is fitted on: disease = ClinVar P/LP '+
+    'PTC variants in this gene, control = gnomAD NMD-escape PTC variants in the SAME gene, so the '+
+    'contrast is within-gene and carries no matching ratio. One row per variant allele '+
+    '(chrom:pos|ref|alt); several alleles can share a mutation position, which is why a lollipop can '+
+    'carry more than one. Position is the MUTATION location, ceil(CDS nt / 3) \u2014 the anchor Figure 5\u2019s '+
+    'models use; the PTC column is where translation then stops, equal to the mutation for a stopgain '+
+    'and downstream of it for a frameshift (\u2014 means no PTC was found in the shifted frame). '+
+    'Sequence from UniProt, pLDDT from AlphaFold DB, Pfam from InterPro.'));
+  grid.appendChild(c4);
+
+  m.appendChild(grid);
+
+  const draw=()=>{
+    const anchor=document.getElementById('tanc').value;
+    holder.textContent='';
+    holder.appendChild(track(d,{variants:document.getElementById('tv').checked,
+                                escape:document.getElementById('te').checked,
+                                lanes:document.getElementById('tf').checked?LANES:[],
+                                exons:document.getElementById('tx').checked,
+                                anchor:anchor}));
+    hintEl.textContent = variantHint(d, anchor);
+    tblHolder.textContent='';
+    tblHolder.appendChild(variantTable(d, anchor));
+  };
+  draw();
+  ['tv','te','tf','tx','tanc'].forEach(id=>document.getElementById(id).onchange=draw);
+  mount3D(d);
+  renderList();
+}
+
+function select(key){
+  fetch(`protein_data/${key}.json`).then(r=>r.json()).then(render)
+    .catch(e=>{document.getElementById('main').innerHTML=
+      `<div class="empty">Could not load ${key}.json — ${e.message}</div>`;});
+}
+
+fetch('protein_data/_index.json').then(r=>r.json()).then(ix=>{
+  INDEX=ix; renderList();
+  document.getElementById('q').oninput=renderList;
+  document.querySelectorAll('#filters button').forEach(b=>b.onclick=()=>{
+    group=b.dataset.g;
+    document.querySelectorAll('#filters button').forEach(x=>x.classList.toggle('on',x===b));
+    renderList();});
+  if(ix.length) select(ix.find(r=>r.gene==='SOD1')?.key || ix[0].key);
+}).catch(e=>{document.getElementById('main').innerHTML=
+  `<div class="empty">Could not load the gene index (${e.message}).<br><br>`+
+  `This page reads JSON with fetch(), which browsers block on <code>file://</code>.<br>`+
+  `Serve the folder over HTTP instead — e.g. <code>python3 -m http.server</code> in this directory, `+
+  `then open <code>http://localhost:8000/</code>.</div>`;});
+</script>
+</body>
+</html>
