@@ -1,7 +1,8 @@
-# colab_paths.R -- path mapping layer for running this repo on Google Colab.
-# The v4 scripts read data through absolute paths on the original author's
-# machine. DATA_DIR points at one folder holding those inputs; run_script()
-# rewrites the prefixes on a working copy and sources that copy.
+# colab_paths.R -- path helpers for running this repository on Google Colab.
+# The seven steps resolve inputs through lib/paths.R and need no rewriting; use
+# run_in_place() for those. Scripts outside the chain carry absolute paths from
+# the machines they were written on; run_script() maps those prefixes onto
+# DATA_DIR on a working copy and sources the copy, leaving the checkout alone.
 
 DATA_DIR <- Sys.getenv("NMDESC_DATA", "/content/drive/MyDrive/NMDesc_data")
 REPO_DIR <- Sys.getenv("NMDESC_REPO", "/content/NMDescapediseasegene_paper")
@@ -69,9 +70,17 @@ run_script <- function(script, echo = TRUE) {
 # Sources a script where it lives, with the working directory set to its own
 # directory, so relative helper lookups inside the script resolve. Use this for
 # entry points; run_script() suits scripts that carry hardcoded data paths.
-run_in_place <- function(script, echo = FALSE) {
+# `args` is handed to the script as commandArgs(trailingOnly = TRUE), which is
+# how run_analysis.R takes --dry-run and a step subset.
+run_in_place <- function(script, echo = FALSE, args = character(0)) {
   path <- file.path(REPO_DIR, script)
   wd <- getwd(); on.exit(setwd(wd), add = TRUE)
+  if (length(args)) {
+    assign("commandArgs",
+           function(trailingOnly = FALSE) if (trailingOnly) args else c("R", args),
+           envir = globalenv())
+    on.exit(rm("commandArgs", envir = globalenv()), add = TRUE)
+  }
   setwd(dirname(path))
   source(basename(path), echo = echo, max.deparse.length = 200)
   invisible(path)

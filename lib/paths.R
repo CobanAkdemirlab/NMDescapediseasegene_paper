@@ -12,23 +12,42 @@
 # Reports missing files clearly; never fails silently.
 # =============================================================================
 
-# Single data root: every input is resolved from one directory inside the repo,
-# <repo>/data level_v5. This file lives at <repo>/gene level_v5/lib/paths.R, so the
-# repo root is three levels up from it; the location is found by scanning the
-# source() call stack for this file's own path, which works however deep the
-# sourcing chain is. REPO (set by run_analysis.R) and the Desktop layout are
-# fallbacks for the case where the stack carries no file name.
+# Single data root: every input is resolved from one directory inside the repo.
+# The repo root is found by walking up from this file's own path until a directory
+# holding "gene level_v5" is reached -- this file is shipped both as
+# <repo>/gene level_v5/lib/paths.R and <repo>/lib/paths.R, which sit at different
+# depths, so a fixed number of dirname() calls is wrong for one of them. The data
+# directory under that root is taken by name from .DATA_DIRS, first one that
+# exists; "data" is the current layout and "data level_v5" the former one. REPO
+# (set by run_analysis.R) and the working directory are fallbacks for the case
+# where the source() call stack carries no file name.
+.DATA_DIRS <- c("data", "data level_v5")
 .find_data_root <- function() {
+  is_repo <- function(p) dir.exists(file.path(p, "gene level_v5"))
+  under <- function(repo) {
+    for (d in .DATA_DIRS) {
+      p <- file.path(repo, d)
+      if (dir.exists(p)) return(p)
+    }
+    file.path(repo, .DATA_DIRS[1])    # not there yet; name it for the error message
+  }
   for (i in seq_len(sys.nframe())) {
     of <- sys.frame(i)$ofile
     if (!is.null(of) && nzchar(of) && grepl("paths\\.R$", of)) {
-      return(file.path(dirname(dirname(dirname(normalizePath(of)))), "data level_v5"))
+      p <- dirname(normalizePath(of))
+      for (up in 1:4) {
+        if (is_repo(p)) return(under(p))
+        p <- dirname(p)
+      }
     }
   }
   if (exists("REPO", envir = globalenv())) {
-    return(file.path(get("REPO", envir = globalenv()), "data level_v5"))
+    return(under(get("REPO", envir = globalenv())))
   }
-  path.expand("~/Desktop/NMDesc/repo_v5/data level_v5")
+  for (cand in c(getwd(), dirname(getwd()))) {
+    if (is_repo(cand)) return(under(cand))
+  }
+  path.expand("~/Desktop/NMDesc/repo_v5/data")
 }
 DATA_ROOTS <- c(main = .find_data_root())
 rm(.find_data_root)

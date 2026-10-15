@@ -934,7 +934,7 @@ for (col in intersect(c("uniprot", "uniprotswissprot"), names(variants_all2))) {
 }
 head(unique(variants_all2$uniprot))          # 应该是 "P35579" 这样的格式
 pfam_fin     <- get_pfam_annotations(variants_all2$ensembl_transcript_id, ensembl)
-human_1_     <- read_delim("/Users/jxu14/Desktop/NMDescapediseasegene_paper-main/new_NMDesc/data/others/human (1).txt",
+human_1_     <- read_delim(data_file("human (1).txt"),
                            delim = "\t", escape_double = FALSE, trim_ws = TRUE)
 variants_all2 <- variants_all2 %>% dplyr::filter(!is.na(group))
 variants_all2$Variant_Key = variants_all2$key
